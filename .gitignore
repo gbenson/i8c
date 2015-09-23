@@ -1,0 +1,14 @@
+*.patch
+*.orig
+*.rej
+
+*~
+.#*
+*#
+
+*.o
+*.pyc
+
+build/
+dist/
+*.egg-info/
