@@ -88,16 +88,11 @@ def setup_output(args):
 def main(args):
     args = CommandLine(args)
     cpp, infile = setup_input(args)
-    try:
-        asm, outfile = setup_output(args)
-        try:
-            try:
-                compile(infile.readline, outfile.write)
-            except IOError:
-                pass
-        finally:
-            asm.terminate()
-            asm.wait()
-    finally:
-        cpp.terminate()
+    asm, outfile = setup_output(args)
+    compile(infile.readline, outfile.write)
+    if cpp is not None:
+        infile.close()
         cpp.wait()
+    if asm is not None:
+        outfile.close()
+        asm.wait()
