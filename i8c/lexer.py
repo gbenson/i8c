@@ -2,7 +2,7 @@ from i8c.exceptions import LexerError
 import re
 
 TOKEN = re.compile(r"\s+|::|[:,()]|"
-                   + r"0[0-7]*|0x[0-9a-f]+|[0-9]+|"
+                   + r"-?(0x[0-9a-f]+|0[0-7]*|[0-9]+)|"
                    + r"[a-z_][a-z0-9_]*", re.IGNORECASE)
 
 class Token(object):
@@ -76,7 +76,7 @@ def generate_tokens(readline):
                              or isinstance(last_token, NEWLINE))
                         and "\n" in tokentext):
                         klass = NEWLINE
-                elif tokentext[0].isdigit():
+                elif tokentext[0] == "-" or tokentext[0].isdigit():
                     klass = NUMBER
                 else:
                     klass = WORD
