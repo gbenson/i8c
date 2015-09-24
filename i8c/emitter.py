@@ -314,7 +314,23 @@ class Emitter(object):
         self.emit_op("deref", op.fileline)
 
     visit_dropop = emit_simple_op
+    visit_dupop = emit_simple_op
     visit_gotoop = emit_branch_op
+
+    def visit_nameop(self, op):
+        pass
+
+    visit_overop = emit_simple_op
+
+    def visit_pickop(self, op):
+        if op.slot == 0:
+            self.visit_dupop(op)
+        elif op.slot == 1:
+            self.visit_overop(op)
+        else:
+            self.emit_op("pick", op.fileline)
+            self.emit_byte(op.slot)
+
     visit_rotop = emit_simple_op
 
     def visit_stopop(self, op):
