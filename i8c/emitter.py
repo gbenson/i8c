@@ -265,7 +265,7 @@ class Emitter(object):
             self.returntypes.append(node.type.encoding)
 
     def visit_funcref(self, funcref):
-        self.autoptypes.append("F")
+        self.autoptypes.append("f")
         funcref.accept(self.autos)
 
     def visit_symbolref(self, symref):

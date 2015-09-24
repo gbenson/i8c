@@ -58,6 +58,12 @@ class FuncType(RootType):
             ", ".join((type.name for type in self.returntypes)),
             ", ".join((type.name for type in self.paramtypes))))
 
+    @property
+    def encoding(self):
+        return "F%s(%s)" % (
+            "".join((type.encoding for type in self.returntypes)),
+            "".join((type.encoding for type in self.paramtypes)))
+
     def __eq__(self, other):
         return not (self != other)
 
