@@ -43,7 +43,7 @@ class StackError(ParsedError):
     """The stack is not correct for the requested operation.
     """
     def __init__(self, cause, stack, msg):
-        msg = "%s: %s" % (cause.name, msg)
+        msg = "%s: %s" % (cause.source, msg)
         if stack is not None:
             msg += ":\n" + str(stack)
         ParsedError.__init__(self, cause, msg)
