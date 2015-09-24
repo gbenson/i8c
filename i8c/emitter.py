@@ -1,3 +1,5 @@
+from i8c import dwarf2
+
 class Label(object):
     def __init__(self, name):
         self.name = name
@@ -110,6 +112,13 @@ class Emitter(object):
         self.write = write
         self.num_labels = 0
         self.__label = None
+        self.__init_opcodes()
+
+    def __init_opcodes(self):
+        self.opcodes = {}
+        for name in dir(dwarf2):
+            if name.startswith("DW_OP_"):
+                self.opcodes[name] = getattr(dwarf2, name)
 
     def new_label(self):
         self.num_labels += 1
@@ -118,7 +127,7 @@ class Emitter(object):
     def emit(self, line, comment=None):
         if line.startswith("."):
             line = "\t" + line
-        if self.__label is not None:
+        if not line.startswith("#") and self.__label is not None:
             line = "%s:%s" % (self.__label.name, line)
             self.__label = None
         if comment is not None:
@@ -152,16 +161,20 @@ class Emitter(object):
         self.__emit_nbyte(4, value, comment)
 
     def emit_op(self, name, comment=None):
-        self.emit_byte("DW_OP_" + name, comment)
+        name = "DW_OP_" + name
+        code = self.opcodes.pop(name, None)
+        if code is not None:
+            self.emit("#define %s 0x%02x" % (name, code))
+        self.emit_byte(name, comment)
 
     def visit_toplevel(self, toplevel):
-        self.emit("#include <infinity-codegen.h>")
-        self.emit('.pushsection .note.infinity, "", "note"')
+        self.emit("#define NT_GNU_INFINITY 5")
+        self.emit("#define ELF_NOTE_I8_FUNCTION 1")
+        self.emit_newline()
+        self.emit('.section .note.infinity, "", "note"')
         self.emit(".balign 4")
         for node in toplevel.functions:
             node.accept(self)
-        self.emit_newline()
-        self.emit(".popsection")
 
     def visit_function(self, function):
         # This method handles laying out the structure of the note

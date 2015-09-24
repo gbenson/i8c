@@ -81,7 +81,7 @@ def setup_input(args):
 def setup_output(args):
     if not args.with_asm:
         return None, sys.stdout
-    command = ["gcc", "-c", "-x", "assembler", "-"] + args.asm_args
+    command = ["gcc", "-c", "-x", "assembler-with-cpp", "-"] + args.asm_args
     process = subprocess.Popen(command, stdin=subprocess.PIPE)
     return process, process.stdin
 
