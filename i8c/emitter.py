@@ -160,6 +160,15 @@ class Emitter(object):
     def emit_4byte(self, value, comment=None):
         self.__emit_nbyte(4, value, comment)
 
+    def emit_8byte(self, value, comment=None):
+        self.__emit_nbyte(8, value, comment)
+
+    def emit_uleb128(self, value, comment=None):
+        self.emit(".uleb128 " + str(value), comment)
+
+    def emit_sleb128(self, value, comment=None):
+        self.emit(".sleb128 " + str(value), comment)
+
     def emit_op(self, name, comment=None):
         name = "DW_OP_" + name
         code = self.opcodes.pop(name, None)
@@ -303,10 +312,52 @@ class Emitter(object):
 
     def visit_constop(self, op):
         value = op.value
-        if value >= 0 and value <= 31:
-            self.emit_op("lit%d" % value, op.fileline)
-            return
-        raise NotImplementedError
+        if value >= 0:
+            if value < 0x20:
+                self.emit_op("lit%d" % value, op.fileline)
+            elif value < (1 << 8):
+                self.emit_op("const1u", op.fileline)
+                self.emit_byte(value)
+            elif value < (1 << 16):
+                self.emit_op("const2u", op.fileline)
+                self.emit_2byte(value)
+            elif value < (1 << 21):
+                self.emit_op("constu", op.fileline)
+                self.emit_uleb128(value)
+            elif value < (1 << 32):
+                self.emit_op("const4u", op.fileline)
+                self.emit_4byte(value)
+            elif value < (1 << 49):
+                self.emit_op("constu", op.fileline)
+                self.emit_uleb128(value)
+            elif value < (1 << 64):
+                self.emit_op("const8u", op.fileline)
+                self.emit_8byte(value)
+            else:
+                self.emit_op("constu", op.fileline)
+                self.emit_uleb128(value)
+        else:
+            if value >= -(1 << 7):
+                self.emit_op("const1s", op.fileline)
+                self.emit_byte(value)
+            elif value >= -(1 << 15):
+                self.emit_op("const2s", op.fileline)
+                self.emit_2byte(value)
+            elif value >= -(1 << 20):
+                self.emit_op("consts", op.fileline)
+                self.emit_sleb128(value)
+            elif value >= -(1 << 31):
+                self.emit_op("const4s", op.fileline)
+                self.emit_4byte(value)
+            elif value >= -(1 << 48):
+                self.emit_op("consts", op.fileline)
+                self.emit_sleb128(value)
+            elif value >= -(1 << 63):
+                self.emit_op("const8s", op.fileline)
+                self.emit_8byte(value)
+            else:
+                self.emit_op("consts", op.fileline)
+                self.emit_sleb128(value)
 
     def visit_derefop(self, op):
         if op.type.sizedtype is not None:
