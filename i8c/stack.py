@@ -101,7 +101,7 @@ class Value:
         if name is not None:
             assert isinstance(name, names.Name)
         if value is not None:
-            assert type(value) == type(0)
+            assert isinstance(value, (int, long))
         self.type = thetype
         self.name = name
         self.value = value
