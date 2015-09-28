@@ -1,5 +1,8 @@
 from i8c import dwarf2
 
+NT_GNU_INFINITY = 5
+I8_FUNCTION_MAGIC = (ord("i") << 8) | ord("8")
+
 class Label(object):
     def __init__(self, name):
         self.name = name
@@ -76,36 +79,42 @@ class ExternTable(object):
         self.strings = strings
         self.entries = []
 
-    def string_or_None(self, text):
-        if text is not None:
-            return self.strings.new(text)
-
-    def add_entry(self, fullname, args=None, rets=None):
-        self.entries.append(
-            map(self.string_or_None,
-                (fullname.provider, fullname.name, args, rets)))
-
     def visit_funcref(self, funcref):
-        name, type = funcref.name.value, funcref.typename.type
-        self.add_entry(funcref.name.value,
-                       "".join((t.encoding for t in type.paramtypes)),
-                       "".join((t.encoding for t in type.returntypes)))
+        fullname, type = funcref.name.value, funcref.typename.type
+        self.entries.append(FuncRef(*map(self.strings.new, (
+            fullname.provider,
+            fullname.name,
+            "".join((t.encoding for t in type.paramtypes)),
+            "".join((t.encoding for t in type.returntypes))))))
 
     def visit_symref(self, symref):
-        self.add_entry(symref.name.value)
+        fullname = symref.name.value
+        assert fullname.is_shortname
+        self.entries.append(SymRef(fullname.name))
 
     def emit(self, emitter):
         for entry, index in zip(self.entries, xrange(len(self.entries))):
-            prov, name, args, rets = entry
-            prefix = "extern %d " % index
-            emitter.emit_2byte(prov.offset, prefix + "provider offset")
-            emitter.emit_2byte(name.offset, prefix + "name offset")
-            if args is None:
-                assert rets is None
-                emitter.emit_4byte(0, prefix + "reserved bytes")
-                continue
-            emitter.emit_2byte(args.offset, prefix + "ptypes offset")
-            emitter.emit_2byte(rets.offset, prefix + "rtypes offset")
+            entry.emit(emitter, "extern %d " % index)
+
+class FuncRef(object):
+    def __init__(self, provider, name, params, returns):
+        self.provider = provider
+        self.name = name
+        self.params = params
+        self.returns = returns
+
+    def emit(self, emitter, prefix):
+        emitter.emit_2byte(self.provider.offset, prefix + "provider offset")
+        emitter.emit_2byte(self.name.offset, prefix + "name offset")
+        emitter.emit_2byte(self.params.offset, prefix + "ptypes offset")
+        emitter.emit_2byte(self.returns.offset, prefix + "rtypes offset")
+
+class SymRef(object):
+    def __init__(self, name):
+        self.name = name
+
+    def emit(self, emitter, prefix):
+        emitter.emit_8byte(self.name, prefix + "address")
 
 class Emitter(object):
     def __init__(self, write):
@@ -177,9 +186,8 @@ class Emitter(object):
         self.emit_byte(name, comment)
 
     def visit_toplevel(self, toplevel):
-        self.emit("#define NT_GNU_INFINITY 5")
-        self.emit("#define ELF_NOTE_I8_FUNCTION 1")
-        self.emit_newline()
+        self.emit("#define NT_GNU_INFINITY %d" % NT_GNU_INFINITY)
+        self.emit("#define I8_FUNCTION_MAGIC 0x%x" % I8_FUNCTION_MAGIC)
         self.emit('.section .note.infinity, "", "note"')
         self.emit(".balign 4")
         for node in toplevel.functions:
@@ -228,7 +236,7 @@ class Emitter(object):
         strings.layout_table(self.new_label)
 
         # Emit the Infinity note header
-        self.emit_2byte("ELF_NOTE_I8_FUNCTION")
+        self.emit_2byte("I8_FUNCTION_MAGIC")
         self.emit_2byte(1, "version")
 
         # Emit the Infinity function header
@@ -278,7 +286,7 @@ class Emitter(object):
         funcref.accept(self.externs)
 
     def visit_symref(self, symref):
-        self.externtypes.append("s")
+        self.externtypes.append("x")
         symref.accept(self.externs)
 
     # Emit the bytecode

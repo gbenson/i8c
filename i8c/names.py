@@ -55,16 +55,16 @@ class NameAnnotator(object):
         parameter.name.accept(self)
 
     def visit_externals(self, externals):
-        self.default_provider = self.function_provider
         for node in externals.children:
             node.accept(self)
 
     def visit_funcref(self, funcref):
+        self.default_provider = self.function_provider
         funcref.name.accept(self)
 
     def visit_symref(self, symref):
+        self.default_provider = None
         symref.name.accept(self)
-        self.ensure_unreserved(symref)
 
     def visit_operations(self, ops):
         self.default_provider = None
