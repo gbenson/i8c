@@ -317,6 +317,9 @@ class StackWalker(object):
     def visit_nameop(self, op):
         self.stack.name_slot(op.slot, op.name)
 
+    def visit_overop(self, op):
+        self.stack.push(self.stack[1])
+
     def visit_pickop(self, op):
         op.operand.accept(self)
         op.slot = self.__pick_index
