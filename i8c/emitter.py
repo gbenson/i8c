@@ -383,9 +383,9 @@ class Emitter(object):
 
     def visit_pickop(self, op):
         if op.slot == 0:
-            self.visit_dupop(op)
+            self.emit_op("dup", op.fileline)
         elif op.slot == 1:
-            self.visit_overop(op)
+            self.emit_op("over", op.fileline)
         else:
             self.emit_op("pick", op.fileline)
             self.emit_byte(op.slot)
