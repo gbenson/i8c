@@ -206,9 +206,25 @@ class StreamOptimizer(Optimizer):
 
     def visit_operationstream(self, stream):
         while True:
+            if self.try_remove_multijump(stream):
+                continue
             if self.try_remove_goto_next(stream):
                 continue
             break
+
+    def try_remove_multijump(self, stream):
+        hits = 0
+        for index, op in stream.items():
+            target = stream.jumps.get(op, None)
+            if target is None:
+                continue
+            if not target.is_goto:
+                continue
+
+            self.debug_print_hit(op)
+            hits += 1
+            stream.retarget_jump(op, stream.jumps[target])
+        return hits > 0
 
     def try_remove_goto_next(self, stream):
         hits = 0

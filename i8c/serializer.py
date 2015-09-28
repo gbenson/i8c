@@ -99,12 +99,33 @@ class OperationStream(visitors.Visitable):
 
         target = self.jumps.pop(op, None)
         if target is not None:
-            self.labels[target].remove(op)
-            if not self.labels[target]:
-                del self.labels[target]
+            self.__remove_label(target, op)
 
         check = self.ops.pop(index)
         assert op == check
+        self.__reindex()
+
+    def retarget_jump(self, from_op, to_op):
+        assert self.is_closed
+
+        trampoline = self.jumps[from_op]
+        self.__remove_label(trampoline, from_op)
+        self.jumps[from_op] = to_op
+        self.labels[to_op].append(from_op)
+
+    def __remove_label(self, target, source):
+        assert self.is_closed
+        self.labels[target].remove(source)
+        if not self.labels[target]:
+            del self.labels[target]
+
+    def __reindex(self):
+        assert self.is_closed
+        ops = self.ops.items()
+        ops.sort()
+        self.ops = {}
+        for index, op in ops:
+            self.ops[len(self.ops)] = op
 
     # Debug printing
 
