@@ -121,20 +121,20 @@ class SyntheticReturn(ReturnOp):
 
 # XXX
 
-class SimpleUnaryOp(ClassComparableOp, NameFromSourceMixin):
+class UnaryOp(ClassComparableOp, NameFromSourceMixin):
     """An operator with no operands that pops one value and pushes one
     back."""
 
-class SimpleBinaryOp(ClassComparableOp, NameFromSourceMixin):
+class BinaryOp(ClassComparableOp, NameFromSourceMixin):
     """An operator with no operands that pops two values and pushes
     one back."""
 
 # XXX
 
-AbsOp = SimpleUnaryOp
-AndOp = SimpleBinaryOp
+AbsOp = UnaryOp
+AndOp = BinaryOp
 
-class AddOp(SimpleBinaryOp):
+class AddOp(BinaryOp):
     dwarfname = "plus"
 
 class PlusUConst(Operation):
@@ -180,7 +180,7 @@ class DerefOp(Operation):
     def type(self):
         return self.ast.operand.type
 
-DivOp = SimpleBinaryOp
+DivOp = BinaryOp
 
 class DropOp(ClassComparableOp, NameFromSourceMixin):
     pass
@@ -188,8 +188,8 @@ class DropOp(ClassComparableOp, NameFromSourceMixin):
 class DupOp(ClassComparableOp, NameFromSourceMixin):
     pass
 
-ModOp = SimpleBinaryOp
-MulOp = SimpleBinaryOp
+ModOp = BinaryOp
+MulOp = BinaryOp
 
 class NameOp(Operation):
     @property
@@ -200,9 +200,9 @@ class NameOp(Operation):
     def slot(self):
         return self.ast.slot.value
 
-NegOp = SimpleUnaryOp
-NotOp = SimpleUnaryOp
-OrOp = SimpleBinaryOp
+NegOp = UnaryOp
+NotOp = UnaryOp
+OrOp = BinaryOp
 
 class OverOp(ClassComparableOp, NameFromSourceMixin):
     pass
@@ -212,11 +212,11 @@ class PickOp(Operation):
     def operand(self):
         return self.ast.operand
 
-ShlOp = SimpleBinaryOp
-ShrOp = SimpleBinaryOp # Welcome to Shropshire
-ShraOp = SimpleBinaryOp
+ShlOp = BinaryOp
+ShrOp = BinaryOp # Welcome to Shropshire
+ShraOp = BinaryOp
 
-class SubOp(SimpleBinaryOp):
+class SubOp(BinaryOp):
     dwarfname = "minus"
 
 class SwapOp(ClassComparableOp, NameFromSourceMixin):
@@ -225,4 +225,4 @@ class SwapOp(ClassComparableOp, NameFromSourceMixin):
 class RotOp(ClassComparableOp, NameFromSourceMixin):
     pass
 
-XorOp = SimpleBinaryOp
+XorOp = BinaryOp
