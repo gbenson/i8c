@@ -68,7 +68,8 @@ class FuncType(RootType):
         return not (self != other)
 
     def __ne__(self, other):
-        return (self.paramtypes != other.paramtypes
+        return (not isinstance(other, FuncType)
+                or self.paramtypes != other.paramtypes
                 or self.returntypes != other.returntypes)
 
     def visit_paramtypes(self, paramtypes):
