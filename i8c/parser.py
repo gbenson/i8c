@@ -151,7 +151,7 @@ class TypeName(Identifier):
 class Type:
     @staticmethod
     def class_for(tokens):
-        if tokens[0].text == "function":
+        if tokens[0].text == "func":
             return FuncType
         else:
             return BasicType
@@ -218,18 +218,19 @@ class Function(TreeNode):
                     raise ParserError(tokens)
                 tokens.pop(0)
             self.add_child(ReturnTypes).pop_consume(tokens)
-            self.add_child(UserParams)
+            self.add_child(Parameters)
             return
 
         if tokens[0].text == "argument":
-            if not isinstance(self.latest_child, UserParams):
+            if not isinstance(self.latest_child, Parameters):
                 raise ParserError(tokens)
-        elif tokens[0].text in ("function", "symbol"):
+        elif tokens[0].text == "extern":
             if isinstance(self.latest_child, Operations):
                 raise ParserError(tokens)
-            if not isinstance(self.latest_child, AutoParams):
-                assert not isinstance(self.latest_child, Operations) # XXX?
-                self.add_child(AutoParams)
+            if not isinstance(self.latest_child, Externals):
+                if isinstance(self.latest_child, Operations):
+                    raise ParserError(tokens)
+                self.add_child(Externals)
         else:
             if not isinstance(self.latest_child, Operations):
                 self.add_child(Operations)
@@ -244,8 +245,8 @@ class Function(TreeNode):
         return self.one_child(ReturnTypes)
 
     @property
-    def parameters(self):
-        return self.some_children((UserParams, AutoParams))
+    def entry_stack(self):
+        return self.some_children((Parameters, Externals))
 
     @property
     def operations(self):
@@ -280,12 +281,6 @@ class Provider(Identifier):
 class ShortName(Identifier):
     pass
 
-class UserParams(TreeNode):
-    def consume(self, tokens):
-        if not self.tokens:
-            self.tokens = tokens
-        self.add_child(Parameter).consume(tokens)
-
 class TypeAndName(TreeNode):
     def consume(self, tokens, allow_fullname):
         self.add_child(Type.class_for(tokens)).pop_consume(tokens)
@@ -317,24 +312,33 @@ class FuncRef(TypeAndName):
         if self.tokens:
             raise ParserError(tokens)
         self.tokens = tokens
-        TypeAndName.consume(self, copy.copy(tokens), True)
+        TypeAndName.consume(self, tokens[1:], True)
 
-class SymbolRef(TypeAndName):
+class SymRef(TypeAndName):
     def consume(self, tokens):
-        if self.tokens:
+        if self.tokens or len(tokens) != 3:
             raise ParserError(tokens)
         self.tokens = tokens
-        TypeAndName.consume(
-            self,
-            [synthetic_token(tokens[0], "ptr")] + tokens[1:],
-            True)
+        TypeAndName.consume(self, tokens[1:], False)
 
-class AutoParams(TreeNode):
-    CLASSES = {"function": FuncRef,
-               "symbol": SymbolRef}
+class Parameters(TreeNode):
+    def consume(self, tokens):
+        if not self.tokens:
+            self.tokens = tokens
+        self.add_child(Parameter).consume(tokens)
+
+class Externals(TreeNode):
+    CLASSES = {"func": FuncRef, "ptr": SymRef}
 
     def consume(self, tokens):
-        self.add_child(self.CLASSES[tokens[0].text]).consume(tokens)
+        if not self.tokens:
+            self.tokens = tokens
+        if len(tokens) < 2:
+            raise ParserError(tokens)
+        klass = self.CLASSES.get(tokens[1].text, None)
+        if klass is None:
+            raise ParserError(tokens)
+        self.add_child(klass).consume(tokens)
 
 class Label(Identifier):
     def consume(self, tokens):
@@ -503,7 +507,7 @@ class Operations(TreeNode):
             klass = Label
         else:
             klass = self.CLASSES.get(tokens[0].text, None)
-            if not klass:
+            if klass is None:
                 raise ParserError(tokens)
         self.add_child(klass).consume(tokens)
 

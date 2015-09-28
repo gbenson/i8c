@@ -222,21 +222,21 @@ class TypeAnnotator(object):
         for node in paramtypes.children:
             node.accept(self)
 
-    def visit_userparams(self, userparams):
-        for node in userparams.children:
+    def visit_parameters(self, parameters):
+        for node in parameters.children:
             node.accept(self)
 
     def visit_parameter(self, parameter):
         parameter.typename.accept(self)
 
-    def visit_autoparams(self, autoparams):
-        for node in autoparams.children:
+    def visit_externals(self, externals):
+        for node in externals.children:
             node.accept(self)
 
     def visit_funcref(self, funcref):
         funcref.typename.accept(self)
 
-    def visit_symbolref(self, symref):
+    def visit_symref(self, symref):
         symref.typename.accept(self)
 
     def annotate_basictype(self, basictype):

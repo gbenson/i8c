@@ -71,7 +71,7 @@ class StringTable(object):
             emitter.emit_label(label)
             emitter.emit('.string "%s"' % text)
 
-class AutosTable(object):
+class ExternTable(object):
     def __init__(self, strings):
         self.strings = strings
         self.entries = []
@@ -91,13 +91,13 @@ class AutosTable(object):
                        "".join((t.encoding for t in type.paramtypes)),
                        "".join((t.encoding for t in type.returntypes)))
 
-    def visit_symbolref(self, symref):
+    def visit_symref(self, symref):
         self.add_entry(symref.name.value)
 
     def emit(self, emitter):
         for entry, index in zip(self.entries, xrange(len(self.entries))):
             prov, name, args, rets = entry
-            prefix = "auto %d " % index
+            prefix = "extern %d " % index
             emitter.emit_2byte(prov.offset, prefix + "provider offset")
             emitter.emit_2byte(name.offset, prefix + "name offset")
             if args is None:
@@ -211,18 +211,18 @@ class Emitter(object):
     def __visit_function(self, function):
         headerstart = self.new_label()
         codestart = self.new_label()
-        autosstart = self.new_label()
+        etablestart = self.new_label()
 
         strings = StringTable()
-        self.autos = AutosTable(strings)
+        self.externs = ExternTable(strings)
 
         # Populate the tables
         provider = strings.new(function.name.provider)
         name = strings.new(function.name.shortname)
-        self.userptypes = strings.new()
-        self.autoptypes = strings.new()
+        self.paramtypes = strings.new()
+        self.externtypes = strings.new()
         self.returntypes = strings.new()
-        for node in function.parameters:
+        for node in function.entry_stack:
             node.accept(self)
         function.returntypes.accept(self)
         strings.layout_table(self.new_label)
@@ -234,52 +234,52 @@ class Emitter(object):
         # Emit the Infinity function header
         self.emit_label(headerstart)
         self.emit_2byte(codestart - headerstart, "header size")
-        self.emit_2byte(autosstart - codestart, "code size")
-        self.emit_2byte(strings.start_label - autosstart, "autos size")
+        self.emit_2byte(etablestart - codestart, "code size")
+        self.emit_2byte(strings.start_label - etablestart, "externs size")
         self.emit_2byte(provider.offset, "provider offset")
         self.emit_2byte(name.offset, "name offset")
-        self.emit_2byte(self.userptypes.offset, "param types offset")
+        self.emit_2byte(self.paramtypes.offset, "param types offset")
         self.emit_2byte(self.returntypes.offset, "return types offset")
-        self.emit_2byte(self.autoptypes.offset, "autos types offset")
+        self.emit_2byte(self.externtypes.offset, "externs types offset")
         self.emit_2byte(function.max_stack, "max stack")
 
         # Emit the code
         self.emit_label(codestart)
         function.ops.accept(self)
 
-        # Emit the automatic parameter slots
-        self.emit_label(autosstart)
-        self.autos.emit(self)
+        # Emit the extern table
+        self.emit_label(etablestart)
+        self.externs.emit(self)
 
         # Emit the string table
         strings.emit(self)
 
-    # Populate the string and automatic parameter tables
+    # Populate the string and extern tables
 
-    def visit_userparams(self, userparams):
-        self.__visit_parameters(userparams)
+    def visit_parameters(self, parameters):
+        self.__visit_parameters(parameters)
 
-    def visit_autoparams(self, autoparams):
-        self.__visit_parameters(autoparams)
+    def visit_externals(self, externals):
+        self.__visit_parameters(externals)
 
     def __visit_parameters(self, parameters):
         for node in parameters.children:
             node.accept(self)
 
     def visit_parameter(self, param):
-        self.userptypes.append(param.typename.type.encoding)
+        self.paramtypes.append(param.typename.type.encoding)
 
     def visit_returntypes(self, returntypes):
         for node in returntypes.children:
             self.returntypes.append(node.type.encoding)
 
     def visit_funcref(self, funcref):
-        self.autoptypes.append("f")
-        funcref.accept(self.autos)
+        self.externtypes.append("f")
+        funcref.accept(self.externs)
 
-    def visit_symbolref(self, symref):
-        self.autoptypes.append("s")
-        symref.accept(self.autos)
+    def visit_symref(self, symref):
+        self.externtypes.append("s")
+        symref.accept(self.externs)
 
     # Emit the bytecode
 

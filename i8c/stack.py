@@ -129,7 +129,7 @@ class StackWalker(object):
     def visit_function(self, function):
         # Build the entry stack
         self.entry_stack = Stack()
-        for node in function.parameters:
+        for node in function.entry_stack:
             node.accept(self)
         self.entry_stack.make_immutable()
         # Build the return types
@@ -143,26 +143,26 @@ class StackWalker(object):
 
     # Build the entry stack
 
-    def visit_userparams(self, userparams):
-        self.__visit_parameters(userparams)
+    def visit_parameters(self, parameters):
+        self.__visit_entry_slots(parameters)
 
     def visit_parameter(self, param):
-        self.__visit_parameter(param)
+        self.__visit_entry_slot(param)
 
-    def visit_autoparams(self, autoparams):
-        self.__visit_parameters(autoparams)
+    def visit_externals(self, externals):
+        self.__visit_entry_slots(externals)
 
     def visit_funcref(self, funcref):
-        self.__visit_parameter(funcref)
+        self.__visit_entry_slot(funcref)
 
-    def visit_symbolref(self, symref):
-        self.__visit_parameter(symref)
+    def visit_symref(self, symref):
+        self.__visit_entry_slot(symref)
 
-    def __visit_parameters(self, parameters):
+    def __visit_entry_slots(self, parameters):
         for node in parameters.children:
             node.accept(self)
 
-    def __visit_parameter(self, param):
+    def __visit_entry_slot(self, param):
         self.entry_stack.push(Value.from_ast_parameter(param))
 
     # Build the return types
@@ -335,8 +335,8 @@ class StackWalker(object):
 
             # No slot exists with this shortname, so this isn't a user
             # argument or a named slot.  Try a fullname lookup with
-            # the function's provider to catch unqualified automatic
-            # arguments.
+            # the function's provider to catch function references
+            # with unqualified names.
             name =  name.with_provider(self.function_provider)
             try:
                 self.__pick_index = self.stack.index_of(name)

@@ -42,27 +42,27 @@ class NameAnnotator(object):
         function.name.accept(self)
         self.ensure_unreserved(function)
         self.function_provider = function.name.value.provider
-        for node in function.parameters:
+        for node in function.entry_stack:
             node.accept(self)
         function.operations.accept(self)
 
-    def visit_userparams(self, userparams):
+    def visit_parameters(self, parameters):
         self.default_provider = None
-        for node in userparams.children:
+        for node in parameters.children:
             node.accept(self)
 
     def visit_parameter(self, parameter):
         parameter.name.accept(self)
 
-    def visit_autoparams(self, autoparams):
+    def visit_externals(self, externals):
         self.default_provider = self.function_provider
-        for node in autoparams.children:
+        for node in externals.children:
             node.accept(self)
 
     def visit_funcref(self, funcref):
         funcref.name.accept(self)
 
-    def visit_symbolref(self, symref):
+    def visit_symref(self, symref):
         symref.name.accept(self)
         self.ensure_unreserved(symref)
 
