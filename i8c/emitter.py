@@ -314,6 +314,8 @@ class Emitter(object):
         self.emit_2byte(target - source)
         self.emit_label(source)
 
+    visit_addop = emit_simple_op
+    visit_binaryop = emit_simple_op
     visit_branchop = emit_branch_op
     visit_callop = emit_simple_op
     visit_compareop = emit_simple_op
@@ -395,5 +397,6 @@ class Emitter(object):
     def visit_stopop(self, op):
         pass
 
+    visit_subop = emit_simple_op
     visit_swapop = emit_simple_op
     visit_unaryop = emit_simple_op
