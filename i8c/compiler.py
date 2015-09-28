@@ -22,6 +22,7 @@ def compile(readline, write):
     tree.accept(serializer.Serializer())
     tree.accept(optimizer.StreamOptimizer())
     tree.accept(emitter.Emitter(write))
+    return tree
 
 class CommandLine(object):
     def __init__(self, args):

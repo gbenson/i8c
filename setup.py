@@ -12,4 +12,6 @@ setup(
     author_email="gbenson@redhat.com",
     url="https://github.com/gbenson/i8c",
     packages=["i8c"],
-    entry_points={"console_scripts": ["i8c = i8c:run_compiler"]})
+    entry_points={"console_scripts": ["i8c = i8c:run_compiler"]},
+    tests_require=["nose"],
+    test_suite="nose.collector")
