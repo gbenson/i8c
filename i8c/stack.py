@@ -364,6 +364,15 @@ class StackWalker(object):
         self.stack.push(c)
         self.stack.push(b)
 
+    # abs, neg, not
+    def visit_unaryop(self, op):
+        # Check the types before mutating the stack
+        # so any error messages show the whole setup
+        if self.stack[0].basetype is not types.INTTYPE:
+            raise StackError(op, self.stack, "wrong type in stack[0]")
+        a = self.stack.pop()
+        self.stack.push(Value.computed(a.type))
+
     def visit_swapop(self, op):
         a = self.stack.pop()
         b = self.stack.pop()
