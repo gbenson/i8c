@@ -117,32 +117,28 @@ class Boolean(BuiltinConstant):
 
 class TopLevel(TreeNode):
     def consume(self, tokens):
-        if tokens[0].text == "define":
-            if len(tokens) < 2:
-                raise ParserError(tokens)
-            if tokens[1].text == "type":
-                self.add_child(TypeDef)
-            else:
-                self.add_child(Function)
+        klass = self.CLASSES.get(tokens[0].text, None)
+        if klass is not None:
+            self.add_child(klass)
         elif not self.children:
             raise ParserError(tokens)
         self.latest_child.consume(tokens)
 
     @property
     def typedefs(self):
-        return self.some_children(TypeDef)
+        return self.some_children(Typedef)
 
     @property
     def functions(self):
         return self.some_children(Function)
 
-class TypeDef(TreeNode):
+class Typedef(TreeNode):
     def consume(self, tokens):
-        if self.tokens or len(tokens) < 4:
+        if self.tokens or len(tokens) < 3:
             raise ParserError(tokens)
         self.tokens = tokens
-        self.add_child(TypeName).consume([tokens[2]])
-        tokens = tokens[3:]
+        self.add_child(TypeName).consume([tokens[-1]])
+        tokens = tokens[1:-1]
         self.add_child(Type.class_for(tokens)).pop_consume(tokens)
 
 class TypeName(Identifier):
@@ -251,6 +247,8 @@ class Function(TreeNode):
     @property
     def operations(self):
         return self.one_child(Operations)
+
+TopLevel.CLASSES = {"define": Function, "typedef": Typedef}
 
 class FullName(TreeNode):
     def consume(self, tokens):
