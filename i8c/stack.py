@@ -190,6 +190,9 @@ class StackWalker(object):
             block.entry_stacks[from_block] = new_entry_stack
         else:
             # XXX return if nothing changed
+            # XXX the below is a temporary hack
+            if old_entry_stack is new_entry_stack:
+                return
             raise NotImplementedError
         if len(block.entry_stacks) != 1:
             raise NotImplementedError
