@@ -396,3 +396,4 @@ class Emitter(object):
         pass
 
     visit_swapop = emit_simple_op
+    visit_unaryop = emit_simple_op
