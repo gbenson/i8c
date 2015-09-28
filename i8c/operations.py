@@ -188,7 +188,7 @@ class DropOp(ClassComparableOp, NameFromSourceMixin):
 class DupOp(ClassComparableOp, NameFromSourceMixin):
     pass
 
-ModOp = SimpleUnaryOp
+ModOp = SimpleBinaryOp
 MulOp = SimpleBinaryOp
 
 class NameOp(Operation):
