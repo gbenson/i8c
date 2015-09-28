@@ -45,6 +45,10 @@ class Operation(visitors.Visitable):
     def is_add(self):
         return isinstance(self, AddOp)
 
+    @property
+    def is_noop(self):
+        return isinstance(self, NoOp)
+
     def __eq__(self, other):
         return not (self != other)
 
@@ -201,6 +205,10 @@ class NameOp(Operation):
         return self.ast.slot.value
 
 NegOp = UnaryOp
+
+class NoOp(Operation):
+    pass
+
 NotOp = UnaryOp
 OrOp = BinaryOp
 

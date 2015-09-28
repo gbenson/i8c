@@ -141,6 +141,8 @@ class BlockCreator(object):
                 else:
                     label = self.new_synthetic_label(next_pc)
                 op.fallthrough = label
+            if block.first_op.is_noop:
+                block.ops.pop(0)
 
     @property
     def current_block(self):
@@ -170,6 +172,7 @@ class BlockCreator(object):
             raise BlockCreatorError(label, "duplicate label `%s'" % name)
         self.labels[name] = self.pc
         self.drop_current_block()
+        self.add_op(NoOp(label))
 
     # Operations
 
