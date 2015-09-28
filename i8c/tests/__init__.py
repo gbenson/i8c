@@ -18,8 +18,8 @@ class Reader(stringio.StringIO):
         return line
 
 class Output(object):
-    def __init__(self, test_id, asm):
-        self.__set_fileprefix(test_id)
+    def __init__(self, test_id, index, asm):
+        self.__set_fileprefix(test_id, index)
         self.asm = asm
         asmfile = self.fileprefix + ".S"
         open(asmfile, "w").write(asm)
@@ -27,7 +27,7 @@ class Output(object):
         subprocess.check_call(["gcc", "-c", asmfile, "-o", objfile])
         self.__extract_note(objfile)
 
-    def __set_fileprefix(self, test_id):
+    def __set_fileprefix(self, test_id, index):
         test_id = test_id.split(".")
         # Remove the common prefix
         for expect in "i8c", "tests":
@@ -35,7 +35,9 @@ class Output(object):
             assert actual == expect
         # Remove the name of the class
         test_id.pop(-2)
-        self.fileprefix = os.path.join("tests.out", *test_id)
+        # Build the result
+        index = "_%04d" % index
+        self.fileprefix = os.path.join("tests.out", *test_id) + index
         # Ensure the directory we'll write to exists
         dir = os.path.dirname(self.fileprefix)
         if not os.path.exists(dir):
@@ -67,8 +69,13 @@ class Output(object):
                 for part in self.asm.split("\t.byte DW_OP_")[1:]]
 
 class TestCase(unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        unittest.TestCase.__init__(self, *args, **kwargs)
+        self.compilecount = 0
+
     def compile(self, input):
+        self.compilecount += 1
         input = Reader('# 1 "<testcase>"\n' + input)
         output = stringio.StringIO()
         tree = compiler.compile(input.readline, output.write)
-        return tree, Output(self.id(), output.getvalue())
+        return tree, Output(self.id(), self.compilecount, output.getvalue())
