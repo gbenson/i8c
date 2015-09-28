@@ -73,14 +73,15 @@ class BasicBlock(visitors.Visitable):
     def __str__(self):
         result = "%s (%s)\n" % (self.name, self.fileline)
         result += "\n\t".join(map(str, self.ops))
-        result += "\n    "
-        if len(self.exits) == 0:
-            result += "no exits"
-        elif len(self.exits) == 1:
-            result += "next block = #%d" % self.exits[0].index
-        else:
-            result += "exits = %s" % ", ".join(
-                ("#%d" % block.index for block in self.exits))
+        if hasattr(self, "exits"):
+            result += "\n    "
+            if len(self.exits) == 0:
+                result += "no exits"
+            elif len(self.exits) == 1:
+                result += "next block = #%d" % self.exits[0].index
+            else:
+                result += "exits = %s" % ", ".join(
+                    ("#%d" % block.index for block in self.exits))
         return result
 
 class BlockCreator(object):
