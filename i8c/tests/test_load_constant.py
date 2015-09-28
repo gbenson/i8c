@@ -1,4 +1,5 @@
 from i8c.tests import TestCase
+from i8c.dwarf2 import DW_OP_consts, DW_OP_constu
 from i8c import parser
 from i8c import types
 
@@ -74,6 +75,7 @@ class TestLoadConstantOutput(TestCase):
         """Check that the correct bytecodes are emitted.
         """
         tree, output = self.compile(OUTPUT_TEST)
+        # Check the assembler contains the expected operations
         self.assertEqual(["lit0", "lit31",
                           "const1u", "const1u",
                           "const2u", "const2u",
@@ -89,3 +91,45 @@ class TestLoadConstantOutput(TestCase):
                           "consts", "consts",
                           "const8s", "const8s",
                           "consts"], output.operations)
+        # Check the note contains the expected leb128 constants
+        for value, expected in ((65535, False),
+                                (65536, True),
+                                (2097151, True),
+                                (2097152, False),
+                                (4294967295, False),
+                                (4294967296, True),
+                                (562949953421311, True),
+                                (562949953421312, False),
+                                (18446744073709551615, False),
+                                (18446744073709551616, True),
+                                (-32768, False),
+                                (-32769, True),
+                                (-1048576, True),
+                                (-1048577, False),
+                                (-2147483648, False),
+                                (-2147483649, True),
+                                (-281474976710656, True),
+                                (-281474976710657, False),
+                                (-9223372036854775808, False),
+                                (-9223372036854775809, True)):
+            actual = output.note.find(chr(value >= 0
+                                          and DW_OP_constu
+                                          or DW_OP_consts)
+                                      + self.leb128encode(value)) >= 0
+            self.assertEqual(expected, actual, repr(value))
+
+    def leb128encode(self, value):
+        return "".join(map(chr, self.__leb128encode(value)))
+
+    def __leb128encode(self, value):
+        empty = value < 0 and -1 or 0
+        if value == empty:
+            result = [value]
+        else:
+            result = []
+            while value != empty:
+                result.append(value & 0x7f)
+                value >>= 7
+        for index in range(len(result) - 1):
+            result[index] |= 0x80
+        return result
