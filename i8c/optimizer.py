@@ -65,6 +65,48 @@ class BlockOptimizer(Optimizer):
         return constant.value
 
     def try_eliminate_cmp_bra_const_const(self, block):
+        """Optimize cases where the blocks following a conditional
+        branch load the constants that the comparison pushed to the
+        stack.
+
+        This is relevant for libpthread notes.  All the libthread_db
+        functions that the libpthread notes replace return a td_err_e
+        error code defined as:
+
+          typedef enum {
+            TD_OK,  /* No error.  */
+            TD_ERR, /* General error.  */
+            ...     /* Specific errors.  */
+          } td_err_e;
+
+        Some libthread_db functions call proc_service functions which
+        return a similar ps_err_e error code:
+
+          typedef enum {
+            PS_OK,  /* No error.  */
+            PS_ERR, /* General error.  */
+            ...     /* Specific errors.  */
+          } ps_err_e;
+
+        Note that TD_OK == PS_OK == 0 and TD_ERR == PS_ERR == 1.
+
+        This optimizer replaces code of the following pattern:
+
+            call        /* Some proc_service function.  */
+            load PS_OK  /* == 0 */
+            bne fail
+            load TD_OK  /* == 0 */
+            return
+          fail:
+            load TD_ERR /* == 1 */
+            return
+
+        With this:
+
+            call        /* Some proc_service function.  */
+            load PS_OK
+            ne
+        """
         # Does the block end with "comparison, branch"?
         if len(block.ops) < 2:
             return
