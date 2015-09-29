@@ -4,8 +4,19 @@ from i8c.lexer import synthetic_token
 from i8c import logger
 from i8c import visitors
 import copy
+from operator import eq as EXACTLY, ge as ATLEAST
 
 debug_print = logger.debug_printer_for(__name__)
+
+def raise_unless_len(tokens, cmp, count):
+    if cmp(len(tokens), count):
+        return
+    # Try to narrow down to an offending token
+    if cmp == EXACTLY and len(tokens) > count:
+        index = count
+    else:
+        index = -1
+    raise ParserError(tokens[index:])
 
 class TreeNode(visitors.Visitable):
     def __init__(self):
@@ -81,7 +92,8 @@ synthetic_node = SyntheticNode
 
 class Identifier(LeafNode):
     def consume(self, tokens):
-        if len(tokens) != 1 or not isinstance(tokens[0], lexer.WORD):
+        raise_unless_len(tokens, EXACTLY, 1)
+        if not isinstance(tokens[0], lexer.WORD):
             raise ParserError(tokens)
         LeafNode.consume(self, tokens)
 
@@ -91,8 +103,7 @@ class Identifier(LeafNode):
 
 class Constant(LeafNode):
     def consume(self, tokens):
-        if len(tokens) != 1:
-            raise ParserError(tokens)
+        raise_unless_len(tokens, EXACTLY, 1)
         LeafNode.consume(self, tokens)
 
 class Integer(Constant):
@@ -134,7 +145,8 @@ class TopLevel(TreeNode):
 
 class Typedef(TreeNode):
     def consume(self, tokens):
-        if self.tokens or len(tokens) < 3:
+        raise_unless_len(tokens, ATLEAST, 3)
+        if self.tokens:
             raise ParserError(tokens)
         self.tokens = tokens
         self.add_child(TypeName).consume([tokens[-1]])
@@ -204,8 +216,7 @@ class ParamTypes(TypeList):
 class Function(TreeNode):
     def consume(self, tokens):
         if not self.tokens:
-            if len(tokens) < 4:
-                raise ParserError(tokens)
+            raise_unless_len(tokens, ATLEAST, 4)
             self.tokens = tokens
             self.add_child(FullName).consume(tokens[1:4])
             tokens = tokens[4:]
@@ -252,7 +263,8 @@ TopLevel.CLASSES = {"define": Function, "typedef": Typedef}
 
 class FullName(TreeNode):
     def consume(self, tokens):
-        if (self.tokens or len(tokens) != 3
+        raise_unless_len(tokens, EXACTLY, 3)
+        if (self.tokens
             or not isinstance(tokens[1], lexer.DOUBLE_COLON)):
             raise ParserError(tokens)
         self.tokens = tokens
@@ -300,8 +312,9 @@ class TypeAndName(TreeNode):
 
 class Parameter(TypeAndName):
     def consume(self, tokens):
-        if self.tokens or len(tokens) < 3:
+        if self.tokens:
             raise ParserError(tokens)
+        raise_unless_len(tokens, ATLEAST, 3)
         self.tokens = tokens
         TypeAndName.consume(self, tokens[1:], False)
 
@@ -314,8 +327,9 @@ class FuncRef(TypeAndName):
 
 class SymRef(TypeAndName):
     def consume(self, tokens):
-        if self.tokens or len(tokens) != 3:
+        if self.tokens:
             raise ParserError(tokens)
+        raise_unless_len(tokens, EXACTLY, 3)
         self.tokens = tokens
         TypeAndName.consume(self, tokens[1:], False)
 
@@ -331,8 +345,7 @@ class Externals(TreeNode):
     def consume(self, tokens):
         if not self.tokens:
             self.tokens = tokens
-        if len(tokens) < 2:
-            raise ParserError(tokens)
+        raise_unless_len(tokens, ATLEAST, 2)
         klass = self.CLASSES.get(tokens[1].text, None)
         if klass is None:
             raise ParserError(tokens)
@@ -346,8 +359,9 @@ class Label(Identifier):
 
 class Operation:
     def consume(self, tokens):
-        if self.tokens or len(tokens) != 1 + self.num_args:
+        if self.tokens:
             raise ParserError(tokens)
+        raise_unless_len(tokens, EXACTLY, 1 + self.num_args)
         self.tokens = tokens
         if self.num_args > 0:
             self.add_children(*tokens[1:])
