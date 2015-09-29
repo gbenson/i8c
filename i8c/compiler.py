@@ -10,8 +10,15 @@ from i8c import stack
 from i8c import types
 from i8c.exceptions import I8CError
 from i8c.logger import loggers
+import pkg_resources
 import subprocess
 import sys
+
+def version():
+    try:
+        return pkg_resources.get_distribution("i8c").version
+    except:
+        return "UNKNOWN"
 
 def compile(readline, write):
     tree = parser.build_tree(lexer.generate_tokens(readline))
@@ -88,6 +95,9 @@ def setup_output(args):
     return process, process.stdin
 
 def main(args):
+    if args == ["--version"]:
+        print "i8c", version()
+        return
     args = CommandLine(args)
     cpp, infile = setup_input(args)
     asm, outfile = setup_output(args)
