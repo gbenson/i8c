@@ -4,7 +4,10 @@ import os
 import StringIO as stringio
 import struct
 import subprocess
-import unittest
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 class TestError(Exception):
     pass
