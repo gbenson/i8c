@@ -179,6 +179,7 @@ class Emitter(object):
         self.emit(".sleb128 " + str(value), comment)
 
     def emit_op(self, name, comment=None):
+        assert name != "addr" # See XXX UNWRITTEN DOCS.
         name = "DW_OP_" + name
         code = self.opcodes.pop(name, None)
         if code is not None:

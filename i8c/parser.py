@@ -492,12 +492,8 @@ class Operations(TreeNode):
         CLASSES["b" + op] = CondBranchOp
     del op
 
-    # Do not add an "addr" instruction for DW_OP_addr:
-    #  a) The only address we can know is NULL, which we can do
-    #     quite nicely with DW_OP_lit0.
-    #  b) It will cause the bytecode to differ on 32- and 64-bit
-    #     machines.  It currently doesn't, and that simplifies a
-    #     lot of things.
+    # Do not add an "addr" instruction for DW_OP_addr.
+    # See XXX UNWRITTEN DOCS.
     assert not CLASSES.has_key("addr")
 
     # Do not add a "bra" instruction, it gives no clue as to why
