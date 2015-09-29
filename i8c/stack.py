@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from i8c.exceptions import StackError
 from i8c import logger
 from i8c import names
@@ -42,10 +43,10 @@ class Stack(object):
             if value is self.slots[result]:
                 continue
             raise StackError(self.current_op, self,
-                             "multiple slots match `%s'" % name)
+                             u"multiple slots match ‘%s’" % name)
         if result is None:
             raise StackError(self.current_op, self,
-                             "no slot matches `%s'" % name)
+                             u"no slot matches ‘%s’" % name)
         return result
 
     def make_immutable(self):
@@ -278,11 +279,11 @@ class StackWalker(object):
             if not type.is_computable:
                 raise StackError(
                     op, self.stack,
-                    "cannot compare `%s' values" % type.name)
+                    u"cannot compare ‘%s’ values" % type.name)
         if typea.basetype is not typeb.basetype:
             raise StackError(
                 op, self.stack,
-                "cannot compare `%s' and `%s' values" % (
+                u"cannot compare ‘%s’ and ‘%s’ values" % (
                     typea.name, typeb.name))
         # Now pop everything and push the result
         self.stack.pop()
@@ -297,14 +298,14 @@ class StackWalker(object):
         if not rtype.is_computable:
             raise StackError(
                 op, self.stack,
-                "cannot create `%s' values" % rtype.name)
+                u"cannot create ‘%s’ values" % rtype.name)
         # Check the types before mutating the stack
         # so any error messages show the whole setup
         type = self.stack[0].type
         if not type.basetype is types.PTRTYPE:
             raise StackError(
                 op, self.stack,
-                "cannot dereference `%s' values" % type.name)
+                u"cannot dereference ‘%s’ values" % type.name)
         self.stack.pop()
         self.stack.push(Value.computed(rtype))
 

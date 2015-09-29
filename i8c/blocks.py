@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from i8c.exceptions import BlockCreatorError
 from i8c.operations import *
 from i8c import visitors
@@ -68,7 +69,7 @@ class BasicBlock(visitors.Visitable):
                           for label in self.last_op.exit_labels]
         except KeyError, e:
             raise BlockCreatorError(self.last_op.ast,
-                               "undefined label `%s'" % e.args[0])
+                               u"undefined label ‘%s’" % e.args[0])
 
     def __str__(self):
         result = "%s (%s)\n" % (self.name, self.fileline)
@@ -170,7 +171,7 @@ class BlockCreator(object):
     def visit_label(self, label):
         name = label.name
         if self.labels.has_key(name):
-            raise BlockCreatorError(label, "duplicate label `%s'" % name)
+            raise BlockCreatorError(label, u"duplicate label ‘%s’" % name)
         self.labels[name] = self.pc
         self.drop_current_block()
         self.add_op(NoOp(label))

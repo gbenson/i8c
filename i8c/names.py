@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from i8c.exceptions import NameAnnotatorError
 
 class Name(object):
@@ -88,4 +89,4 @@ class NameAnnotator(object):
         provider = item.name.value.provider
         if provider.startswith("i8"):
             raise NameAnnotatorError(
-                item.name, "provider `%s' is reserved" % provider)
+                item.name, u"provider ‘%s’ is reserved" % provider)

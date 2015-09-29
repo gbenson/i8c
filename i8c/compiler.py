@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from i8c import blocks
 from i8c import emitter
 from i8c import lexer
@@ -37,7 +38,7 @@ class CommandLine(object):
             arg = args.pop(0)
             if arg == "-o":
                 if not args:
-                    raise I8CError("missing filename after `-o'")
+                    raise I8CError(u"missing filename after ‘-o’")
                 # GCC doesn't complain about multiple "-o"
                 # options, it just uses the last one it saw.
                 self.asm_args.append(arg)
@@ -60,7 +61,7 @@ class CommandLine(object):
                     for faculty in arg[8:].split(","):
                         self.__enable_logging(faculty)
                 else:
-                    raise I8CError("unrecognized option `%s'" % arg)
+                    raise I8CError(u"unrecognized option ‘%s’" % arg)
             else:
                 self.cpp_args.append(arg)
                 self.asm_args.append(arg)

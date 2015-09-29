@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 class I8CError(Exception):
     """Base class for all errors.
     """
@@ -21,7 +23,7 @@ class ParserError(LexedError):
     """
     def __init__(self, tokens):
         token = tokens[0]
-        LexedError.__init__(self, token, "unexpected `%s'" % token.text)
+        LexedError.__init__(self, token, u"unexpected ‘%s’" % token.text)
 
 class ParsedError(LexedError):
     """An error occurred while processing the AST.

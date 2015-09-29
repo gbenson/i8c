@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from i8c.exceptions import LexerError
 import re
 
@@ -64,7 +65,7 @@ def generate_tokens(readline):
             match = TOKEN.match(line)
             if match is None:
                 raise LexerError(filename, linenumber,
-                                 "invalid syntax: `%s'" % line.rstrip())
+                                 u"invalid syntax: ‘%s’" % line.rstrip())
             tokentext = match.group(0)
             assert len(tokentext) > 0
             assert line.startswith(tokentext)

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from i8c.exceptions import TypeAnnotatorError
 
 class Type(object):
@@ -145,7 +146,7 @@ class TypeAnnotator(object):
     def add_type(self, type, node=None):
         if self.types.has_key(type.name):
             raise TypeAnnotatorError(
-                node, "type `%s' already exists" % type.name)
+                node, u"type ‘%s’ already exists" % type.name)
         self.types[type.name] = type
 
     def get_type(self, basictype):
@@ -153,7 +154,7 @@ class TypeAnnotator(object):
         result = self.types.get(name, None)
         if result is None:
             raise TypeAnnotatorError(
-                basictype, "undefined type `%s'" % name)
+                basictype, u"undefined type ‘%s’" % name)
         return result
 
     def visit_basictype(self, basictype):
