@@ -128,10 +128,12 @@ class SyntheticReturn(ReturnOp):
 class UnaryOp(ClassComparableOp, NameFromSourceMixin):
     """An operator with no operands that pops one value and pushes one
     back."""
+    arity, verb = 1, "operate on"
 
 class BinaryOp(ClassComparableOp, NameFromSourceMixin):
     """An operator with no operands that pops two values and pushes
     one back."""
+    arity, verb = 2, "operate on"
 
 # XXX
 
@@ -153,6 +155,8 @@ class CallOp(ClassComparableOp):
     dwarfname = "GNU_i8call"
 
 class CompareOp(Operation):
+    arity, verb = 2, "compare"
+
     REVERSE = {"lt": "ge", "le": "gt", "eq": "ne",
                "ne": "eq", "ge": "lt", "gt": "le"}
 
@@ -180,6 +184,8 @@ class ConstOp(Operation):
         return self.ast.operand.value
 
 class DerefOp(Operation):
+    arity, verb = 1, "dereference to"
+
     @property
     def type(self):
         return self.ast.operand.type

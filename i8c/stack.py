@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from i8c.exceptions import StackError
+from i8c.exceptions import ParsedError, StackError, StackTypeError
 from i8c import logger
 from i8c import names
 from i8c import types
@@ -230,14 +230,14 @@ class StackWalker(object):
         basetypes = [type.basetype for type in fulltypes]
         # At least one of the operands must be INTTYPE
         if types.INTTYPE not in basetypes:
-            raise AddTypeError(op, self.stack)
+            raise StackTypeError(op, self.stack)
         if types.PTRTYPE in basetypes:
             rtype = types.PTRTYPE
         else:
             rtype = types.lowest_common_ancestor(*fulltypes)
             if rtype is None:
                 # One of the types was not INTTYPE
-                raise AddTypeError(op, self.stack)
+                raise StackTypeError(op, self.stack)
         # Now pop everything and push the result
         self.stack.pop()
         self.stack.pop()
@@ -277,14 +277,9 @@ class StackWalker(object):
         typeb = self.stack[1].type
         for type in typea, typeb:
             if not type.is_computable:
-                raise StackError(
-                    op, self.stack,
-                    u"cannot compare ‘%s’ values" % type.name)
+                raise StackTypeError(op, self.stack)
         if typea.basetype is not typeb.basetype:
-            raise StackError(
-                op, self.stack,
-                u"cannot compare ‘%s’ and ‘%s’ values" % (
-                    typea.name, typeb.name))
+            raise StackTypeError(op, self.stack)
         # Now pop everything and push the result
         self.stack.pop()
         self.stack.pop()
@@ -296,16 +291,13 @@ class StackWalker(object):
     def visit_derefop(self, op):
         rtype = op.type
         if not rtype.is_computable:
-            raise StackError(
-                op, self.stack,
-                u"cannot create ‘%s’ values" % rtype.name)
+            raise ParsedError(
+                op, u"can't dereference to ‘%s’" % rtype.name)
         # Check the types before mutating the stack
         # so any error messages show the whole setup
         type = self.stack[0].type
         if not type.basetype is types.PTRTYPE:
-            raise StackError(
-                op, self.stack,
-                u"cannot dereference ‘%s’ values" % type.name)
+            raise StackTypeError(op, self.stack)
         self.stack.pop()
         self.stack.push(Value.computed(rtype))
 
@@ -373,7 +365,7 @@ class StackWalker(object):
         # Check the types before mutating the stack
         # so any error messages show the whole setup
         if self.stack[0].basetype is not types.INTTYPE:
-            raise StackError(op, self.stack, "wrong type in stack[0]")
+            raise StackTypeError(op, self.stack)
         a = self.stack.pop()
         self.stack.push(Value.computed(a.type))
 

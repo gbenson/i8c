@@ -49,3 +49,16 @@ class StackError(ParsedError):
         if stack is not None:
             msg += ":\n" + str(stack)
         ParsedError.__init__(self, cause, msg)
+
+class StackTypeError(StackError):
+    """The stack contains incorrect types for the requested operation.
+    """
+    def __init__(self, cause, stack):
+        # Sorry translators...
+        types = [u"‘%s’" % stack[index].type.name
+                 for index in range(cause.arity - 1, -1, -1)]
+        if len(types) > 1:
+            types[:-1] = [", ".join(types[:-1])]
+        types = " and ".join(types)
+        msg = "can't %s %s" % (cause.verb, types)
+        StackError.__init__(self, cause, stack, msg)
