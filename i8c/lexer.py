@@ -58,6 +58,7 @@ def generate_tokens(readline):
         line = readline()
         if not line:
             break
+        line = line.decode("utf-8")
         if line.startswith("#"):
             filename, linenumber = parse_line_control(line)
             continue
