@@ -7,4 +7,4 @@ def run_compiler():
         compiler.main(sys.argv[1:])
     except exceptions.I8CError as e:
         print >>sys.stderr, unicode(e).encode("utf-8")
-        sys.exit(1)
+        return 1
