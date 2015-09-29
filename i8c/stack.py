@@ -248,6 +248,20 @@ class StackWalker(object):
         self.stack.pop()
         self.__leave_block()
 
+    # and, div, mod, mul, or, shl, shr, shra, xor
+    def visit_binaryop(self, op):
+        # Check the types before mutating the stack
+        # so any error messages show the whole setup
+        fulltypes = [self.stack[index].type for index in (0, 1)]
+        basetypes = [type.basetype for type in fulltypes]
+        if basetypes != [types.INTTYPE, types.INTTYPE]:
+            raise StackTypeError(op, self.stack)
+        rtype = types.lowest_common_ancestor(*fulltypes)
+        assert rtype is not None
+        self.stack.pop()
+        self.stack.pop()
+        self.stack.push(Value.computed(rtype))
+
     def visit_callop(self, op):
         # Check the types before mutating the stack
         # so any error messages show the whole setup
@@ -341,6 +355,22 @@ class StackWalker(object):
                 self.__pick_index = self.stack.index_of(name)
             except StackError, second_exception:
                 raise first_exception
+
+    def visit_subop(self, op):
+        # Check the types before mutating the stack
+        # so any error messages show the whole setup
+        fulltypes = [self.stack[index].type for index in (0, 1)]
+        basetypes = [type.basetype for type in fulltypes]
+        if basetypes == [types.INTTYPE, types.PTRTYPE]:
+            rtype = types.PTRTYPE
+        elif basetypes == [types.INTTYPE, types.INTTYPE]:
+            rtype = types.lowest_common_ancestor(*fulltypes)
+            assert rtype is not None
+        else:
+            raise StackTypeError(op, self.stack)
+        self.stack.pop()
+        self.stack.pop()
+        self.stack.push(Value.computed(rtype))
 
     def visit_returnop(self, op):
         num_returns = len(self.returntypes)
