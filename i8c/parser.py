@@ -554,7 +554,13 @@ def build_tree(tokens):
                 terminators.append(lexer.CPAREN)
             if not isinstance(token, lexer.NEWLINE):
                 group.append(token)
-        assert not group
+        if group:
+            if terminators == [lexer.NEWLINE]:
+                # No newline at end of input
+                tree.consume(group)
+            else:
+                # Unclosed parenthesis?
+                raise NotImplementedError
         return tree
     finally:
         debug_print("%s\n\n" % tree)
