@@ -1,6 +1,5 @@
 from i8c.exceptions import ParserError, ParsedError
 from i8c import lexer
-from i8c.lexer import synthetic_token
 from i8c import logger
 from i8c import visitors
 import copy
@@ -85,10 +84,9 @@ class SyntheticNode(LeafNode):
     """A node that the block creator created.
     """
     def __init__(self, template, text):
-        self.tokens = [synthetic_token(template.tokens[0],
-                                       "synthetic " + text)]
-
-synthetic_node = SyntheticNode
+        assert isinstance(template, TreeNode)
+        self.tokens = [lexer.SyntheticToken(template.tokens[0],
+                                            "synthetic " + text)]
 
 class Identifier(LeafNode):
     def consume(self, tokens):

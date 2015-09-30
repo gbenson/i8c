@@ -23,9 +23,8 @@ class SyntheticToken(Token):
     """A token that the parser inserted.
     """
     def __init__(self, template, text):
+        assert isinstance(template, Token)
         Token.__init__(self, template.filename, template.linenumber, text)
-
-synthetic_token = SyntheticToken
 
 class NEWLINE(Token): pass
 class COMMA(Token): pass

@@ -1,4 +1,4 @@
-from i8c.parser import synthetic_node
+from i8c import parser
 from i8c import visitors
 
 class Operation(visitors.Visitable):
@@ -111,7 +111,9 @@ class ReturnOp(TerminalOp):
 
 class SyntheticGoto(GotoOp):
     def __init__(self, template, target=None):
-        GotoOp.__init__(self, synthetic_node(template.ast, "goto"))
+        assert isinstance(template, Operation)
+        GotoOp.__init__(self, parser.SyntheticNode(template.ast,
+                                                   "goto"))
         if target is not None:
             self.target = target
 
@@ -121,7 +123,9 @@ class SyntheticGoto(GotoOp):
 
 class SyntheticReturn(ReturnOp):
     def __init__(self, template):
-        ReturnOp.__init__(self, synthetic_node(template.ast, "return"))
+        assert isinstance(template, Operation)
+        ReturnOp.__init__(self, parser.SyntheticNode(template.ast,
+                                                     "return"))
 
 # XXX
 
