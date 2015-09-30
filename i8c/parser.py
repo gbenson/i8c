@@ -224,40 +224,31 @@ class Function(TreeNode):
                 if tokens[0].text != "returns":
                     raise ParserError(tokens)
                 tokens.pop(0)
-            self.add_child(ReturnTypes).pop_consume(tokens)
-            self.add_child(Parameters)
+            self.returntypes = self.add_child(ReturnTypes)
+            self.returntypes.pop_consume(tokens)
+            self.parameters = self.add_child(Parameters)
+            self.externals = self.add_child(Externals)
+            self.operations = self.add_child(Operations)
             return
 
         if tokens[0].text == "argument":
-            if not isinstance(self.latest_child, Parameters):
+            if self.externals.children or self.operations.children:
                 raise ParserError(tokens)
+            self.parameters.consume(tokens)
         elif tokens[0].text == "extern":
-            if isinstance(self.latest_child, Operations):
+            if self.operations.children:
                 raise ParserError(tokens)
-            if not isinstance(self.latest_child, Externals):
-                if isinstance(self.latest_child, Operations):
-                    raise ParserError(tokens)
-                self.add_child(Externals)
+            self.externals.consume(tokens)
         else:
-            if not isinstance(self.latest_child, Operations):
-                self.add_child(Operations)
-        self.latest_child.consume(tokens)
+            self.operations.consume(tokens)
 
     @property
     def name(self):
         return self.one_child(FullName)
 
     @property
-    def returntypes(self):
-        return self.one_child(ReturnTypes)
-
-    @property
     def entry_stack(self):
         return self.some_children((Parameters, Externals))
-
-    @property
-    def operations(self):
-        return self.one_child(Operations)
 
 TopLevel.CLASSES = {"define": Function, "typedef": Typedef}
 
