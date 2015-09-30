@@ -97,6 +97,7 @@ class BlockCreator(object):
         self.pc = 0
 
         function.operations.accept(self)
+        self.ensure_has_blocks(function)
         self.ensure_all_blocks_terminated()
 
         labels = {}
@@ -122,6 +123,11 @@ class BlockCreator(object):
         assert not self.labels.has_key(label)
         self.labels[label] = target
         return label
+
+    def ensure_has_blocks(self, function):
+        if self.blocks:
+            return
+        self.add_op(SyntheticReturn(Operation(function)))
 
     def ensure_all_blocks_terminated(self):
         blocks = self.blocks.items()
