@@ -30,6 +30,8 @@ class TestCompilerDriver(TestCase):
         self.assertFalse(os.path.exists(self.outfile))
         main(args)
         self.assertTrue(os.path.isfile(self.outfile))
+        junk = os.path.join(self.workdir, "-.o")
+        self.assertFalse(os.path.exists(junk))
 
     def test_do_nothing(self):
         """Check that -E -fpreprocessed is rejected."""
