@@ -6,6 +6,12 @@ from i8c.tests import TestCase
 class TestCommandLineProcessor(TestCase):
     """Tests for the command line processor."""
 
+    def setUp(self):
+        self.disable_loggers()
+
+    def tearDown(self):
+        self.disable_loggers()
+
     def __process_command(self, cmd):
         return CommandLine(cmd.split())
 
@@ -150,30 +156,23 @@ class TestCommandLineProcessor(TestCase):
 
     def test_debug(self):
         """Check that --debug works."""
-        try:
-            for logger in loggers.values():
-                self.assertFalse(logger.enabled)
+        args = self.__process_command("")
+        self.__check_empty(args)
+        for logger in loggers.values():
+            self.assertFalse(logger.enabled)
 
-            args = self.__process_command("")
-            self.__check_empty(args)
-            for logger in loggers.values():
-                self.assertFalse(logger.enabled)
-
-            args = self.__process_command("--debug=serializer")
-            self.__check_empty(args)
-            for name, logger in loggers.items():
-                if name == "serializer":
-                    self.assertTrue(logger.enabled)
-                else:
-                    self.assertFalse(logger.enabled)
-
-            args = self.__process_command("--debug")
-            self.__check_empty(args)
-            for logger in loggers.values():
+        args = self.__process_command("--debug=serializer")
+        self.__check_empty(args)
+        for name, logger in loggers.items():
+            if name == "serializer":
                 self.assertTrue(logger.enabled)
-        finally:
-            for logger in loggers.values():
-                logger.disable()
+            else:
+                self.assertFalse(logger.enabled)
+
+        args = self.__process_command("--debug")
+        self.__check_empty(args)
+        for logger in loggers.values():
+            self.assertTrue(logger.enabled)
 
     def test_include(self):
         """Check that -include works."""

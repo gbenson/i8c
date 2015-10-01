@@ -1,5 +1,6 @@
 from i8c import compiler
 from i8c import emitter
+from i8c.logger import loggers
 import os
 import StringIO as stringio
 import struct
@@ -82,3 +83,7 @@ class TestCase(unittest.TestCase):
         output = stringio.StringIO()
         tree = compiler.compile(input.readline, output.write)
         return tree, Output(self.id(), self.compilecount, output.getvalue())
+
+    def disable_loggers(self):
+        for logger in loggers.values():
+            logger.disable()
