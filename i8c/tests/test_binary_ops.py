@@ -27,7 +27,7 @@ class TestBinaryOperations(TestCase):
         if self.__expect_success(op, type1, type2):
             tree, output = self.compile(source)
             op = {"add": "plus", "sub": "minus"}.get(op, op)
-            self.assertEqual([op], output.operations)
+            self.assertEqual([op], output.opnames)
         else:
             self.assertRaises(StackError, self.compile, source)
 

@@ -1,5 +1,6 @@
 from i8c import logger
 from i8c import dwarf2
+import copy
 
 debug_print = logger.debug_printer_for(__name__)
 
@@ -124,13 +125,7 @@ class Emitter(object):
         self.write = write
         self.num_labels = 0
         self.__label = None
-        self.__init_opcodes()
-
-    def __init_opcodes(self):
-        self.opcodes = {}
-        for name in dir(dwarf2):
-            if name.startswith("DW_OP_"):
-                self.opcodes[name] = getattr(dwarf2, name)
+        self.opcodes = copy.copy(dwarf2.by_name)
 
     def new_label(self):
         self.num_labels += 1
@@ -184,9 +179,9 @@ class Emitter(object):
     def emit_op(self, name, comment=None):
         assert name != "addr" # See XXX UNWRITTEN DOCS.
         name = "DW_OP_" + name
-        code = self.opcodes.pop(name, None)
-        if code is not None:
-            self.emit("#define %s 0x%02x" % (name, code))
+        op = self.opcodes.pop(name, None)
+        if op is not None:
+            self.emit("#define %s 0x%02x" % (name, op.opcode))
         self.emit_byte(name, comment)
 
     def visit_toplevel(self, toplevel):

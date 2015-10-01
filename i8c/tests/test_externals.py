@@ -12,4 +12,4 @@ class TestExternals(TestCase):
     def test_externals(self):
         """Check that externals work."""
         tree, output = self.compile(SOURCE)
-        self.assertEqual(["GNU_i8call"], output.operations)
+        self.assertEqual(["GNU_i8call"], output.opnames)

@@ -38,6 +38,6 @@ class TestComparisons(TestCase):
     def __run_test(self, source, expect_success, expect_ops):
         if expect_success:
             tree, output = self.compile(source)
-            self.assertEqual(expect_ops, output.operations)
+            self.assertEqual(expect_ops, output.opnames)
         else:
             self.assertRaises(StackError, self.compile, source)

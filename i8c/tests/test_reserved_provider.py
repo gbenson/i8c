@@ -18,4 +18,4 @@ class TestReservedProvider(TestCase):
                 self.assertRaises(NameAnnotatorError, self.compile, source)
             else:
                 tree, output = self.compile(source)
-                self.assertEqual([], output.operations)
+                self.assertEqual([], output.opnames)

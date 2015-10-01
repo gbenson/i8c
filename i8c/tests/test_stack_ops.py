@@ -28,4 +28,4 @@ class TestStackOperations(TestCase):
                           "pick",   # pick 2
                           "over",
                           "swap",
-                          "rot"], output.operations)
+                          "rot"], output.opnames)

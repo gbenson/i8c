@@ -20,4 +20,4 @@ class TestOptimizeReverseBranchExits(TestCase):
         tree, output = self.compile(SOURCE)
         self.assertEqual(["lit1", "eq", "bra",
                           "lit2", "skip",
-                          "lit3"], output.operations)
+                          "lit3"], output.opnames)

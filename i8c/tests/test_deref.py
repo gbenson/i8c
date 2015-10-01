@@ -55,4 +55,4 @@ class TestDeref(TestCase):
                     expect_ops.extend(("dup", "rot", "shl", "swap", "shra"))
 
                 tree, output = self.compile(source)
-                self.assertEqual(expect_ops, output.operations)
+                self.assertEqual(expect_ops, output.opnames)

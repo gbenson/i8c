@@ -15,7 +15,7 @@ class TestUnaryOperations(TestCase):
         for type in ("int", "bool"):
             for op in self.OPERATIONS:
                 tree, output = self.compile(SOURCE % (type, op))
-                self.assertEqual([op], output.operations)
+                self.assertEqual([op], output.opnames)
 
     def test_nonint_arg(self):
         """Check unary operations with non-int arguments are rejected."""

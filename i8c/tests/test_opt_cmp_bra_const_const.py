@@ -58,4 +58,4 @@ class TestOptimizeCmpBraConstConst(TestCase):
                     tree, output = self.compile(source % ((op,) + values))
                     if is_reversed:
                         op = self.REVERSE[op]
-                    self.assertEqual([op] + extra_ops, output.operations)
+                    self.assertEqual([op] + extra_ops, output.opnames)
