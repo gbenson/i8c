@@ -47,6 +47,7 @@ class BlockOptimizer(Optimizer):
     def try_all_optimizations(self, block):
         self.try_eliminate_cmp_bra_const_const(block)
         self.try_eliminate_lit0_cmp_bra(block)
+        self.try_reverse_branch_exits(block)
         self.try_peephole(block, self.try_eliminate_identity_math, 2)
         self.try_peephole(block, self.try_use_plus_uconst, 2)
 
@@ -173,13 +174,36 @@ class BlockOptimizer(Optimizer):
 
         # Reverse the branch if necessary
         if block.ops[-2].dwarfname == "eq":
-            block.ops[-1].exits.reverse()
+            block.exits.reverse()
 
         # Remove the load and the comparison
         removed_op = block.ops.pop(-3)
         assert removed_op.is_load_constant
         removed_op = block.ops.pop(-2)
         assert removed_op.is_comparison
+
+    def try_reverse_branch_exits(self, block):
+        # Does the block end with "compare, branch"?
+        if len(block.ops) < 2:
+            return
+        if not block.ops[-1].is_branch:
+            return
+        if not block.ops[-2].is_comparison:
+            return
+
+        # Does the nobranch case immediately jump somewhere?
+        if not block.nobranch_exit.first_op.is_jump:
+            return
+
+        # Does the branch case NOT immediately jump somewhere?
+        if block.branched_exit.first_op.is_jump:
+            return
+
+        self.debug_print_hit(block.ops[-2])
+
+        # Reverse both the comparison and the branch
+        block.ops[-2].reverse()
+        block.exits.reverse()
 
     def try_peephole(self, block, action, size):
         start = 0

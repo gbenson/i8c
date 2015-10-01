@@ -34,6 +34,10 @@ class Operation(visitors.Visitable):
         return isinstance(self, ReturnOp)
 
     @property
+    def is_jump(self):
+        return self.is_goto or self.is_return
+
+    @property
     def is_comparison(self):
         return isinstance(self, CompareOp)
 
