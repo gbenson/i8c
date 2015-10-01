@@ -53,10 +53,17 @@ class Operation(visitors.Visitable):
     def is_noop(self):
         return isinstance(self, NoOp)
 
-    def __eq__(self, other):
+    def __eq__(self, other): # pragma: no cover
+        # This comparison is excluded from coverage because it's
+        # not currently entered (but it must be defined because
+        # we've defined __ne__ below).
         return not (self != other)
 
-    def __ne__(self, other):
+    def __ne__(self, other): # pragma: no cover
+        # This function is excluded from coverage because it
+        # should not be entered.  If it is entered from the
+        # testsuite the exception will cause whatever test
+        # entered it to fail.
         raise NotImplementedError, "%s.__ne__" % self.classname
 
     def __str__(self):
@@ -78,7 +85,10 @@ class ClassComparableOp(Operation):
         return (isinstance(self, other.__class__)
                 or isinstance(other, self.__class__))
 
-    def __ne__(self, other):
+    def __ne__(self, other): # pragma: no cover
+        # This comparison is excluded from coverage because it's
+        # not currently entered (but it must be defined because
+        # we've defined __eq__ above).
         return not (self == other)
 
 # Block-terminating operations.  Note that these are class-comparable,

@@ -20,7 +20,10 @@ import sys
 def version():
     try:
         return pkg_resources.get_distribution("i8c").version
-    except:
+    except: # pragma: no cover
+        # This block is excluded from coverage because while
+        # we could test it (by hiding the egg-info somehow?)
+        # it seems like a lot of effort for very little gain.
         return "UNKNOWN"
 
 VERSIONMSG = u"""\

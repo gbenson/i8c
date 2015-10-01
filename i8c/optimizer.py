@@ -3,6 +3,7 @@ from i8c import operations
 from i8c.operations import PlusUConst, SyntheticGoto
 from i8c import types
 import inspect
+import sys
 
 # The primary goal of these optimizations is to reduce the instruction
 # count, to aid consumers using interpreters to execute notes.  The
@@ -128,7 +129,15 @@ class BlockOptimizer(Optimizer):
         try:
             if block.exits[0].ops[1:] != block.exits[1].ops[1:]:
                 return
-        except NotImplementedError, e:
+        except NotImplementedError, e: # pragma: no cover
+            # This block is excluded from coverage because it
+            # should not be entered.  If it is entered then
+            # we need to implement the relevant comparison.
+            # To ensure things don't get lost we propagate
+            # the exception if it looks like we're being run
+            # by the testsuite.
+            if sys.modules.has_key("i8c.tests"):
+                raise
             debug_print("warning: missed an optimization?"
                         + " (implement %s)\n" % e)
             return
