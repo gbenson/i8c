@@ -1,6 +1,6 @@
 from i8c.tests import TestCase
 
-TEST_SOURCE = """\
+SOURCE = """\
 define test::stack_ops_test
     argument int arg_1
     argument ptr arg_2
@@ -19,7 +19,7 @@ define test::stack_ops_test
 class TestStackOperations(TestCase):
     def test_stack_ops(self):
         """Basic checks for stack-manipulation bytecodes."""
-        tree, output = self.compile(TEST_SOURCE)
+        tree, output = self.compile(SOURCE)
         # Check the assembler contains the expected operations
         self.assertEqual(["dup",
                           "drop",
