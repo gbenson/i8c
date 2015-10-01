@@ -87,3 +87,14 @@ class TestCase(unittest.TestCase):
     def disable_loggers(self):
         for logger in loggers.values():
             logger.disable()
+
+    def collect_blocks(self, function):
+        result = {}
+        self.__collect_blocks(result, function.entry_block)
+        return result
+
+    def __collect_blocks(self, result, block):
+        if not result.has_key(block.index):
+            result[block.index] = block
+            for block in block.exits:
+                self.__collect_blocks(result, block)
