@@ -3,7 +3,13 @@ import i8c
 import sys
 
 class TestEntryPoint(TestCase):
-    """Test the console scripts entry point."""
+    """Test i8c.run_compiler, the console scripts entry point.
+
+    This testcase should be the bare minimum required to exercise
+    the code in i8c.__init__.  Tests exercising the function it
+    wraps (i8c.compiler.main) should be in test_compiler_driver.py
+    so they may be run without messing with sys.argv and sys.stderr.
+    """
 
     def setUp(self):
         self.saved_argv = sys.argv
