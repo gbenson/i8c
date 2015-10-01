@@ -129,20 +129,22 @@ class OperationStream(visitors.Visitable):
 
     # Debug printing
 
-    def dump(self):
-        assert self.is_closed
+    def __str__(self):
         reverse = {}
         for index, op in self.ops.items():
             reverse[op] = index
+        lines = []
         for index, op in self.ops.items():
+            line = []
             sources = self.labels.get(op, None)
             if sources is not None:
-                debug_print("%d:" % index)
-            debug_print("\t%s" % op)
+                line.append("%d:" % index)
+            line.append("\t%s" % op)
             jump = self.jumps.get(op, None)
             if jump is not None:
-                debug_print(" -> %d" % reverse[jump])
-            debug_print("\n")
+                line.append(" -> %d" % reverse[jump])
+            lines.append("".join(line))
+        return "\n".join(lines)
 
 class Serializer(object):
     def visit_toplevel(self, toplevel):
@@ -154,9 +156,8 @@ class Serializer(object):
         self.visited = {}
         function.entry_block.accept(self)
         self.ops.close()
-        if debug_print.enabled:
-            debug_print("\n%s:\n" % function.name.value)
-            self.ops.dump()
+        debug_print("%s:\n" % function.name.value)
+        debug_print("%s\n\n" % self.ops)
         function.ops = self.ops
 
     def visit_basicblock(self, block):
