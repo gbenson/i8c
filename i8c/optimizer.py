@@ -243,6 +243,9 @@ class StreamOptimizer(Optimizer):
     """Optimizations performed after serialization.
     """
 
+    def debug_print_stream(self, stream):
+        debug_print("%s\n" % stream)
+
     def visit_function(self, function):
         function.ops.accept(self)
 
@@ -264,6 +267,7 @@ class StreamOptimizer(Optimizer):
 
             self.debug_print_hit(op)
             stream.retarget_jump(op, stream.jumps[target])
+            self.debug_print_stream(stream)
             return True
         return False
 
@@ -280,5 +284,6 @@ class StreamOptimizer(Optimizer):
 
             self.debug_print_hit(op)
             stream.remove_by_index_op(index, op)
+            self.debug_print_stream(stream)
             return True
         return False

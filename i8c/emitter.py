@@ -1,4 +1,7 @@
+from i8c import logger
 from i8c import dwarf2
+
+debug_print = logger.debug_printer_for(__name__)
 
 NT_GNU_INFINITY = 5
 I8_FUNCTION_MAGIC = (ord("i") << 8) | ord("8")
@@ -195,6 +198,7 @@ class Emitter(object):
             node.accept(self)
 
     def visit_function(self, function):
+        debug_print("\n%s:\n" % function.name.value)
         # This method handles laying out the structure of the note
         # as per http://www.netbsd.org/docs/kernel/elf-notes.html.
         # The Infinity-specific part is in the "desc" field and is
@@ -293,6 +297,7 @@ class Emitter(object):
     # Emit the bytecode
 
     def visit_operationstream(self, stream):
+        debug_print("%s\n" % stream)
         self.jumps = stream.jumps
         self.labels = {}
         for op in stream.labels.keys():
