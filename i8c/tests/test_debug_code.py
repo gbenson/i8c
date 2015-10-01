@@ -14,10 +14,14 @@ define test::factorial returns int
     return
 
 not_done_yet:
+    dup
     load 1
     sub
     swap
+    rot
+    swap
     call
+    mul
 """
 
 class TestDebugCode(TestCase):
