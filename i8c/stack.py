@@ -347,6 +347,13 @@ class StackWalker(object):
         self.__leave_block()
 
     def visit_nameop(self, op):
+        indexes = self.stack.indexes_for(op.name)
+        if indexes:
+            if indexes[0] == op.slot:
+                return # first result already has this name
+            raise StackError(op, self.stack,
+                             u"declaration shadows slot %s" % (
+                                 ", ".join(map(str, indexes))))
         self.stack.name_slot(op.slot, op.name)
 
     def visit_overop(self, op):
