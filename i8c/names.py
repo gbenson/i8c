@@ -20,7 +20,10 @@ class Name(object):
         assert self.is_shortname
         return Name(provider, self.name)
 
-    def __eq__(self, other):
+    def __eq__(self, other): # pragma: no cover
+        # This comparison is excluded from coverage because it's
+        # not currently entered (but it must be defined because
+        # we've defined __ne__ below).
         return not (self != other)
 
     def __ne__(self, other):
