@@ -55,9 +55,13 @@ class FuncType(RootType):
     def __init__(self, functype):
         functype.paramtypes.accept(self)
         functype.returntypes.accept(self)
-        Type.__init__(self, "function %s (%s)" % (
-            ", ".join((type.name for type in self.returntypes)),
-            ", ".join((type.name for type in self.paramtypes))))
+        ptypes = ", ".join((type.name for type in self.paramtypes))
+        rtypes = ", ".join((type.name for type in self.returntypes))
+        name = "function"
+        if rtypes:
+            name += " " + rtypes
+        name += " (%s)" % ptypes
+        Type.__init__(self, name)
 
     @property
     def encoding(self):
