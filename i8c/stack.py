@@ -28,14 +28,18 @@ class Stack(object):
         assert name is None or isinstance(name, names.Name)
         self.__assert_depth(index)
         value = copy.copy(self.slots[index])
-        value.name = name
+        value.names = copy.copy(value.names)
+        value.names.append(name)
         self.slots[index] = value
 
     def index_of(self, name):
         assert isinstance(name, names.Name)
         result = None
         for value, index in zip(self.slots, xrange(len(self.slots))):
-            if value.name != name:
+            for thisname in value.names:
+                if thisname == name:
+                    break
+            else:
                 continue
             if result is None:
                 result = index
@@ -99,12 +103,13 @@ class Value:
     def __init__(self, thetype, name, value):
         assert thetype is not None
         assert isinstance(thetype, types.Type)
+        self.type = thetype
+        self.names = []
         if name is not None:
             assert isinstance(name, names.Name)
+            self.names.append(name)
         if value is not None:
             assert isinstance(value, (int, long))
-        self.type = thetype
-        self.name = name
         self.value = value
 
     @property
@@ -113,11 +118,16 @@ class Value:
 
     def __str__(self):
         result = ""
-        if self.name is None:
+        if not self.names:
             result += "anonymous "
         result += self.type.name
-        if self.name is not None:
-            result += " " + str(self.name)
+        if self.names:
+            result += " "
+            if len(self.names) > 1:
+                result += "["
+            result += ", ".join(map(str, self.names))
+            if len(self.names) > 1:
+                result += "]"
         if self.value is not None:
             result += " = %d" % self.value
         return result
