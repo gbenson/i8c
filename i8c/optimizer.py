@@ -47,7 +47,7 @@ class BlockOptimizer(Optimizer):
 
     def try_all_optimizations(self, block):
         self.try_eliminate_cmp_bra_const_const(block)
-        self.try_eliminate_lit0_cmp_bra(block)
+        self.try_eliminate_lit0_cmp_before_bra(block)
         self.try_reverse_branch_exits(block)
         self.try_peephole(block, self.try_eliminate_identity_math, 2)
         self.try_peephole(block, self.try_use_plus_uconst, 2)
@@ -164,7 +164,7 @@ class BlockOptimizer(Optimizer):
         removed_op = block.ops.pop(0)
         assert removed_op.is_load_constant
 
-    def try_eliminate_lit0_cmp_bra(self, block):
+    def try_eliminate_lit0_cmp_before_bra(self, block):
         # Does the block end with "load 0, {eq,ne}, branch"?
         if len(block.ops) < 3:
             return
