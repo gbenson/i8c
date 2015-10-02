@@ -402,7 +402,7 @@ class StackWalker(object):
         for index in xrange(num_returns):
             rtype = self.returntypes[index].basetype
             stype = self.stack[index].basetype
-            if rtype is not stype:
+            if rtype != stype:
                 raise StackError(op, self.stack,
                                  "wrong type in stack[%d]" % index)
         self.__leave_block()
