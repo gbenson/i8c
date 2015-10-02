@@ -20,6 +20,11 @@ class Name(object):
         assert self.is_shortname
         return Name(provider, self.name)
 
+    def without_provider(self, provider):
+        assert self.is_fullname
+        assert provider == self.provider
+        return Name(None, self.name)
+
     def __eq__(self, other): # pragma: no cover
         # This comparison is excluded from coverage because it's
         # not currently entered (but it must be defined because
@@ -44,14 +49,12 @@ class NameAnnotator(object):
 
     def visit_function(self, function):
         function.name.accept(self)
-        self.ensure_unreserved(function)
-        self.function_provider = function.name.value.provider
+        self.check_provider(function.name)
         for node in function.entry_stack:
             node.accept(self)
         function.operations.accept(self)
 
     def visit_parameters(self, parameters):
-        self.default_provider = None
         for node in parameters.children:
             node.accept(self)
 
@@ -63,15 +66,12 @@ class NameAnnotator(object):
             node.accept(self)
 
     def visit_funcref(self, funcref):
-        self.default_provider = self.function_provider
         funcref.name.accept(self)
 
     def visit_symref(self, symref):
-        self.default_provider = None
         symref.name.accept(self)
 
     def visit_operations(self, ops):
-        self.default_provider = None
         for node in ops.named_operations:
             node.accept(self)
 
@@ -86,10 +86,10 @@ class NameAnnotator(object):
         name.value = Name(name.provider, name.shortname)
 
     def visit_shortname(self, name):
-        name.value = Name(self.default_provider, name.name)
+        name.value = Name(None, name.name)
 
-    def ensure_unreserved(self, item):
-        provider = item.name.value.provider
+    def check_provider(self, name):
+        provider = name.value.provider
         if provider.startswith("i8"):
             raise NameAnnotatorError(
-                item.name, u"provider ‘%s’ is reserved" % provider)
+                name, u"provider ‘%s’ is reserved" % provider)

@@ -79,14 +79,16 @@ class StringTable(object):
             emitter.emit('.string "%s"' % text)
 
 class ExternTable(object):
-    def __init__(self, strings):
+    def __init__(self, strings, default_provider):
         self.strings = strings
+        self.default_provider = default_provider
         self.entries = []
 
     def visit_funcref(self, funcref):
         fullname, type = funcref.name.value, funcref.typename.type
+        provider = fullname.provider or self.default_provider
         self.entries.append(FuncRef(*map(self.strings.new, (
-            fullname.provider,
+            provider,
             fullname.name,
             "".join((t.encoding for t in type.paramtypes)),
             "".join((t.encoding for t in type.returntypes))))))
@@ -222,7 +224,7 @@ class Emitter(object):
         etablestart = self.new_label()
 
         strings = StringTable()
-        self.externs = ExternTable(strings)
+        self.externs = ExternTable(strings, function.name.provider)
 
         # Populate the tables
         provider = strings.new(function.name.provider)

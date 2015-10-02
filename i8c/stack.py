@@ -8,7 +8,10 @@ import copy
 debug_print = logger.debug_printer_for(__name__)
 
 class Stack(object):
-    def __init__(self):
+    def __init__(self, funcname):
+        assert isinstance(funcname, names.Name)
+        assert funcname.provider is not None
+        self.funcprovider = funcname.provider
         self.slots = []
         self.is_mutable = True
         self.max_depth = 0
@@ -32,26 +35,36 @@ class Stack(object):
         value.names.append(name)
         self.slots[index] = value
 
-    def index_of(self, name):
+    def indexes_for(self, name):
         assert isinstance(name, names.Name)
-        result = None
+        # Set search to either
+        #   shortname, funcprovider::shortname
+        # or
+        #   otherprovider::shortname
+        if name.is_fullname and name.provider == self.funcprovider:
+            search = [name.without_provider(self.funcprovider), name]
+        elif name.is_shortname:
+            search = [name, name.with_provider(self.funcprovider)]
+        else:
+            search = [name]
+        results = []
         for value, index in zip(self.slots, xrange(len(self.slots))):
-            for thisname in value.names:
-                if thisname == name:
-                    break
-            else:
+            # Does this slot match the names we're looking for?
+            if not self.__names_match(search, value.names):
                 continue
-            if result is None:
-                result = index
+            # Is this slot just a copy of a previous result?
+            if value in (self.slots[result] for result in results):
                 continue
-            if value is self.slots[result]:
-                continue
-            raise StackError(self.current_op, self,
-                             u"multiple slots match ‘%s’" % name)
-        if result is None:
-            raise StackError(self.current_op, self,
-                             u"no slot matches ‘%s’" % name)
-        return result
+            # This is a new match
+            results.append(index)
+        return results
+
+    def __names_match(self, list1, list2):
+        for name1 in list1:
+            for name2 in list2:
+                if name1 == name2:
+                    return True
+        return False
 
     def make_immutable(self):
         self.is_mutable = False
@@ -139,7 +152,7 @@ class StackWalker(object):
 
     def visit_function(self, function):
         # Build the entry stack
-        self.entry_stack = Stack()
+        self.entry_stack = Stack(function.name.value)
         for node in function.entry_stack:
             node.accept(self)
         self.entry_stack.make_immutable()
@@ -147,7 +160,6 @@ class StackWalker(object):
         self.returntypes = []
         function.returntypes.accept(self)
         # Walk the operations
-        self.function_provider = function.name.value.provider
         self.max_stack = 0
         self.__enter_block(function.entry_block, None, self.entry_stack)
         function.max_stack = self.max_stack
@@ -341,7 +353,9 @@ class StackWalker(object):
         self.stack.push(self.stack[1])
 
     def visit_pickop(self, op):
+        self.__pick_op = op
         op.operand.accept(self)
+        del self.__pick_op
         op.slot = self.__pick_index
         del self.__pick_index
         self.stack.push(self.stack[op.slot])
@@ -350,21 +364,15 @@ class StackWalker(object):
         self.__pick_index = slot
 
     def __pick_by_name(self, name):
-        try:
-            self.__pick_index = self.stack.index_of(name)
-        except StackError, first_exception:
-            if name.is_fullname:
-                raise first_exception
-
-            # No slot exists with this shortname, so this isn't a user
-            # argument or a named slot.  Try a fullname lookup with
-            # the function's provider to catch function references
-            # with unqualified names.
-            name =  name.with_provider(self.function_provider)
-            try:
-                self.__pick_index = self.stack.index_of(name)
-            except StackError, second_exception:
-                raise first_exception
+        indexes = self.stack.indexes_for(name)
+        if not indexes:
+            raise StackError(self.__pick_op, self.stack,
+                             u"no slot matches ‘%s’" % name)
+        elif len(indexes) != 1:
+            raise StackError(self.__pick_op, self.stack,
+                             u"multiple slots match ‘%s’" % name)
+        else:
+            self.__pick_index = indexes[0]
 
     def visit_subop(self, op):
         # Check the types before mutating the stack
