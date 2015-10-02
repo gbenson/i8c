@@ -428,6 +428,10 @@ class Emitter(object):
             self.emit_op("pick", op.fileline)
             self.emit_byte(op.slot)
 
+    def visit_plusuconst(self, op):
+        self.emit_op("plus_uconst", op.fileline)
+        self.emit_uleb128(op.value)
+
     visit_rotop = emit_simple_op
 
     def visit_stopop(self, op):
