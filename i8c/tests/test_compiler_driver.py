@@ -103,3 +103,12 @@ class TestCompilerDriver(TestCase):
         """Check that assembler errors are handled correctly."""
         os.chmod(self.workdir, 0500)
         self.__run_failtest()
+
+    # Test that multiple input files with no output file is caught
+
+    def test_multi_input_no_output(self):
+        """Check that unguessable output filenames are handled."""
+        infile2 = os.path.join(self.workdir, "test2.i8")
+        open(infile2, "w")
+        self.assertRaises(I8CError,
+                          self.__run_permtest, ["-c", infile2], ".o")
