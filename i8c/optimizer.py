@@ -288,6 +288,8 @@ class StreamOptimizer(Optimizer):
                 continue
             if self.try_remove_goto_next(stream):
                 continue
+            if self.try_remove_unreachable_code(stream):
+                continue
             break
 
     def try_remove_multijump(self, stream):
@@ -319,4 +321,18 @@ class StreamOptimizer(Optimizer):
             stream.remove_by_index_op(index, op)
             self.debug_print_stream(stream)
             return True
+        return False
+
+    def try_remove_unreachable_code(self, stream):
+        last_was_goto = False
+        for index, op in stream.items():
+            if last_was_goto:
+                if stream.labels.get(op, None) is not None:
+                    continue
+
+                self.debug_print_hit(op)
+                stream.remove_by_index_op(index, op)
+                self.debug_print_stream(stream)
+                return True
+            last_was_goto = op.is_goto
         return False
