@@ -258,6 +258,8 @@ class BlockOptimizer(Optimizer):
     def try_use_plus_uconst(self, block, index):
         if not block.ops[index].is_load_constant:
             return False
+        if block.ops[index].value < 0:
+            return False
         if not block.ops[index + 1].is_add:
             return False
 
