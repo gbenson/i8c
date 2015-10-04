@@ -1,6 +1,6 @@
 from i8c import compiler
 from i8c import dwarf2
-from i8c import emitter
+from i8c import constants
 from i8c.logger import loggers
 import os
 import StringIO as stringio
@@ -49,9 +49,9 @@ class Output(object):
         objfile = open(objfile).read()
         for byteorder in "<>":
             search = struct.pack(byteorder + "I4sH",
-                                 emitter.NT_GNU_INFINITY,
+                                 constants.NT_GNU_INFINITY,
                                  "GNU\0",
-                                 emitter.I8_FUNCTION_MAGIC)
+                                 constants.I8_FUNCTION_MAGIC)
             index = objfile.find(search)
             if index < 0:
                 continue
@@ -84,7 +84,7 @@ class Note(object):
             hdrformat, data[:expect_hdrsize])
 
         # Check the header
-        testcase.assertEqual(magic, emitter.I8_FUNCTION_MAGIC)
+        testcase.assertEqual(magic, constants.I8_FUNCTION_MAGIC)
         testcase.assertEqual(version, 1)
         testcase.assertEqual(hdrsize, expect_hdrsize - 4)
 
