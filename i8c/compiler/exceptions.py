@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
+from i8c import I8Error
 
-class I8CError(Exception):
+class I8CError(I8Error):
     """Base class for all compiler errors.
     """
     def __init__(self, msg, prefix="i8c"):
-        Exception.__init__(self, prefix + ": error: " + msg)
+        I8Error.__init__(self, msg, prefix)
 
 class LexerError(I8CError):
     """An error occurred while tokenizing a source file.
