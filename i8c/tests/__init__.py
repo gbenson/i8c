@@ -1,7 +1,6 @@
 from i8c import compiler
 from i8c import dwarf2
 from i8c import constants
-from i8c.logger import loggers
 import os
 import StringIO as stringio
 import struct
@@ -192,7 +191,7 @@ class TestCase(unittest.TestCase):
         return tree, Output(self, self.compilecount, output.getvalue())
 
     def disable_loggers(self):
-        for logger in loggers.values():
+        for logger in compiler.loggers.values():
             logger.disable()
 
     def collect_blocks(self, function):

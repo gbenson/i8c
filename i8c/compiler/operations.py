@@ -1,5 +1,5 @@
-from i8c import parser
-from i8c import visitors
+from . import parser
+from . import visitors
 
 class Operation(visitors.Visitable):
     """Base class for all operations.

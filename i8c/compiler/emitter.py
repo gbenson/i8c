@@ -1,5 +1,5 @@
-from i8c import constants
-from i8c import logger
+from .. import constants
+from . import logger
 
 debug_print = logger.debug_printer_for(__name__)
 

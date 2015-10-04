@@ -1,5 +1,5 @@
 from i8c.tests import TestCase
-from i8c.exceptions import ParserError, ParsedError, StackTypeError
+from i8c.compiler import ParserError, ParsedError, StackTypeError
 
 SOURCE = """\
 typedef ptr ptr_alias

@@ -1,7 +1,6 @@
-from i8c.compiler import CommandLine
-from i8c.exceptions import I8CError
-from i8c.logger import loggers
 from i8c.tests import TestCase
+from i8c.compiler import I8CError, loggers
+from i8c.compiler.driver import CommandLine
 
 class TestCommandLineProcessor(TestCase):
     """Tests for the command line processor."""

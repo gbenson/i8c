@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from i8c.exceptions import NameAnnotatorError
+from . import NameAnnotatorError
 
 class Name(object):
     def __init__(self, provider, name):

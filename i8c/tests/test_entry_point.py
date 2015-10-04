@@ -1,13 +1,13 @@
 from i8c.tests import TestCase
-import i8c
+from i8c.compiler import main
 import sys
 
 class TestEntryPoint(TestCase):
-    """Test i8c.run_compiler, the console scripts entry point.
+    """Test i8c.compiler.main, the console scripts entry point.
 
     This testcase should be the bare minimum required to exercise
-    the code in i8c.__init__.  Tests exercising the function it
-    wraps (i8c.compiler.main) should be in test_compiler_driver.py
+    i8c.compiler.main.  Tests exercising the function it wraps
+    (i8c.compiler.driver.main) should be in test_compiler_driver.py
     so they may be run without messing with sys.argv and sys.stderr.
     """
 
@@ -22,10 +22,10 @@ class TestEntryPoint(TestCase):
     def test_success_path(self):
         """Check the console scripts entry point success path."""
         sys.argv[1:] = ["--version"]
-        self.assertIs(i8c.run_compiler(), None)
+        self.assertIs(main(), None)
 
     def test_failure_path(self):
         """Check the console scripts entry point failure path."""
         sys.argv[1:] = ["-x"]
         sys.stderr = sys.stdout
-        self.assertEqual(i8c.run_compiler(), 1)
+        self.assertEqual(main(), 1)

@@ -1,8 +1,7 @@
-from i8c import blocks
-from i8c import logger
-from i8c import operations
-from i8c.operations import SyntheticGoto
-from i8c import visitors
+from . import blocks
+from . import logger
+from . import operations
+from . import visitors
 
 debug_print = logger.debug_printer_for(__name__)
 
@@ -66,7 +65,7 @@ class OperationStream(visitors.Visitable):
         for index, op in self.ops.items():
             if not op.is_return:
                 continue
-            self.replace_by_index(index, SyntheticGoto(op))
+            self.replace_by_index(index, operations.SyntheticGoto(op))
 
     # Methods used to mutate the stream
 
@@ -171,7 +170,7 @@ class Serializer(object):
         if block.is_branch_terminated:
             self.ops.jump_from_last_to(block.branched_exit)
 
-            self.ops.append(SyntheticGoto(self.ops.last_op))
+            self.ops.append(operations.SyntheticGoto(self.ops.last_op))
             self.ops.jump_from_last_to(block.nobranch_exit)
 
             block.nobranch_exit.accept(self)

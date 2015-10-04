@@ -1,5 +1,5 @@
 from i8c.tests import TestCase
-from i8c.exceptions import NameAnnotatorError
+from i8c.compiler import NameAnnotatorError
 
 SOURCE = """\
 define %s::test_reserved_provider returns ptr

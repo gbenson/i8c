@@ -1,5 +1,5 @@
 from i8c.tests import TestCase
-from i8c.exceptions import StackError
+from i8c.compiler import StackError
 
 FUNCTYPE = "func int (int)"
 GOODTYPES1 = (FUNCTYPE,)

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from i8c.exceptions import LexerError
+from . import LexerError
 import re
 
 TOKEN = re.compile(r"\s+|::|[:,()]|"

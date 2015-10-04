@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from i8c.exceptions import BlockCreatorError
-from i8c.operations import *
-from i8c import visitors
+from . import BlockCreatorError
+from . import visitors
+from .operations import *
 import sys
 
 class BasicBlock(visitors.Visitable):

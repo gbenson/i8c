@@ -1,7 +1,6 @@
-from i8c import logger
-from i8c import operations
-from i8c.operations import PlusUConst, SyntheticGoto
-from i8c import types
+from . import logger
+from . import operations
+from . import types
 import inspect
 import sys
 
@@ -154,7 +153,7 @@ class BlockOptimizer(Optimizer):
         assert not dead_block.entry_stacks
 
         # Reduce the branch to a goto
-        block.ops[-1] = SyntheticGoto(block.ops[-1])
+        block.ops[-1] = operations.SyntheticGoto(block.ops[-1])
 
         # Move the the remaining successor and drop the ConstOp.
         # This messes with the types a bit (what was an INTTYPE
@@ -266,7 +265,7 @@ class BlockOptimizer(Optimizer):
         self.debug_print_hit(block.ops[index])
 
         # Insert the plus_uconst
-        block.ops[index] = PlusUConst(block.ops[index])
+        block.ops[index] = operations.PlusUConst(block.ops[index])
 
         # Remove the add
         removed_op = block.ops.pop(index + 1)

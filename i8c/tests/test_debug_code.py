@@ -1,5 +1,5 @@
 from i8c.tests import TestCase
-from i8c.logger import loggers
+from i8c.compiler import loggers
 import cStringIO as stringio
 import sys
 

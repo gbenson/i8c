@@ -1,6 +1,6 @@
 from i8c.tests import TestCase
-from i8c import parser
-from i8c import types
+from i8c.compiler import parser
+from i8c.compiler import types
 
 INPUT_TEST = """\
 define test::input_test

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from i8c.exceptions import TypeAnnotatorError
+from . import TypeAnnotatorError
 
 class Type(object):
     """Base class for all types.

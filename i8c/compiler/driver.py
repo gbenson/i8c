@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-from i8c import blocks
-from i8c import emitter
-from i8c import lexer
-from i8c import names
-from i8c import optimizer
-from i8c import parser
-from i8c import serializer
-from i8c import stack
-from i8c import types
-from i8c.exceptions import I8CError
-from i8c.logger import loggers
+from . import blocks
+from . import emitter
+from . import I8CError
+from . import lexer
+from . import loggers
+from . import names
+from . import optimizer
+from . import parser
+from . import serializer
+from . import stack
+from . import types
 import copy
 import os
 import pkg_resources

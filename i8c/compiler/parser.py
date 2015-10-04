@@ -1,7 +1,8 @@
-from i8c.exceptions import ParserError, ParsedError
-from i8c import lexer
-from i8c import logger
-from i8c import visitors
+from . import lexer
+from . import logger
+from . import ParserError
+from . import ParsedError
+from . import visitors
 import copy
 from operator import eq as EXACTLY, ge as ATLEAST
 

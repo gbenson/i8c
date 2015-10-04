@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
-from i8c.exceptions import ParsedError, StackError, StackTypeError
-from i8c import logger
-from i8c import names
-from i8c import types
+from . import ParsedError
+from . import logger
+from . import names
+from . import StackError
+from . import StackTypeError
+from . import types
 import copy
 
 debug_print = logger.debug_printer_for(__name__)

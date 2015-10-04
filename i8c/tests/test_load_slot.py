@@ -1,5 +1,5 @@
 from i8c.tests import TestCase
-from i8c.exceptions import ParserError, StackError
+from i8c.compiler import ParserError, StackError
 
 SOURCE = """\
 define test::load_slot

@@ -1,6 +1,6 @@
-from i8c.compiler import main
-from i8c.exceptions import I8CError
 from i8c.tests import TestCase
+from i8c.compiler import I8CError
+from i8c.compiler.driver import main
 import os
 import subprocess
 import sys
@@ -12,11 +12,11 @@ define test::func
 """
 
 class TestCompilerDriver(TestCase):
-    """Test i8c.compiler.main.
+    """Test i8c.compiler.driver.main.
 
     This testcase should be the bare minumum to exercise the function
-    i8c.compiler.main and its helper functions.  Tests for command
-    line processing should be in test_commandline_processor.py, and
+    i8c.compiler.driver.main and its helper functions.  Command line
+    processing tests should be in test_commandline_processor.py, and
     tests exercising the compiler generally (i8c.compiler.compile)
     should be in their own files.
     """

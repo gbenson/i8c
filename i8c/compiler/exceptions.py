@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 class I8CError(Exception):
-    """Base class for all errors.
+    """Base class for all compiler errors.
     """
     def __init__(self, msg, prefix="i8c"):
         Exception.__init__(self, prefix + ": error: " + msg)
