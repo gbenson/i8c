@@ -1,0 +1,3 @@
+[run]
+include=i8c/*
+omit=i8c/tests/*,i8c/runtime/*
