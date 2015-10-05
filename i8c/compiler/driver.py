@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from .. import cmdline
 from . import blocks
 from . import emitter
 from . import I8CError
@@ -12,28 +13,11 @@ from . import stack
 from . import types
 import copy
 import os
-import pkg_resources
 import cStringIO as stringio
 import subprocess
 import sys
 
-def version():
-    try:
-        return pkg_resources.get_distribution("i8c").version
-    except: # pragma: no cover
-        # This block is excluded from coverage because while
-        # we could test it (by hiding the egg-info somehow?)
-        # it seems like a lot of effort for very little gain.
-        return "UNKNOWN"
-
-VERSIONMSG = u"""\
-GNU i8c %s
-Copyright (C) 2015 Free Software Foundation, Inc.
-License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
-This is free software: you are free to change and redistribute it.
-There is NO WARRANTY, to the extent permitted by law.""" % version()
-
-HELPMSG = u"""\
+USAGE = u"""\
 Usage: i8c [OPTION]... [FILE]...
 
 GNU Infinity note compiler.
@@ -57,10 +41,8 @@ In general i8c operates like GCC, so if you are used to GCC then i8c
 should make sense.  Try it!
 
 In most cases the command you want is ‘i8c -c file.i8’, which reads
-and compiles ‘file.i8’ and writes the result to ‘file.o’.
-
-Report bugs to gbenson@redhat.com.
-i8c home page: <https://github.com/gbenson/i8c/>"""
+and compiles ‘file.i8’ and writes the result to ‘file.o’.""" \
+    + cmdline.usage_message_footer()
 
 class CommandLine(object):
     def __init__(self, args):
@@ -86,11 +68,11 @@ class CommandLine(object):
             # exit immediately, without continuing to process the
             # command line or compiling anything.
             if arg == "--help":
-                self.showinfo = HELPMSG
+                self.showinfo = USAGE
                 return
 
             elif arg == "--version":
-                self.showinfo = VERSIONMSG
+                self.showinfo = cmdline.version_message_for("i8c")
                 return
 
             # -E  Preprocess only; do not compile, assemble or link
