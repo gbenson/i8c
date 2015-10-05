@@ -1,1 +1,2 @@
 recursive-include i8c *.py
+recursive-include examples *.i8 *.py

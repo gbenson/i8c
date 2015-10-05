@@ -1,12 +1,10 @@
 from i8c import compiler
 from i8c import runtime
+from i8c.runtime.testcase import BaseTestCase
 import os
 import StringIO as stringio
+import struct
 import subprocess
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 
 class SourceReader(stringio.StringIO):
     def readline(self):
@@ -33,6 +31,8 @@ class TestOutput(runtime.Context):
             self.notes.extend(notes)
         # Make sure we got at least one note
         testcase.assertGreaterEqual(len(self.notes), 1)
+        # Setup for note execution
+        self.env = testcase
 
     def __set_fileprefix(self, testcase, index):
         test_id = testcase.id().split(".")
@@ -44,7 +44,8 @@ class TestOutput(runtime.Context):
         test_id.pop(-2)
         # Build the result
         index = "_%04d" % index
-        self.fileprefix = os.path.join("tests.out", *test_id) + index
+        self.fileprefix = os.path.join(
+            testcase.topdir, "tests.out", *test_id) + index
         # Ensure the directory we'll write to exists
         dir = os.path.dirname(self.fileprefix)
         if not os.path.exists(dir):
@@ -65,10 +66,20 @@ class TestOutput(runtime.Context):
     def opnames(self):
         return [op.name for op in self.ops]
 
-class TestCase(unittest.TestCase):
-    def __init__(self, *args, **kwargs):
-        unittest.TestCase.__init__(self, *args, **kwargs)
+class TestCase(BaseTestCase):
+    def __locate_topdir(self):
+        self.topdir = os.path.realpath(__file__)
+        self.topdir, check = os.path.split(self.topdir)
+        assert check.startswith("__init__.py")
+        for expect in ("tests", "i8c"):
+            self.topdir, check = os.path.split(self.topdir)
+            assert check == expect
+        assert os.path.exists(os.path.join(self.topdir, "setup.py"))
+
+    def run(self, *args, **kwargs):
+        self.__locate_topdir()
         self.compilecount = 0
+        return BaseTestCase.run(self, *args, **kwargs)
 
     def compile(self, input):
         self.compilecount += 1

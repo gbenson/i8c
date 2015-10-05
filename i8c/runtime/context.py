@@ -1,134 +1,116 @@
-from .. import constants
-from . import ELFError, CorruptNoteError, UnhandledNoteError
-from . import operations
-import struct
+from . import *
+from . import elffile
+from . import functions
+from . import stack
+import copy
+import os
 
 class Context(object):
     def __init__(self):
         self.functions = {}
+        self.env = None
+        self.wordsize = None
+        self.include_path = []
+        self.tracelevel = 0
+        self.__last_traced = None
+
+    # Methods to handle constant import directives in testcases
+
+    def import_builtin_constants(self, mod, fromfile):
+        mod.update({"NULL": 0, "FALSE": 0, "TRUE": 1})
+
+    def import_constants_from(self, mod, fromfile, arg):
+        path = copy.copy(self.include_path)
+        path.insert(0, os.path.dirname(fromfile))
+        for dir in path:
+            filename = os.path.join(dir, arg)
+            if os.path.exists(filename):
+                self.__import_constants_from(mod, filename)
+                return
+        raise TestFileError(arg, "not found in: " + repr(path))
+
+    def __import_constants_from(self, mod, filename):
+        lines = open(filename).readlines()
+        for line, linenumber in zip(lines, range(1, len(lines) + 1)):
+            bits = line.strip().split()
+            try:
+                assert len(bits) == 3 and bits[0] == "#define"
+                name, value = bits[1:]
+                value = eval(value)
+                assert isinstance(value, (int, long))
+                mod[name] = value
+            except:
+                raise HeaderFileError(filename, linenumber)
+
+    # Methods to XXX
 
     def register_function(self, function):
-        funclist = self.functions.get(function.name, [])
+        funclist = self.functions.get(function.signature, [])
         if not funclist:
-            self.functions[function.name] = funclist
+            self.functions[function.signature] = funclist
         funclist.append(function)
 
+    def get_function(self, sig_or_ref):
+        if isinstance(sig_or_ref, functions.UnresolvedFunction):
+            reference = sig_or_ref
+            signature = reference.signature
+        else:
+            assert isinstance(sig_or_ref, str)
+            signature = sig_or_ref
+            reference = None
+        # First check the registered functions
+        funclist = self.functions.get(signature, None)
+        if funclist is not None:
+            if len(funclist) == 1:
+                return funclist[0]
+            elif len(funclist) > 1:
+                raise AmbiguousFunctionError(sig_or_ref)
+        # No registered function with this name
+        if reference is not None:
+            impl = "call_%s_%s" % (reference.provider, reference.name)
+            impl = getattr(self.env, impl, None)
+            if impl is not None:
+                return functions.BuiltinFunction(reference, impl)
+        raise UndefinedFunctionError(sig_or_ref)
+
+    # Methods to XXX
+
     def import_notes(self, filename):
-        with open(filename) as fp:
-            fmt = "4sxB"
-            data = fp.read(struct.calcsize(fmt))
-            magic, byteorder = struct.unpack(fmt, data)
-            if magic != "\x7fELF":
-                raise ELFError(filename, "not an ELF file")
-            byteorder = {1: "<", 2: ">"}[byteorder]
-            data = fp.read()
-        name = "GNU\0"
-        hfmt, mfmt = byteorder + "2I", byteorder + "I4sH"
-        marker = struct.pack(mfmt, constants.NT_GNU_INFINITY,
-                             name, constants.I8_FUNCTION_MAGIC)
-        start = hdrsz = struct.calcsize(hfmt)
-        while True:
-            start = data.find(marker, start)
-            if start < 0:
-                break
-            start -= hdrsz
-            namesz, descsz = struct.unpack(hfmt,
-                                           data[start:start + hdrsz])
-            if namesz != len(name):
-                raise ELFError(filename, "corrupt note about 0x%x", index)
-            descstart = start + hdrsz + struct.calcsize("I") + len(name)
-            desclimit = descstart + descsz
-            self.register_function(Function((filename, descstart),
-                                            data[descstart:desclimit],
-                                            byteorder))
-            start = desclimit
+        ef = elffile.open(filename)
+        if self.wordsize is None or self.wordsize < ef.wordsize:
+            self.wordsize = ef.wordsize
+        for note in ef.infinity_notes:
+            self.register_function(functions.BytecodeFunction(note))
 
-class Function(object):
-    def __init__(self, location, data, byteorder):
-        self.location = location
-        self.byteorder = byteorder
+    def new_stack(self):
+        return stack.Stack(self.wordsize)
 
-        # Parse the header
-        hdrformat = byteorder + "11H"
-        expect_hdrsize = struct.calcsize(hdrformat)
-        (magic, version, hdrsize, codesize, externsize, provider_o, name_o,
-         ptypes_o, rtypes_o, etypes_o, self.max_stack) = struct.unpack(
-            hdrformat, data[:expect_hdrsize])
+    def call(self, signature, *args):
+        function = self.get_function(signature)
+        stack = self.new_stack()
+        stack.push_multi(function.ptypes, args)
+        function.execute(self, stack)
+        return stack.pop_multi(function.rtypes)
 
-        # Check the header
-        if magic != constants.I8_FUNCTION_MAGIC:
-            if magic >> 8 == magic & 0xFF:
-                raise CorruptNoteError(self)
-            else:
-                raise UnhandledNoteError(self)
-        if version != 1:
-            raise UnhandledNoteError(self)
-        if hdrsize != expect_hdrsize - 4:
-            raise CorruptNoteError(self)
+    def __trace(self, (function, pc), stack, encoded, decoded):
+        if self.tracelevel > 0:
+            if function != self.__last_traced:
+                print "\n%s:" % function
+                self.__last_traced = function
+            if self.tracelevel > 1:
+                stack.trace(self.tracelevel)
+            print "  %04x: %-12s %s" % (pc, encoded, decoded)
 
-        # Work out where everything is
-        codestart = 4 + hdrsize
-        externstart = codestart + codesize
-        stringstart = externstart + externsize
+    def trace_operation(self, *args):
+        self.__trace(*args)
 
-        # Extract the strings
-        self.strings = data[stringstart:]
-        (provider, name, ptypes, rtypes, etypes) = map(self.get_string,
-                       (provider_o, name_o, ptypes_o, rtypes_o, etypes_o))
-        self.name = "%s::%s(%s)%s" % (provider, name, ptypes, rtypes)
+    def trace_call(self, function, stack):
+        if not isinstance(function, functions.BytecodeFunction):
+            if self.tracelevel > 0:
+                print "\n%s:" % function
+                print "  NON-BYTECODE FUNCTION"
+        self.__last_traced = None
 
-        # Load the bytecode and externals
-        self.__load_bytecode(data[codestart:externstart])
-        self.__load_externals(etypes, data[externstart:stringstart])
-
-    def get_string(self, start):
-        limit = self.strings.find("\0", start)
-        if limit < start:
-            raise CorruptNoteError(self)
-        return self.strings[start:limit]
-
-    def __load_bytecode(self, code):
-        self.ops, pc = {}, 0
-        while pc < len(code):
-            op = operations.Operation((self.name, pc), code, self.byteorder)
-            self.ops[pc] = op
-            pc += op.size
-
-    def __load_externals(self, etypes, data):
-        self.externals = []
-        if not etypes:
-            return
-        slotsize, check = divmod(len(data), len(etypes))
-        if check != 0:
-            raise CorruptNoteError(self)
-        for type, index in zip(etypes, range(len(etypes))):
-            klass = {"f": FuncRef, "x": RelAddr}.get(type, None)
-            if klass is None:
-                raise UnhandledNoteError(self)
-            start = index * slotsize
-            limit = start + slotsize
-            self.externals.append(klass(self, data[start:limit]))
-
-class External(object):
-    @property
-    def is_function(self):
-        return isinstance(self, FuncRef)
-
-    @property
-    def is_unrelocated_address(self):
-        return isinstance(self, RelAddr)
-
-class FuncRef(External):
-    def __init__(self, note, data):
-        format = note.byteorder + "4H"
-        slotsize = struct.calcsize(format)
-        self.provider, self.name, self.paramtypes, self.returntypes \
-            = map(note.get_string, struct.unpack(format, data[:slotsize]))
-
-class RelAddr(External):
-    def __init__(self, note, data):
-        format = {4: "I", 8: "Q"}.get(len(data), None)
-        if format is None:
-            raise UnhandledNoteError(note)
-        format = note.byteorder + format
-        self.value = struct.unpack(format, data)[0]
+    def trace_return(self, location, stack):
+        self.__trace(location, stack, "", "RETURN")
+        self.__last_traced = None

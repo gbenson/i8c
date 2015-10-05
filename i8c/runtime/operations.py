@@ -1,5 +1,6 @@
 from .. import constants
 from . import UnhandledNoteError
+import operator
 import struct
 
 class Operation(object):
@@ -66,6 +67,29 @@ class Operation(object):
         constants.DW_OP_xderef_size: ["u1"],
     }
 
+    OPTABLE = {
+        constants.DW_OP_abs: (abs, 1, True),
+        constants.DW_OP_and: (operator.and_, 2, False),
+        constants.DW_OP_div: (operator.floordiv, 2, True),
+        constants.DW_OP_minus: (operator.sub, 2, False),
+        constants.DW_OP_mod: (operator.mod, 2, False),
+        constants.DW_OP_mul: (operator.mul, 2, False),
+        constants.DW_OP_or: (operator.or_, 2, False),
+        constants.DW_OP_neg: (operator.neg, 1, True),
+        constants.DW_OP_not: (operator.invert, 1, False),
+        constants.DW_OP_plus: (operator.add, 2, False),
+        constants.DW_OP_shl: (operator.lshift, 2, False),
+        constants.DW_OP_shr: (operator.rshift, 2, False),
+        constants.DW_OP_shra: (operator.rshift, 2, True),
+        constants.DW_OP_xor: (operator.xor, 2, False),
+        constants.DW_OP_eq: (operator.eq, 2, False),
+        constants.DW_OP_ge: (operator.ge, 2, False),
+        constants.DW_OP_gt: (operator.gt, 2, False),
+        constants.DW_OP_le: (operator.le, 2, False),
+        constants.DW_OP_lt: (operator.lt, 2, False),
+        constants.DW_OP_ne: (operator.ne, 2, False),
+    }
+
     FIXEDSIZE = {}
     for code in "bBhHiIqQ":
         size = struct.calcsize(code)
@@ -74,44 +98,56 @@ class Operation(object):
         FIXEDSIZE[type] = size, code
     del code, size, type
 
-    def __init__(self, location, code, byteorder):
-        self.location = location
-        pc = location[1]
-        self.code = ord(code[pc])
-        if not self.NAMES.has_key(self.code):
-            raise UnhandledNoteError(self)
-        pc += 1
+    def __init__(self, function, pc):
+        src = function.code + pc
+        # Read the opcode
+        self.opcode = ord(src[0])
+        if not self.NAMES.has_key(self.opcode):
+            raise UnhandledNoteError(src)
+        next = src + 1
+        # Read the operands
         self.operands = []
-        for type in self.OPERANDS.get(self.code, ()):
+        for type in self.OPERANDS.get(self.opcode, ()):
             sizecode = self.FIXEDSIZE.get(type, None)
             if sizecode is not None:
                 size, fmt = sizecode
-                fmt = byteorder + fmt
-                value = struct.unpack(fmt, code[pc:pc + size])[0]
+                fmt = src.byteorder + fmt
+                value = struct.unpack(fmt, next[:size].bytes)[0]
             else:
-                size, value = getattr(self, "decode_" + type)(code, pc)
+                size, value = getattr(self, "decode_" + type)(next)
             self.operands.append(value)
-            pc += size
-        self.size = pc - location[1]
+            next += size
+        # Store our source location for exceptions
+        self.src = src[:next.start - src.start]
+        # Store our location and encoded form for tracing
+        self.location = (function, pc)
+        self.encoded = self.src.bytes
+
+    @property
+    def size(self):
+        return len(self.src)
+
+    @property
+    def byteorder(self):
+        return self.src.byteorder
 
     @staticmethod
-    def decode_address(code, start): # pragma: no cover
+    def decode_address(code): # pragma: no cover
         # This function is excluded from coverage because it
         # should never be implemented.  See XXX UNWRITTEN.
         raise NotImplementedError
 
     @classmethod
-    def decode_uleb128(cls, code, start):
-        return cls.__decode_leb128(code, start, False)
+    def decode_uleb128(cls, code):
+        return cls.__decode_leb128(code, False)
 
     @classmethod
-    def decode_sleb128(cls, code, start):
-        return cls.__decode_leb128(code, start, True)
+    def decode_sleb128(cls, code):
+        return cls.__decode_leb128(code, True)
 
     @staticmethod
-    def __decode_leb128(code, start, is_signed):
-        result = shift = 0
-        offset = start
+    def __decode_leb128(code, is_signed):
+        result = shift = offset = 0
         while True:
             byte = ord(code[offset])
             offset += 1
@@ -123,11 +159,11 @@ class Operation(object):
             sign = 0x40 << shift
             result &= ~(0x40 << shift)
             result -= sign
-        return offset - start, result
+        return offset, result
 
     @property
     def name(self):
-        result = self.NAMES[self.code]
+        result = self.NAMES[self.opcode]
         assert result.startswith("DW_OP_")
         return result[6:]
 
@@ -135,3 +171,108 @@ class Operation(object):
     def operand(self):
         assert len(self.operands) == 1
         return self.operands[0]
+
+    def __trace(self, ctx, stack):
+        ctx.trace_operation(self.location, stack,
+                            " ".join("%02x" % ord(c)
+                                     for c in self.encoded),
+                            " ".join(["DW_OP_%s" % self.name]
+                                     + map(str, self.operands)))
+
+    def execute(self, ctx, stack):
+        self.__trace(ctx, stack)
+        if (self.opcode >= constants.DW_OP_lit0
+              and self.opcode <= constants.DW_OP_lit31):
+            impl = self.__exec_litN
+        elif (self.opcode >= constants.DW_OP_const1u
+              and self.opcode <= constants.DW_OP_consts):
+            impl = self.__exec_constX
+        elif self.OPTABLE.has_key(self.opcode):
+            impl = self.__exec_optable
+        else:
+            impl = getattr(self, "exec_" + self.name, None)
+        if impl is None:
+            raise NotImplementedError(self.name)
+        return impl(ctx, stack)
+
+    def __exec_optable(self, ctx, stack):
+        func, num_args, is_signed = self.OPTABLE[self.opcode]
+        pop = is_signed and stack.pop_signed or stack.pop_unsigned
+        if num_args == 2:
+            impl = self.__exec_binary
+        else:
+            assert num_args == 1
+            impl = self.__exec_unary
+        return impl(ctx, stack, func, pop)
+
+    def __exec_unary(self, ctx, stack, func, pop):
+        stack.push_intptr(func(pop()))
+
+    def __exec_binary(self, ctx, stack, func, pop):
+        b = pop()
+        a = pop()
+        stack.push_intptr(func(a, b))
+
+    def __exec_constX(self, ctx, stack):
+        stack.push_intptr(self.operand)
+
+    def exec_bra(self, ctx, stack):
+        if stack.pop_unsigned() != 0:
+            return self.operand
+
+    def exec_deref(self, ctx, stack):
+        self.__exec_deref(ctx, stack, ctx.wordsize / 8)
+
+    def exec_deref_size(self, ctx, stack):
+        self.__exec_deref(ctx, stack, self.operand)
+
+    def __exec_deref(self, ctx, stack, size):
+        sizecode = self.FIXEDSIZE.get("u%d" % size, None)
+        if sizecode is None:
+            raise UnhandledNoteError(self)
+        check, fmt = sizecode
+        assert check == size
+        fmt = self.byteorder + fmt
+        result = ctx.env.read_memory(fmt, stack.pop_unsigned())
+        stack.push_intptr(struct.unpack(fmt, result)[0])
+
+    def exec_drop(self, ctx, stack):
+        stack.pop_boxed()
+
+    def exec_dup(self, ctx, stack):
+        stack.push_boxed(stack.slots[0])
+
+    def exec_GNU_i8call(self, ctx, stack):
+        callee = stack.pop_function()
+        ctx.trace_call(callee, stack)
+        callee.execute(ctx, stack)
+
+    def __exec_litN(self, ctx, stack):
+        stack.push_intptr(self.opcode - constants.DW_OP_lit0)
+
+    def exec_over(self, ctx, stack):
+        stack.push_boxed(stack.slots[1])
+
+    def exec_pick(self, ctx, stack):
+        stack.push_boxed(stack.slots[self.operand])
+
+    def exec_plus_uconst(self, ctx, stack):
+        a = stack.pop_unsigned()
+        stack.push_intptr(a + self.operand)
+
+    def exec_rot(self, ctx, stack):
+        a = stack.pop_boxed()
+        b = stack.pop_boxed()
+        c = stack.pop_boxed()
+        stack.push_boxed(a)
+        stack.push_boxed(c)
+        stack.push_boxed(b)
+
+    def exec_skip(self, ctx, stack):
+        return self.operand
+
+    def exec_swap(self, ctx, stack):
+        a = stack.pop_boxed()
+        b = stack.pop_boxed()
+        stack.push_boxed(a)
+        stack.push_boxed(b)

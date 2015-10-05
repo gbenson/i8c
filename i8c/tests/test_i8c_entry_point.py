@@ -20,12 +20,12 @@ class TestEntryPoint(TestCase):
         sys.stderr = self.saved_stderr
 
     def test_success_path(self):
-        """Check the console scripts entry point success path."""
+        """Check the i8c console scripts entry point success path."""
         sys.argv[1:] = ["--version"]
         self.assertIs(main(), None)
 
     def test_failure_path(self):
-        """Check the console scripts entry point failure path."""
+        """Check the i8c console scripts entry point failure path."""
         sys.argv[1:] = ["-x"]
         sys.stderr = sys.stdout
         self.assertEqual(main(), 1)

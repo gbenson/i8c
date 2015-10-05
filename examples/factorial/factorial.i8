@@ -1,0 +1,59 @@
+define example::factorial returns int
+    argument int x
+    extern func int (int) factorial
+
+	// stack[0]: factorial
+	// stack[1]: x
+    swap
+	// stack[0]: x
+	// stack[1]: factorial
+    dup
+	// stack[0]: x
+	// stack[1]: x
+	// stack[2]: factorial
+    load 1
+	// stack[0]: 1
+	// stack[1]: x
+	// stack[2]: x
+	// stack[3]: factorial
+    bgt not_done_yet
+	// stack[0]: x <= 1
+	// stack[1]: factorial
+    load 1
+	// stack[0]: 1
+	// stack[1]: x <= 1
+	// stack[2]: factorial
+    return
+
+not_done_yet:
+	// stack[0]: x != 1
+	// stack[1]: factorial
+    dup
+	// stack[0]: x
+	// stack[1]: x
+	// stack[2]: factorial
+    load 1
+	// stack[0]: 1
+	// stack[1]: x
+	// stack[2]: x
+	// stack[3]: factorial
+    sub
+	// stack[0]: x - 1
+	// stack[1]: x
+	// stack[2]: factorial
+    swap
+	// stack[0]: x
+	// stack[1]: x - 1
+	// stack[2]: factorial
+    rot
+	// stack[0]: x - 1
+	// stack[1]: factorial
+	// stack[2]: x
+    swap
+	// stack[0]: factorial
+	// stack[1]: x - 1
+	// stack[2]: x
+    call
+	// stack[0]: (x - 1)!
+	// stack[1]: x
+    mul
