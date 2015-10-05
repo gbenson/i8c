@@ -102,8 +102,7 @@ class Function(object):
         if check != 0:
             raise CorruptNoteError(self)
         for type, index in zip(etypes, range(len(etypes))):
-            klass = {"f": FuncRefExternal,
-                     "x": RelAddrExternal}.get(type, None)
+            klass = {"f": FuncRef, "x": RelAddr}.get(type, None)
             if klass is None:
                 raise UnhandledNoteError(self)
             start = index * slotsize
@@ -113,20 +112,20 @@ class Function(object):
 class External(object):
     @property
     def is_function(self):
-        return isinstance(self, FuncRefExternal)
+        return isinstance(self, FuncRef)
 
     @property
     def is_unrelocated_address(self):
-        return isinstance(self, RelAddrExternal)
+        return isinstance(self, RelAddr)
 
-class FuncRefExternal(External):
+class FuncRef(External):
     def __init__(self, note, data):
         format = note.byteorder + "4H"
         slotsize = struct.calcsize(format)
-        self.name = "%s::%s(%s)%s" % tuple(map(
-            note.get_string, struct.unpack(format, data[:slotsize])))
+        self.provider, self.name, self.paramtypes, self.returntypes \
+            = map(note.get_string, struct.unpack(format, data[:slotsize]))
 
-class RelAddrExternal(External):
+class RelAddr(External):
     def __init__(self, note, data):
         format = {4: "I", 8: "Q"}.get(len(data), None)
         if format is None:
