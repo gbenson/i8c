@@ -24,6 +24,6 @@ setup(
         "Programming Language :: Python :: 2.7",
     ],
     packages=["i8c"],
-    entry_points={"console_scripts": ["i8c = i8c:run_compiler"]},
+    entry_points={"console_scripts": ["i8c = i8c.compiler:main"]},
     tests_require=["nose"],
     test_suite="nose.collector")
