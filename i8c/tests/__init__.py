@@ -54,7 +54,9 @@ class Output(runtime.Context):
 
     @property
     def ops(self):
-        return self.note.ops
+        ops = self.note.ops.items()
+        ops.sort()
+        return [op for pc, op in ops]
 
     @property
     def opnames(self):

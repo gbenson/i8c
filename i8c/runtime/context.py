@@ -88,10 +88,10 @@ class Function(object):
         return self.strings[start:limit]
 
     def __load_bytecode(self, code):
-        self.ops, pc = [], 0
+        self.ops, pc = {}, 0
         while pc < len(code):
             op = operations.Operation((self.name, pc), code, self.byteorder)
-            self.ops.append(op)
+            self.ops[pc] = op
             pc += op.size
 
     def __load_externals(self, etypes, data):
