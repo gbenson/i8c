@@ -411,19 +411,6 @@ class DerefOp(OneArgOp):
 class GotoOp(JumpOp):
     pass
 
-class NameOp(TwoArgOp):
-    def add_children(self, slot, name):
-        self.add_child(StackSlot).consume([slot])
-        self.add_child(ShortName).consume([name])
-
-    @property
-    def slot(self):
-        return self.one_child(StackSlot)
-
-    @property
-    def name(self):
-        return self.one_child(ShortName)
-
 class LoadOp(TreeOp):
     def consume(self, tokens):
         if self.tokens:
@@ -456,6 +443,19 @@ class LoadOp(TreeOp):
         """
         return self.some_children(Constant)
 
+class NameOp(TwoArgOp):
+    def add_children(self, slot, name):
+        self.add_child(StackSlot).consume([slot])
+        self.add_child(ShortName).consume([name])
+
+    @property
+    def slot(self):
+        return self.one_child(StackSlot)
+
+    @property
+    def name(self):
+        return self.one_child(ShortName)
+
 class PickOp(OneArgOp):
     def add_children(self, slot):
         self.add_child(StackSlot).consume([slot])
@@ -468,8 +468,8 @@ class ReturnOp(NoArgOp):
 class Operations(TreeNode):
     CLASSES = {"deref": DerefOp,
                "goto": GotoOp,
-               "name": NameOp,
                "load": LoadOp,
+               "name": NameOp,
                "pick": PickOp,
                "return": ReturnOp}
     for op in ("abs", "add", "and", "div", "drop", "dup",
