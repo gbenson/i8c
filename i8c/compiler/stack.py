@@ -25,13 +25,13 @@ class Stack(object):
 
     def pop(self):
         assert self.is_mutable
-        self.__assert_depth(1)
+        self.underflow_check(1)
         return self.slots.pop(0)
 
     def name_slot(self, index, name):
         assert self.is_mutable
         assert name is None or isinstance(name, names.Name)
-        self.__assert_depth(index)
+        self.underflow_check(index)
         value = copy.copy(self.slots[index])
         value.names = copy.copy(value.names)
         value.names.append(name)
@@ -40,7 +40,7 @@ class Stack(object):
     def cast_slot(self, index, type):
         assert self.is_mutable
         assert isinstance(type, types.Type)
-        self.__assert_depth(index)
+        self.underflow_check(index)
         value = copy.copy(self.slots[index])
         value.type = type
         self.slots[index] = value
@@ -90,12 +90,12 @@ class Stack(object):
         result.is_mutable = True
         return result
 
-    def __assert_depth(self, depth):
+    def underflow_check(self, depth):
         if len(self.slots) < depth:
             raise StackError(self.current_op, None, "stack underflow")
 
     def __getitem__(self, index):
-        self.__assert_depth(index)
+        self.underflow_check(index)
         return self.slots[index]
 
     def __str__(self):
@@ -301,6 +301,7 @@ class StackWalker(object):
         if not isinstance(ftype, types.FuncType):
             raise StackError(op, self.stack, "stack[0] not a function:")
         num_params = len(ftype.paramtypes)
+        self.stack.underflow_check(1 + num_params)
         for pindex in xrange(num_params):
             sindex = num_params - pindex
             ptype = ftype.paramtypes[pindex]
