@@ -328,12 +328,10 @@ class StreamOptimizer(Optimizer):
         last_was_goto = False
         for index, op in stream.items():
             if last_was_goto:
-                if stream.labels.get(op, None) is not None:
-                    continue
-
-                self.debug_print_hit(op)
-                stream.remove_by_index_op(index, op)
-                self.debug_print_stream(stream)
-                return True
+                if stream.labels.get(op, None) is None:
+                    self.debug_print_hit(op)
+                    stream.remove_by_index_op(index, op)
+                    self.debug_print_stream(stream)
+                    return True
             last_was_goto = op.is_goto
         return False
