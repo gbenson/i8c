@@ -37,6 +37,14 @@ class Stack(object):
         value.names.append(name)
         self.slots[index] = value
 
+    def cast_slot(self, index, type):
+        assert self.is_mutable
+        assert isinstance(type, types.Type)
+        self.__assert_depth(index)
+        value = copy.copy(self.slots[index])
+        value.type = type
+        self.slots[index] = value
+
     def indexes_for(self, name):
         assert isinstance(name, names.Name)
         # Set search to either
@@ -307,6 +315,13 @@ class StackWalker(object):
         for sindex in xrange(num_returns):
             rindex = num_returns - sindex - 1
             self.stack.push(Value.computed(ftype.returntypes[rindex]))
+
+    def visit_castop(self, op):
+        self.__pick_op = op
+        op.slot.accept(self)
+        del self.__pick_op
+        self.stack.cast_slot(self.__pick_index, op.type)
+        del self.__pick_index
 
     def visit_compareop(self, op):
         # Check the types before mutating the stack

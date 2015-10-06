@@ -187,6 +187,9 @@ class BlockCreator(object):
     def visit_simpleop(self, op):
         self.add_op(globals()[op.name.title() + "Op"](op))
 
+    def visit_castop(self, op):
+        self.add_op(CastOp(op))
+
     def visit_compareop(self, op):
         self.add_op(CompareOp(op))
 

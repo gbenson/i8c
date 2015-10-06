@@ -75,6 +75,10 @@ class NameAnnotator(object):
         for node in ops.named_operations:
             node.accept(self)
 
+    def visit_castop(self, op):
+        for node in op.named_operands:
+            node.accept(self)
+
     def visit_loadop(self, op):
         for node in op.named_operands:
             node.accept(self)

@@ -325,6 +325,10 @@ class Emitter(object):
     visit_binaryop = emit_simple_op
     visit_branchop = emit_branch_op
     visit_callop = emit_simple_op
+
+    def visit_castop(self, op):
+        pass
+
     visit_compareop = emit_simple_op
 
     def visit_constop(self, op):

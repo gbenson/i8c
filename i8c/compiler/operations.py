@@ -172,6 +172,15 @@ class PlusUConst(Operation):
 class CallOp(ClassComparableOp):
     dwarfname = "GNU_i8call"
 
+class CastOp(Operation):
+    @property
+    def slot(self):
+        return self.ast.slot
+
+    @property
+    def type(self):
+        return self.ast.typename.type
+
 class CompareOp(Operation):
     arity, verb = 2, "compare"
 

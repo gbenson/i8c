@@ -404,6 +404,28 @@ class CondBranchOp(JumpOp):
 
 # Classes for operators that require specific individual parsing
 
+class CastOp(TwoArgOp):
+    def add_children(self, slot, type):
+        if isinstance(slot, lexer.NUMBER):
+            self.add_child(StackSlot).consume([slot])
+        else:
+            self.add_child(ShortName).consume([slot])
+        self.add_child(BasicType).pop_consume([type])
+
+    @property
+    def slot(self):
+        return self.one_child((StackSlot, ShortName))
+
+    @property
+    def typename(self):
+        return self.one_child(BasicType)
+
+    @property
+    def named_operands(self):
+        """Operands that need processing by the name annotator.
+        """
+        return self.some_children(ShortName)
+
 class DerefOp(OneArgOp):
     def add_children(self, type):
         self.add_child(BasicType).pop_consume([type])
@@ -466,7 +488,8 @@ class ReturnOp(NoArgOp):
 # XXX
 
 class Operations(TreeNode):
-    CLASSES = {"deref": DerefOp,
+    CLASSES = {"cast": CastOp,
+               "deref": DerefOp,
                "goto": GotoOp,
                "load": LoadOp,
                "name": NameOp,
@@ -513,13 +536,13 @@ class Operations(TreeNode):
     def named_operations(self):
         """Operations that need processing by the name annotator.
         """
-        return self.some_children((LoadOp, NameOp))
+        return self.some_children((CastOp, LoadOp, NameOp))
 
     @property
     def typed_operations(self):
         """Operations that need processing by the type annotator.
         """
-        return self.some_children((DerefOp, LoadOp))
+        return self.some_children((CastOp, DerefOp, LoadOp))
 
 def build_tree(tokens):
     tree = TopLevel()

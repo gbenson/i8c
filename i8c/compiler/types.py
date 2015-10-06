@@ -256,6 +256,9 @@ class TypeAnnotator(object):
         for node in ops.typed_operations:
             node.accept(self)
 
+    def visit_castop(self, op):
+        op.typename.accept(self)
+
     def visit_derefop(self, op):
         for node in op.children:
             node.accept(self)
