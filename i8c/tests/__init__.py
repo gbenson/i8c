@@ -8,7 +8,7 @@ try:
 except ImportError:
     import unittest
 
-class Reader(stringio.StringIO):
+class SourceReader(stringio.StringIO):
     def readline(self):
         line = stringio.StringIO.readline(self)
         trim = line.find("//")
@@ -16,19 +16,22 @@ class Reader(stringio.StringIO):
             line = line[:trim] + "\n"
         return line
 
-class Output(runtime.Context):
+class TestOutput(runtime.Context):
     def __init__(self, testcase, index, asm):
         runtime.Context.__init__(self)
         self.__set_fileprefix(testcase, index)
-        self.asm = asm
+        # Store the assembly language we generated
         asmfile = self.fileprefix + ".S"
         open(asmfile, "w").write(asm)
+        # Assemble it
         objfile = self.fileprefix + ".o"
         subprocess.check_call(["gcc", "-c", asmfile, "-o", objfile])
+        # Load the notes from it
         self.import_notes(objfile)
         self.notes = []
         for notes in self.functions.values():
             self.notes.extend(notes)
+        # Make sure we got at least one note
         testcase.assertGreaterEqual(len(self.notes), 1)
 
     def __set_fileprefix(self, testcase, index):
@@ -69,10 +72,10 @@ class TestCase(unittest.TestCase):
 
     def compile(self, input):
         self.compilecount += 1
-        input = Reader('# 1 "<testcase>"\n' + input)
+        input = SourceReader('# 1 "<testcase>"\n' + input)
         output = stringio.StringIO()
         tree = compiler.compile(input.readline, output.write)
-        return tree, Output(self, self.compilecount, output.getvalue())
+        return tree, TestOutput(self, self.compilecount, output.getvalue())
 
     def disable_loggers(self):
         for logger in compiler.loggers.values():
