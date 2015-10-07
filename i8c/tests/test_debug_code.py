@@ -11,7 +11,8 @@ define test::factorial returns int
     swap
     dup
     load 1
-    bne not_done_yet
+    bgt not_done_yet
+    load 1
     return
 
 not_done_yet:
