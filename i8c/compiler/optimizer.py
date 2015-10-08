@@ -21,7 +21,7 @@ class Optimizer(object):
             node.accept(self)
 
     def debug_print_hit(self, location):
-        if debug_print.enabled:
+        if debug_print.is_enabled:
             optimization = inspect.stack()[1][0].f_code.co_name
             for prefix in ("__", "try_"):
                 if optimization.startswith(prefix):

@@ -158,20 +158,20 @@ class TestCommandLineProcessor(TestCase):
         args = self.__process_command("")
         self.__check_empty(args)
         for logger in loggers.values():
-            self.assertFalse(logger.enabled)
+            self.assertFalse(logger.is_enabled)
 
         args = self.__process_command("--debug=serializer")
         self.__check_empty(args)
         for name, logger in loggers.items():
             if name == "serializer":
-                self.assertTrue(logger.enabled)
+                self.assertTrue(logger.is_enabled)
             else:
-                self.assertFalse(logger.enabled)
+                self.assertFalse(logger.is_enabled)
 
         args = self.__process_command("--debug")
         self.__check_empty(args)
         for logger in loggers.values():
-            self.assertTrue(logger.enabled)
+            self.assertTrue(logger.is_enabled)
 
     def test_include(self):
         """Check that -include works."""

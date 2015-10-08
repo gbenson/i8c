@@ -2,16 +2,16 @@ import sys
 
 class Logger(object):
     def __init__(self):
-        self.enabled = False
+        self.is_enabled = False
 
     def disable(self):
-        self.enabled = False
+        self.is_enabled = False
 
     def enable(self):
-        self.enabled = True
+        self.is_enabled = True
 
     def __call__(self, msg):
-        if self.enabled:
+        if self.is_enabled:
             sys.stderr.write(msg)
 
 loggers = {}
