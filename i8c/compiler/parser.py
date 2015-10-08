@@ -70,7 +70,11 @@ class TreeNode(visitors.Visitable):
             line += " ".join((token.text for token in self.tokens))
         if hasattr(self, "type"):
             # Dump what the type annotator added
-            line += " [%s]" % self.type.name
+            line += " [%s" % self.type.name
+            basetype = self.type.basetype
+            if basetype is not self.type:
+                line += " = %s" % basetype.name
+            line += "]"
         lines.append(line)
         for child in self.children:
             child.__dump(lines, prefix + "  ")

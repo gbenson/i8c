@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 from . import TypeAnnotatorError
+from . import logger
+
+debug_print = logger.debug_printer_for(__name__)
 
 class Type(object):
     """Base class for all types.
@@ -213,6 +216,9 @@ class TypeAnnotator(object):
 
         for node in function.children:
             node.accept(self)
+
+        if debug_print.is_enabled:
+            debug_print("%s\n\n" % function)
 
         self.types = toplevel_types
         self.in_toplevel = True
