@@ -4,7 +4,7 @@ from . import logger
 from . import names
 from . import StackError
 from . import StackTypeError
-from . import types
+from .types import Type, INTTYPE, PTRTYPE, BOOLTYPE
 import copy
 
 debug_print = logger.debug_printer_for(__name__)
@@ -39,7 +39,7 @@ class Stack(object):
 
     def cast_slot(self, index, type):
         assert self.is_mutable
-        assert isinstance(type, types.Type)
+        assert isinstance(type, Type)
         self.underflow_check(index)
         value = copy.copy(self.slots[index])
         value.type = type
@@ -125,7 +125,7 @@ class Value:
 
     def __init__(self, thetype, name, value):
         assert thetype is not None
-        assert isinstance(thetype, types.Type)
+        assert isinstance(thetype, Type)
         self.type = thetype
         self.names = []
         if name is not None:
@@ -261,10 +261,10 @@ class StackWalker(object):
         fulltypes = [self.stack[index].type for index in (0, 1)]
         basetypes = [type.basetype for type in fulltypes]
         # At least one of the operands must be INTTYPE
-        if types.INTTYPE not in basetypes:
+        if INTTYPE not in basetypes:
             raise StackTypeError(op, self.stack)
-        if types.PTRTYPE in basetypes:
-            rtype = types.PTRTYPE
+        if PTRTYPE in basetypes:
+            rtype = PTRTYPE
         else:
             rtype = fulltypes[0].lowest_common_ancestor(fulltypes[1])
             if rtype is None:
@@ -276,7 +276,7 @@ class StackWalker(object):
         self.stack.push(Value.computed(rtype))
 
     def visit_branchop(self, op):
-        assert self.stack[0].type is types.BOOLTYPE
+        assert self.stack[0].type is BOOLTYPE
         self.stack.pop()
         self.__leave_block()
 
@@ -286,7 +286,7 @@ class StackWalker(object):
         # so any error messages show the whole setup
         fulltypes = [self.stack[index].type for index in (0, 1)]
         basetypes = [type.basetype for type in fulltypes]
-        if basetypes != [types.INTTYPE, types.INTTYPE]:
+        if basetypes != [INTTYPE, INTTYPE]:
             raise StackTypeError(op, self.stack)
         rtype = fulltypes[0].lowest_common_ancestor(fulltypes[1])
         assert rtype is not None
@@ -298,7 +298,7 @@ class StackWalker(object):
         # Check the types before mutating the stack
         # so any error messages show the whole setup
         ftype = self.stack[0].basetype
-        if not isinstance(ftype, types.FuncType):
+        if not ftype.is_function:
             raise StackError(op, self.stack, "stack[0] not a function:")
         num_params = len(ftype.paramtypes)
         self.stack.underflow_check(1 + num_params)
@@ -337,7 +337,7 @@ class StackWalker(object):
         # Now pop everything and push the result
         self.stack.pop()
         self.stack.pop()
-        self.stack.push(Value.computed(types.BOOLTYPE))
+        self.stack.push(Value.computed(BOOLTYPE))
 
     def visit_constop(self, op):
         self.stack.push(Value.from_ast_constant(op))
@@ -350,7 +350,7 @@ class StackWalker(object):
         # Check the types before mutating the stack
         # so any error messages show the whole setup
         type = self.stack[0].type
-        if not type.basetype is types.PTRTYPE:
+        if not type.basetype is PTRTYPE:
             raise StackTypeError(op, self.stack)
         self.stack.pop()
         self.stack.push(Value.computed(rtype))
@@ -404,9 +404,9 @@ class StackWalker(object):
         # so any error messages show the whole setup
         fulltypes = [self.stack[index].type for index in (0, 1)]
         basetypes = [type.basetype for type in fulltypes]
-        if basetypes == [types.INTTYPE, types.PTRTYPE]:
-            rtype = types.PTRTYPE
-        elif basetypes == [types.INTTYPE, types.INTTYPE]:
+        if basetypes == [INTTYPE, PTRTYPE]:
+            rtype = PTRTYPE
+        elif basetypes == [INTTYPE, INTTYPE]:
             rtype = fulltypes[0].lowest_common_ancestor(fulltypes[1])
             assert rtype is not None
         else:
@@ -437,7 +437,7 @@ class StackWalker(object):
     def visit_unaryop(self, op):
         # Check the types before mutating the stack
         # so any error messages show the whole setup
-        if self.stack[0].basetype is not types.INTTYPE:
+        if self.stack[0].basetype is not INTTYPE:
             raise StackTypeError(op, self.stack)
         a = self.stack.pop()
         self.stack.push(Value.computed(a.type))

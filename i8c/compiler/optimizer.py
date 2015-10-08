@@ -1,6 +1,6 @@
 from . import logger
 from . import operations
-from . import types
+from .types import INTTYPE
 import inspect
 import sys
 
@@ -61,7 +61,7 @@ class BlockOptimizer(Optimizer):
         if not block.ops[0].is_load_constant:
             return
         constant = block.ops[0]
-        if constant.type.basetype != types.INTTYPE:
+        if constant.type.basetype != INTTYPE:
             return
         return constant.value
 

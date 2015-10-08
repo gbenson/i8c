@@ -1,6 +1,6 @@
 from i8c.tests import TestCase
 from i8c.compiler import parser
-from i8c.compiler import types
+from i8c.compiler.types import INTTYPE, PTRTYPE, BOOLTYPE
 
 INPUT_TEST = """\
 define test::input_test
@@ -26,15 +26,15 @@ class TestLoadConstantInput(TestCase):
             for node in op.children:
                 self.assertIsInstance(node, parser.Constant)
                 constants.append([node.type, node.value])
-        self.assertEqual([[types.INTTYPE, 23],
-                          [types.INTTYPE, 023],
-                          [types.INTTYPE, 0x23],
-                          [types.INTTYPE, -17],
-                          [types.INTTYPE, -017],
-                          [types.INTTYPE, -0x17],
-                          [types.PTRTYPE, 0],
-                          [types.BOOLTYPE, 1],
-                          [types.BOOLTYPE, 0]], constants)
+        self.assertEqual([[INTTYPE, 23],
+                          [INTTYPE, 023],
+                          [INTTYPE, 0x23],
+                          [INTTYPE, -17],
+                          [INTTYPE, -017],
+                          [INTTYPE, -0x17],
+                          [PTRTYPE, 0],
+                          [BOOLTYPE, 1],
+                          [BOOLTYPE, 0]], constants)
 
 OUTPUT_TEST = (
     (0, "lit0"),
