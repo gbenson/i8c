@@ -61,7 +61,7 @@ class FuncType(BaseType):
         functype.returntypes.accept(self)
         ptypes = ", ".join((type.name for type in self.paramtypes))
         rtypes = ", ".join((type.name for type in self.returntypes))
-        name = "function"
+        name = "func"
         if rtypes:
             name += " " + rtypes
         name += " (%s)" % ptypes
