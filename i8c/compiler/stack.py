@@ -289,7 +289,7 @@ class StackWalker(object):
             sindex = num_params - pindex
             ptype = ftype.paramtypes[pindex]
             stype = self.stack[sindex].type
-            if stype != ptype:
+            if stype.basetype != ptype.basetype:
                 raise StackError(op, self.stack,
                                  "wrong type in stack[%d]" % sindex)
         # Now pop everything and push the result
