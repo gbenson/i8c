@@ -28,7 +28,7 @@ label: // ensure we hit the 1-exit case in blocks.Block.__str_
 """
 
 EXTERN0_NODE = """\
-FuncRef
+External
   FuncType [func int (int)]
     ReturnTypes
       BasicType: int [int]

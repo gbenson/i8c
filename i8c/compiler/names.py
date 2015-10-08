@@ -65,11 +65,8 @@ class NameAnnotator(object):
         for node in externals.children:
             node.accept(self)
 
-    def visit_funcref(self, funcref):
-        funcref.name.accept(self)
-
-    def visit_symref(self, symref):
-        symref.name.accept(self)
+    def visit_external(self, external):
+        external.name.accept(self)
 
     def visit_operations(self, ops):
         for node in ops.named_operations:

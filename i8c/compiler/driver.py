@@ -206,8 +206,8 @@ def setup_output(args):
 
 def compile(readline, write):
     tree = parser.build_tree(lexer.generate_tokens(readline))
-    tree.accept(names.NameAnnotator())
     tree.accept(types.TypeAnnotator())
+    tree.accept(names.NameAnnotator())
     tree.accept(blocks.BlockCreator())
     tree.accept(stack.StackWalker())
     tree.accept(optimizer.BlockOptimizer())

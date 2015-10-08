@@ -159,27 +159,32 @@ class StackWalker(object):
     # Build the entry stack
 
     def visit_parameters(self, parameters):
-        self.__visit_entry_slots(parameters)
-
-    def visit_parameter(self, param):
-        self.__visit_entry_slot(param)
-
-    def visit_externals(self, externals):
-        self.__visit_entry_slots(externals)
-
-    def visit_funcref(self, funcref):
-        self.__visit_entry_slot(funcref)
-
-    def visit_symref(self, symref):
-        self.__visit_entry_slot(symref)
-
-    def __visit_entry_slots(self, parameters):
         for node in parameters.children:
             node.accept(self)
 
-    def __visit_entry_slot(self, item):
-        self.entry_stack.push(Value(item.typename.type,
-                                    name=item.name.value))
+    def visit_parameter(self, param):
+        type = param.typename.type
+        name = param.name.value
+        self.entry_stack.push(Value(type, name))
+
+    def visit_externals(self, externals):
+        for node in externals.children:
+            node.accept(self)
+
+    def visit_external(self, external):
+        type = external.typename.type
+        name = external.name.value
+        if not type.is_function:
+            if not type.basetype is PTRTYPE:
+                raise ParsedError(
+                    external.typename,
+                    op, u"%s: invalid type for ‘extern’" % type.name)
+            if not name.is_shortname:
+                raise ParsedError(
+                    external.name,
+                    u"%s: invalid name for ‘extern %s’" % (
+                        name, type.name))
+        self.entry_stack.push(Value(type, name))
 
     # Build the return types
 
@@ -329,7 +334,7 @@ class StackWalker(object):
         rtype = op.type
         if not rtype.is_computable:
             raise ParsedError(
-                op, u"can't dereference to ‘%s’" % rtype.name)
+                op, u"%s: invalid type for ‘deref’" % rtype.name)
         # Check the types before mutating the stack
         # so any error messages show the whole setup
         type = self.stack[0].type

@@ -304,6 +304,12 @@ class TypeAndName(TreeNode):
     def name(self):
         return self.one_child((ShortName, FullName))
 
+class Parameters(TreeNode):
+    def consume(self, tokens):
+        if not self.tokens:
+            self.tokens = tokens
+        self.add_child(Parameter).consume(tokens)
+
 class Parameter(TypeAndName):
     def consume(self, tokens):
         if self.tokens:
@@ -312,38 +318,21 @@ class Parameter(TypeAndName):
         self.tokens = tokens
         TypeAndName.consume(self, tokens[1:], False)
 
-class FuncRef(TypeAndName):
+class Externals(TreeNode):
+    def consume(self, tokens):
+        if not self.tokens:
+            self.tokens = tokens
+        self.add_child(External).consume(tokens)
+
+class External(TypeAndName):
     def consume(self, tokens):
         if self.tokens:
             raise ParserError(tokens)
+        raise_unless_len(tokens, ATLEAST, 3)
         self.tokens = tokens
         TypeAndName.consume(self, tokens[1:], True)
 
-class SymRef(TypeAndName):
-    def consume(self, tokens):
-        if self.tokens:
-            raise ParserError(tokens)
-        raise_unless_len(tokens, EXACTLY, 3)
-        self.tokens = tokens
-        TypeAndName.consume(self, tokens[1:], False)
-
-class Parameters(TreeNode):
-    def consume(self, tokens):
-        if not self.tokens:
-            self.tokens = tokens
-        self.add_child(Parameter).consume(tokens)
-
-class Externals(TreeNode):
-    CLASSES = {"func": FuncRef, "ptr": SymRef}
-
-    def consume(self, tokens):
-        if not self.tokens:
-            self.tokens = tokens
-        raise_unless_len(tokens, ATLEAST, 2)
-        klass = self.CLASSES.get(tokens[1].text, None)
-        if klass is None:
-            raise ParserError(tokens)
-        self.add_child(klass).consume(tokens)
+# XXX
 
 class Label(Identifier):
     def consume(self, tokens):

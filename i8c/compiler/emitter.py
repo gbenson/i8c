@@ -1,5 +1,6 @@
 from .. import constants
 from . import logger
+from .types import PTRTYPE
 
 debug_print = logger.debug_printer_for(__name__)
 
@@ -80,23 +81,30 @@ class ExternTable(object):
         self.default_provider = default_provider
         self.entries = []
 
-    def visit_funcref(self, funcref):
-        fullname, type = funcref.name.value, funcref.typename.type
-        provider = fullname.provider or self.default_provider
-        self.entries.append(FuncRef(*map(self.strings.new, (
-            provider,
-            fullname.name,
-            "".join((t.encoding for t in type.paramtypes)),
-            "".join((t.encoding for t in type.returntypes))))))
-
-    def visit_symref(self, symref):
-        fullname = symref.name.value
-        assert fullname.is_shortname
-        self.entries.append(SymRef(fullname.name))
+    def visit_external(self, external):
+        basetype = external.typename.type.basetype
+        fullname = external.name.value
+        if basetype is PTRTYPE:
+            self.entries.append(RelAddr(fullname))
+        else:
+            assert basetype.is_function
+            provider = fullname.provider or self.default_provider
+            self.entries.append(FuncRef(*map(self.strings.new, (
+                provider,
+                fullname.name,
+                "".join((t.encoding for t in basetype.paramtypes)),
+                "".join((t.encoding for t in basetype.returntypes))))))
 
     def emit(self, emitter):
         for entry, index in zip(self.entries, xrange(len(self.entries))):
             entry.emit(emitter, "extern %d " % index)
+
+class RelAddr(object):
+    def __init__(self, name):
+        self.name = str(name)
+
+    def emit(self, emitter, prefix):
+        emitter.emit_8byte(self.name, prefix + "relative address")
 
 class FuncRef(object):
     def __init__(self, provider, name, params, returns):
@@ -110,13 +118,6 @@ class FuncRef(object):
         emitter.emit_2byte(self.name.offset, prefix + "name offset")
         emitter.emit_2byte(self.params.offset, prefix + "ptypes offset")
         emitter.emit_2byte(self.returns.offset, prefix + "rtypes offset")
-
-class SymRef(object):
-    def __init__(self, name):
-        self.name = name
-
-    def emit(self, emitter, prefix):
-        emitter.emit_8byte(self.name, prefix + "address")
 
 class Emitter(object):
     def __init__(self, write):
@@ -287,13 +288,14 @@ class Emitter(object):
         for node in returntypes.children:
             self.returntypes.append(node.type.encoding)
 
-    def visit_funcref(self, funcref):
-        self.externtypes.append("f")
-        funcref.accept(self.externs)
-
-    def visit_symref(self, symref):
-        self.externtypes.append("x")
-        symref.accept(self.externs)
+    def visit_external(self, external):
+        basetype = external.typename.type.basetype
+        if basetype is PTRTYPE:
+            self.externtypes.append("x")
+        else:
+            assert basetype.is_function
+            self.externtypes.append("f")
+        external.accept(self.externs)
 
     # Emit the bytecode
 

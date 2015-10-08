@@ -266,11 +266,8 @@ class TypeAnnotator(object):
         for node in externals.children:
             node.accept(self)
 
-    def visit_funcref(self, funcref):
-        funcref.typename.accept(self)
-
-    def visit_symref(self, symref):
-        symref.typename.accept(self)
+    def visit_external(self, external):
+        external.typename.accept(self)
 
     def annotate_basictype(self, basictype):
         basictype.type = self.get_type(basictype)
