@@ -576,4 +576,5 @@ def build_tree(tokens):
                 raise NotImplementedError
         return tree
     finally:
-        debug_print("%s\n\n" % tree)
+        if debug_print.is_enabled:
+            debug_print("%s\n\n" % tree)
