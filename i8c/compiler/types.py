@@ -10,7 +10,21 @@ class Type(object):
     def __init__(self, name):
         self.name = name
 
-class RootType(Type):
+    def lowest_common_ancestor(self, other):
+        last = None
+        for type1, type2 in zip(self.__lca_path(), other.__lca_path()):
+            if type1 is not type2:
+                break
+            last = type1
+        return last
+
+    def __lca_path(self):
+        parent = self.basetype
+        if parent == self:
+            return (self,)
+        return self.parent.__lca_path() + (self,)
+
+class BaseType(Type):
     """Base class for types that are not an alias for some other type.
     """
     @property
@@ -21,40 +35,27 @@ class RootType(Type):
     def sizedtype(self):
         return None
 
-    @property
-    def is_computable(self):
-        return self in (INTTYPE, PTRTYPE)
-
-class AliasType(Type):
-    """Base class for types that are aliases for some other type.
+class CoreType(BaseType):
+    """The three core types: int, ptr and opaque.
     """
-    def __init__(self, name, parent):
-        assert parent is not None
-        Type.__init__(self, name)
-        self.parent = parent
+    class_init_complete = False
+    is_function = False
 
-    @property
-    def basetype(self):
-        return self.parent.basetype
+    def __init__(self, name, is_computable):
+        assert not CoreType.class_init_complete
+        BaseType.__init__(self, name)
+        self.is_computable = is_computable
 
-    @property
-    def sizedtype(self):
-        return self.parent.sizedtype
-
-    @property
-    def is_computable(self):
-        return self.parent.is_computable
-
-    @property
-    def encoding(self):
-        return self.parent.encoding
-
-class CoreType(RootType):
     @property
     def encoding(self):
         return self.name[0]
 
-class FuncType(RootType):
+class FuncType(BaseType):
+    """Function types.
+    """
+    is_computable = False
+    is_function = True
+
     def __init__(self, functype):
         functype.paramtypes.accept(self)
         functype.returntypes.accept(self)
@@ -98,8 +99,41 @@ class FuncType(RootType):
     def visit_functype(self, functype):
         self.__list.append(functype.type)
 
+class AliasType(Type):
+    """A type that is an alias for some other type.
+    """
+    def __init__(self, name, parent):
+        assert parent is not None
+        Type.__init__(self, name)
+        self.parent = parent
+
+    @property
+    def basetype(self):
+        return self.parent.basetype
+
+    @property
+    def sizedtype(self):
+        return self.parent.sizedtype
+
+    @property
+    def is_computable(self):
+        return self.parent.is_computable
+
+    @property
+    def is_function(self):
+        return self.parent.is_function
+
+    @property
+    def encoding(self):
+        return self.parent.encoding
+
 class SizedType(AliasType):
+    """The sized-integer types used by "deref".
+    """
+    class_init_complete = False
+
     def __init__(self, size_bytes, is_signed):
+        assert not SizedType.class_init_complete
         name = "%s%d" % (is_signed and "s" or "u", size_bytes << 3)
         AliasType.__init__(self, name, INTTYPE)
         self.size_bytes = size_bytes
@@ -115,28 +149,15 @@ def __create_builtin_types():
     def add_builtin_type(type):
         globals()[type.name.upper() + "TYPE"] = type
     for name in ("int", "ptr", "opaque"):
-        add_builtin_type(CoreType(name))
+        add_builtin_type(CoreType(name, name != "opaque"))
+    CoreType.class_init_complete = True
     add_builtin_type(AliasType("bool", INTTYPE))
     for is_signed in range(2):
         for shift in range(4):
             size = 1 << shift
             add_builtin_type(SizedType(size, is_signed))
+    SizedType.class_init_complete = True
 __create_builtin_types()
-
-def __lca_path(type):
-    if hasattr(type, "parent"):
-        parents = __lca_path(type.parent)
-    else:
-        parents = ()
-    return parents + (type,)
-
-def lowest_common_ancestor(type1, type2):
-    last = None
-    for type1, type2 in zip(*map(__lca_path, (type1, type2))):
-        if type1 is not type2:
-            break
-        last = type1
-    return last
 
 class TypeAnnotator(object):
     def visit_toplevel(self, toplevel):

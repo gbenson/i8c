@@ -266,7 +266,7 @@ class StackWalker(object):
         if types.PTRTYPE in basetypes:
             rtype = types.PTRTYPE
         else:
-            rtype = types.lowest_common_ancestor(*fulltypes)
+            rtype = fulltypes[0].lowest_common_ancestor(fulltypes[1])
             if rtype is None:
                 # One of the types was not INTTYPE
                 raise StackTypeError(op, self.stack)
@@ -288,7 +288,7 @@ class StackWalker(object):
         basetypes = [type.basetype for type in fulltypes]
         if basetypes != [types.INTTYPE, types.INTTYPE]:
             raise StackTypeError(op, self.stack)
-        rtype = types.lowest_common_ancestor(*fulltypes)
+        rtype = fulltypes[0].lowest_common_ancestor(fulltypes[1])
         assert rtype is not None
         self.stack.pop()
         self.stack.pop()
@@ -407,7 +407,7 @@ class StackWalker(object):
         if basetypes == [types.INTTYPE, types.PTRTYPE]:
             rtype = types.PTRTYPE
         elif basetypes == [types.INTTYPE, types.INTTYPE]:
-            rtype = types.lowest_common_ancestor(*fulltypes)
+            rtype = fulltypes[0].lowest_common_ancestor(fulltypes[1])
             assert rtype is not None
         else:
             raise StackTypeError(op, self.stack)
