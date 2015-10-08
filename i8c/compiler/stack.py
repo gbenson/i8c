@@ -105,25 +105,7 @@ class Stack(object):
                           for slot in xrange(len(self.slots))))
 
 class Value:
-    @staticmethod
-    def computed(type):
-        """A value that was computed.
-        """
-        return Value(type, None, None)
-
-    @staticmethod
-    def from_ast_constant(const):
-        """A value created from a constant in the AST.
-        """
-        return Value(const.type, None, const.value)
-
-    @staticmethod
-    def from_ast_parameter(param):
-        """A value created from a parameter in the AST.
-        """
-        return Value(param.typename.type, param.name.value, None)
-
-    def __init__(self, thetype, name, value):
+    def __init__(self, thetype, name=None, value=None):
         assert thetype is not None
         assert isinstance(thetype, Type)
         self.type = thetype
@@ -195,8 +177,9 @@ class StackWalker(object):
         for node in parameters.children:
             node.accept(self)
 
-    def __visit_entry_slot(self, param):
-        self.entry_stack.push(Value.from_ast_parameter(param))
+    def __visit_entry_slot(self, item):
+        self.entry_stack.push(Value(item.typename.type,
+                                    name=item.name.value))
 
     # Build the return types
 
@@ -273,7 +256,7 @@ class StackWalker(object):
         # Now pop everything and push the result
         self.stack.pop()
         self.stack.pop()
-        self.stack.push(Value.computed(rtype))
+        self.stack.push(Value(rtype))
 
     def visit_branchop(self, op):
         assert self.stack[0].type is BOOLTYPE
@@ -292,7 +275,7 @@ class StackWalker(object):
         assert rtype is not None
         self.stack.pop()
         self.stack.pop()
-        self.stack.push(Value.computed(rtype))
+        self.stack.push(Value(rtype))
 
     def visit_callop(self, op):
         # Check the types before mutating the stack
@@ -315,7 +298,7 @@ class StackWalker(object):
         num_returns = len(ftype.returntypes)
         for sindex in xrange(num_returns):
             rindex = num_returns - sindex - 1
-            self.stack.push(Value.computed(ftype.returntypes[rindex]))
+            self.stack.push(Value(ftype.returntypes[rindex]))
 
     def visit_castop(self, op):
         self.__pick_op = op
@@ -337,10 +320,10 @@ class StackWalker(object):
         # Now pop everything and push the result
         self.stack.pop()
         self.stack.pop()
-        self.stack.push(Value.computed(BOOLTYPE))
+        self.stack.push(Value(BOOLTYPE))
 
     def visit_constop(self, op):
-        self.stack.push(Value.from_ast_constant(op))
+        self.stack.push(Value(op.type, value=op.value))
 
     def visit_derefop(self, op):
         rtype = op.type
@@ -353,7 +336,7 @@ class StackWalker(object):
         if not type.basetype is PTRTYPE:
             raise StackTypeError(op, self.stack)
         self.stack.pop()
-        self.stack.push(Value.computed(rtype))
+        self.stack.push(Value(rtype))
 
     def visit_dropop(self, op):
         self.stack.pop()
@@ -413,7 +396,7 @@ class StackWalker(object):
             raise StackTypeError(op, self.stack)
         self.stack.pop()
         self.stack.pop()
-        self.stack.push(Value.computed(rtype))
+        self.stack.push(Value(rtype))
 
     def visit_returnop(self, op):
         num_returns = len(self.returntypes)
@@ -440,7 +423,7 @@ class StackWalker(object):
         if self.stack[0].basetype is not INTTYPE:
             raise StackTypeError(op, self.stack)
         a = self.stack.pop()
-        self.stack.push(Value.computed(a.type))
+        self.stack.push(Value(a.type))
 
     def visit_swapop(self, op):
         a = self.stack.pop()
