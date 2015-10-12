@@ -2,7 +2,6 @@
 from . import BlockCreatorError
 from . import visitors
 from .operations import *
-import sys
 
 class BasicBlock(visitors.Visitable):
     def __init__(self, index):
