@@ -23,14 +23,14 @@ Usage: i8c [OPTION]... [FILE]...
 GNU Infinity note compiler.
 
 Options:
-  --help     Display this information
-  --version  Display version information
-  -E         Preprocess only; do not compile, assemble or link
-  -S         Compile only; do not assemble or link
-  -c         Compile and assemble, but do not link
+  --help     Display this information.
+  --version  Display version information.
+  -E         Preprocess only; do not compile, assemble or link.
+  -S         Compile only; do not assemble or link.
+  -c         Compile and assemble, but do not link.
   -fpreprocessed
              Do not preprocess.
-  -o FILE    Place the output into FILE
+  -o FILE    Place the output into FILE.
 
 Note that i8c uses GCC both to preprocess its input (unless invoked
 with ‘-fpreprocessed’) and to assemble its output (unless invoked with
