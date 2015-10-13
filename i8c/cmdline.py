@@ -12,5 +12,5 @@ There is NO WARRANTY, to the extent permitted by law.""" % (program,
 def usage_message_footer():
     return """
 
-Home page: <https://github.com/gbenson/i8c/>
+Home page: <https://pypi.python.org/pypi/i8c/>
 Bug tracker: <https://github.com/gbenson/i8c/issues/>"""

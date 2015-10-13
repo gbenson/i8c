@@ -12,8 +12,8 @@ except ImportError: # pragma: no cover
     import unittest
 
 USAGE = u"""\
-Usage: i8x [OPTION]... TESTCASE...
-   or: i8x [OPTION]... [-q|--quick] FUNCTION [ARG]...
+Usage: i8x [OPTION]... TESTFILE...
+   or: i8x [OPTION]... [-q|--quick] FUNCTION [ARGUMENT]...
 
 GNU Infinity note execution environment.
 
@@ -24,7 +24,8 @@ Options:
                         that TestCase.import_constants_from will search
                         for header files.
   -i, --import=ELFFILE  Import notes from ELFFILE.
-  -q, --quick=FUNCTION  Execute FUNCTION with arguments from the command line.
+  -q, --quick           Execute the function and arguments specified on
+                        command line.
   -t, --trace           Trace function execution.  This option may be
                         specified multiple times for greater detail.""" \
     + cmdline.usage_message_footer()

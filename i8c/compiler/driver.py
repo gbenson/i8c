@@ -37,7 +37,7 @@ with ‘-fpreprocessed’) and to assemble its output (unless invoked with
 ‘-E’ or ‘-S’).  If GCC is used, all options not explicitly listed
 above will be passed to GCC unmodified.
 
-In general I8C operates like GCC, so if you are used to GCC then I8C
+In general I8C operates like GCC, so if you’re used to GCC then I8C
 should make sense.  Try it!
 
 In most cases the command you want is ‘i8c -c file.i8’, which reads
