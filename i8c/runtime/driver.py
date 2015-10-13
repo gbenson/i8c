@@ -6,8 +6,6 @@ from . import TestCase
 import getopt
 import imp
 import os
-import subprocess
-import tempfile
 try:
     import unittest2 as unittest
 except ImportError: # pragma: no cover
@@ -35,44 +33,16 @@ class TestSuite(unittest.TestSuite):
     def __init__(self, *args, **kwargs):
         unittest.TestSuite.__init__(self, *args, **kwargs)
         self.__loader = unittest.TestLoader()
-        self.__tmpdir = tempfile.mkdtemp()
-
-    def __del__(self):
-        subprocess.call(("rm", "-rf", self.__tmpdir))
 
     def load_i8tests(self, ctx, filename):
-        # Patch the source
-        filename = self.__patch_source(filename)
-        # Load the patched source
         name = os.path.splitext(os.path.basename(filename))[0]
         module = imp.load_source(name, filename)
-        # Add all the tests
         for name in dir(module):
             item = getattr(module, name)
             if (item is not TestCase
                 and type(item) is type
                 and issubclass(item, TestCase)):
                 self.addTest(self.__loader.loadTestsFromTestCase(item))
-
-    def __patch_source(self, filename):
-        # Patch the code.  We replace one line with one line
-        # to preserve line numbers in exception reports.
-        lines = open(filename).readlines()
-        for index, line in zip(xrange(len(lines)), lines):
-            if not line.lstrip().startswith("TestCase.import_"):
-                continue
-            line = line.replace("TestCase.", "TestCase.i8ctx.", 1)
-            sub = "(globals(), %s" % repr(filename)
-            line = line.replace("(", sub + ", ", 1)
-            line = line.replace(sub + ", )", sub + ")")
-            lines[index] = line
-        # Write the patched file with the same basename, so
-        # the file part is right in exceptions even if the
-        # absolute pathname is different.
-        name = os.path.splitext(os.path.basename(filename))[0]
-        filename = os.path.join(self.__tmpdir, name + ".py")
-        open(filename, "w").write("".join(lines))
-        return filename
 
 def main(args):
     try:
@@ -93,7 +63,7 @@ def main(args):
             print cmdline.version_message_for("i8x")
             return
         elif opt == "-I":
-            ctx.include_path.append(arg)
+            TestCase.include_path.append(arg)
         elif opt in ("-i", "--import"):
             ctx.import_notes(arg)
         elif opt in ("-q", "--quick"):

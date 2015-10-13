@@ -2,45 +2,14 @@ from . import *
 from . import elffile
 from . import functions
 from . import stack
-import copy
-import os
 
 class Context(object):
     def __init__(self):
         self.functions = {}
         self.env = None
         self.wordsize = None
-        self.include_path = []
         self.tracelevel = 0
         self.__last_traced = None
-
-    # Methods to handle constant import directives in testcases
-
-    def import_builtin_constants(self, mod, fromfile):
-        mod.update({"NULL": 0, "FALSE": 0, "TRUE": 1})
-
-    def import_constants_from(self, mod, fromfile, arg):
-        path = copy.copy(self.include_path)
-        path.insert(0, os.path.dirname(fromfile))
-        for dir in path:
-            filename = os.path.join(dir, arg)
-            if os.path.exists(filename):
-                self.__import_constants_from(mod, filename)
-                return
-        raise TestFileError(arg, "not found in: " + repr(path))
-
-    def __import_constants_from(self, mod, filename):
-        lines = open(filename).readlines()
-        for line, linenumber in zip(lines, range(1, len(lines) + 1)):
-            bits = line.strip().split()
-            try:
-                assert len(bits) == 3 and bits[0] == "#define"
-                name, value = bits[1:]
-                value = int(value, 0)
-                assert isinstance(value, (int, long))
-                mod[name] = value
-            except:
-                raise HeaderFileError(filename, linenumber)
 
     # Methods to XXX
 
