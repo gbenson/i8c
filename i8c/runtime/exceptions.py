@@ -61,14 +61,14 @@ class UndefinedFunctionError(FunctionLookupError):
     """
     def __init__(self, signature, reference=None):
         FunctionLookupError.__init__(
-            self, "undefined function ‘%s’" % signature, reference)
+            self, u"undefined function ‘%s’" % signature, reference)
 
 class AmbiguousFunctionError(FunctionLookupError):
     """Multiple copies of the requested function were found.
     """
     def __init__(self, signature, reference=None):
         FunctionLookupError.__init__(
-            self, "function ‘%s’ defined more than once" % signature,
+            self, u"function ‘%s’ defined more than once" % signature,
             reference)
 
 class ExecutionError(I8XError):
