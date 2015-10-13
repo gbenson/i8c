@@ -6,6 +6,7 @@ from .operations import *
 class BasicBlock(visitors.Visitable):
     def __init__(self, index):
         self.index = index
+        self.entries = {}
         self.ops = []
 
     @property
@@ -111,8 +112,13 @@ class BlockCreator(object):
 
         for block in blocks:
             block.set_exits(labels)
+            for exit_block in block.exits:
+                exit_block.entries[block] = True
+        for block in blocks:
+            block.entries = block.entries.keys()
 
         function.entry_block = blocks[0]
+        function.entry_block.entries.append(None)
 
     def new_synthetic_label(self, target):
         # Create a synthetic label.  Using an integer

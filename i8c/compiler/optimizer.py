@@ -54,7 +54,7 @@ class BlockOptimizer(Optimizer):
     def __tecbcc_helper(self, block):
         """Helper for try_eliminate_cmp_bra_const_const.
         """
-        if len(block.entry_stacks) != 1:
+        if len(block.entries) != 1:
             return
         if len(block.ops) < 2:
             return
@@ -149,8 +149,8 @@ class BlockOptimizer(Optimizer):
 
         # Lose one of the successor blocks (doesn't matter which)
         dead_block = block.exits.pop()
-        dead_block.entry_stacks.pop(block)
-        assert not dead_block.entry_stacks
+        dead_block.entries.remove(block)
+        assert not dead_block.entries
 
         # Reduce the branch to a goto
         block.ops[-1] = operations.SyntheticGoto(block.ops[-1])
