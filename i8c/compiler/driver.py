@@ -32,12 +32,12 @@ Options:
              Do not preprocess.
   -o FILE    Place the output into FILE.
 
-Note that i8c uses GCC both to preprocess its input (unless invoked
+Note that I8C uses GCC both to preprocess its input (unless invoked
 with ‘-fpreprocessed’) and to assemble its output (unless invoked with
 ‘-E’ or ‘-S’).  If GCC is used, all options not explicitly listed
 above will be passed to GCC unmodified.
 
-In general i8c operates like GCC, so if you are used to GCC then i8c
+In general I8C operates like GCC, so if you are used to GCC then I8C
 should make sense.  Try it!
 
 In most cases the command you want is ‘i8c -c file.i8’, which reads

@@ -1,18 +1,24 @@
 from setuptools import setup
+from codecs import open
+from os import path
+
+here = path.realpath(path.dirname(__file__))
+
+with open(path.join(here, "README.rst"), encoding="utf-8") as fp:
+    long_description = fp.read()
 
 setup(
     name="i8c",
     version="0.0.1",
-    description="GNU Infinity note compiler",
-    #XXX long_description
-    #XXX see https://github.com/pypa/sampleproject/blob/master/setup.py
+    description="GNU Infinity note development kit",
+    long_description=long_description,
     license="GPLv3+",
     author="Gary Benson",
     author_email="gbenson@redhat.com",
-    url="https://github.com/gbenson/i8c",
+    url="https://github.com/gbenson/i8c/",
     classifiers=[
-        # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
-        "Development Status :: 2 - Pre-Alpha",
+        # https://pypi.python.org/pypi?%3Aaction=list_classifiers
+        "Development Status :: 3 - Alpha",
         "Environment :: Console",
         "Intended Audience :: Developers",
         "License :: OSI Approved" +

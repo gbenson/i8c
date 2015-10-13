@@ -12,5 +12,5 @@ There is NO WARRANTY, to the extent permitted by law.""" % (program,
 def usage_message_footer():
     return """
 
-Report bugs to gbenson@redhat.com.
-i8c home page: <https://github.com/gbenson/i8c/>"""
+Home page: <https://github.com/gbenson/i8c/>
+Bug tracker: <https://github.com/gbenson/i8c/issues/>"""
