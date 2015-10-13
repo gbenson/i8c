@@ -18,10 +18,14 @@ class Stack(object):
         self.is_mutable = True
         self.max_depth = 0
 
+    @property
+    def depth(self):
+        return len(self.slots)
+
     def push(self, item):
         assert self.is_mutable
         self.slots.insert(0, item)
-        self.max_depth = max(self.max_depth, len(self.slots))
+        self.max_depth = max(self.max_depth, self.depth)
 
     def pop(self):
         assert self.is_mutable
@@ -58,7 +62,7 @@ class Stack(object):
         else:
             search = [name]
         results = []
-        for value, index in zip(self.slots, xrange(len(self.slots))):
+        for value, index in zip(self.slots, xrange(self.depth)):
             # Does this slot match the names we're looking for?
             if not self.__names_match(search, value.names):
                 continue
@@ -91,7 +95,7 @@ class Stack(object):
         return result
 
     def underflow_check(self, depth):
-        if len(self.slots) < depth:
+        if self.depth < depth:
             raise StackError(self.current_op, None, "stack underflow")
 
     def __getitem__(self, index):
@@ -102,7 +106,7 @@ class Stack(object):
         if not self.slots:
             return "   <empty stack>"
         return "\n".join(("%4d: %s" % (slot, self[slot])
-                          for slot in xrange(len(self.slots))))
+                          for slot in xrange(self.depth)))
 
 class Value:
     def __init__(self, thetype, name=None, value=None):
