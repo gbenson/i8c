@@ -63,3 +63,14 @@ class StackTypeError(StackError):
         types = " and ".join(types)
         msg = "can't %s %s" % (cause.verb, types)
         StackError.__init__(self, cause, stack, msg)
+
+class StackMergeError(StackError):
+    def __init__(self, (from_op, to_op), (prev_stack, new_stack), slot=None):
+        msg = "\narriving from %s with stack:\n%s\n" % (
+            from_op.fileline, new_stack)
+        msg += "can't merge with previously walked stack:\n%s\n" % prev_stack
+        if slot is not None:
+            msg += "because of incompatible type at stack[%d]." % slot
+        else:
+            msg += "because depths differ"
+        StackError.__init__(self, to_op, None, msg)

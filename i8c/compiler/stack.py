@@ -3,6 +3,7 @@ from . import ParsedError
 from . import logger
 from . import names
 from . import StackError
+from . import StackMergeError
 from . import StackTypeError
 from .types import Type, INTTYPE, PTRTYPE, BOOLTYPE
 import copy
@@ -26,6 +27,11 @@ class Stack(object):
         assert self.is_mutable
         assert isinstance(elem, Element)
         self.slots.insert(0, elem)
+        self.max_depth = max(self.max_depth, self.depth)
+
+    def __push_back(self, item):
+        assert self.is_mutable
+        self.slots.append(item)
         self.max_depth = max(self.max_depth, self.depth)
 
     def pop(self):
@@ -109,6 +115,62 @@ class Stack(object):
             return "   <empty stack>"
         return "\n".join(("%4d: %s" % (slot, self[slot])
                           for slot in xrange(self.depth)))
+
+    def merge_into(self, previous, ops):
+        # There is a direction to this.  We (self) are a new stack
+        # joining anoterh, previously processed stack.  If no merge
+        # is necessary we indicate this by return the previous stack
+        # as our result (i.e. the result of the merge is no change,
+        # so the block does not need re-walking.
+
+        if previous is self:
+            return previous
+
+        if previous.depth != self.depth:
+            raise StackMergeError(ops, (previous, self))
+
+        merged = Stack(self.funcname)
+        for slot in range(self.depth):
+            selem = self[slot]
+            pelem = previous[slot]
+
+            if pelem is selem:
+                merged.__push_back(pelem)
+                continue
+
+            # Merge the types.
+            merged_type = pelem.type.lowest_common_ancestor(selem.type)
+            if merged_type is None:
+                raise StackMergeError(ops, (previous, self), slot)
+
+            # Merge the values.
+            if pelem.value == selem.value:
+                merged_value = pelem.value
+            else:
+                merged_value = None
+
+            # Merge the names.
+            merged_names = []
+            for name in pelem.names:
+                if name in selem.names:
+                    merged_names.append(name)
+
+            if (merged_type == pelem.type
+                and merged_value == pelem.value
+                and merged_names == pelem.names):
+                merged_elem = pelem
+            else:
+                merged_elem = Element(merged_type, None, merged_value)
+                merged_elem.names = merged_names
+
+            merged.__push_back(merged_elem)
+
+        if merged.slots == previous.slots:
+            return previous
+
+        merged.is_mutable = previous.is_mutable
+        merged.max_depth = max(previous.max_depth, self.max_depth)
+        return merged
 
 class Element:
     def __init__(self, thetype, name=None, value=None):
@@ -208,22 +270,13 @@ class StackWalker(object):
 
     def __enter_block(self, block, from_block, new_entry_stack):
         self.__current_block = block
-        if not hasattr(block, "entry_stacks"):
-            # First entry to BLOCK
-            block.entry_stacks = {}
-        old_entry_stack = block.entry_stacks.get(from_block, None)
-        if old_entry_stack is None:
-            # First entry to BLOCK from FROM_BLOCK
-            block.entry_stacks[from_block] = new_entry_stack
-        else:
-            # XXX return if nothing changed
-            # XXX the below is a temporary hack
-            if old_entry_stack is new_entry_stack:
-                return
-            raise NotImplementedError
-        if len(block.entry_stacks) != 1:
-            raise NotImplementedError
-        assert not hasattr(block, "entry_stack") # XXX
+        old_entry_stack = getattr(block, "entry_stack", None)
+        if old_entry_stack is not None:
+            new_entry_stack = new_entry_stack.merge_into(
+                old_entry_stack, (from_block.last_op,
+                                  block.first_op))
+            if new_entry_stack is old_entry_stack:
+                return # We've walked this block with this stack
         block.entry_stack = new_entry_stack
         block.accept(self)
 
