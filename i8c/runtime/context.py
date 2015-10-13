@@ -36,7 +36,7 @@ class Context(object):
             try:
                 assert len(bits) == 3 and bits[0] == "#define"
                 name, value = bits[1:]
-                value = eval(value)
+                value = int(value, 0)
                 assert isinstance(value, (int, long))
                 mod[name] = value
             except:

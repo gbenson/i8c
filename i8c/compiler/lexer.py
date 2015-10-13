@@ -37,7 +37,7 @@ class WORD(Token): pass
 class NUMBER(Token):
     def __init__(self, *args):
         Token.__init__(self, *args)
-        self.value = eval(self.text)
+        self.value = int(self.text, 0)
 
 SIMPLE_CLASSES = {
     ",": COMMA,
