@@ -20,7 +20,7 @@ import sys
 USAGE = u"""\
 Usage: i8c [OPTION]... [FILE]...
 
-GNU Infinity note compiler.
+Infinity note compiler.
 
 Options:
   --help     Display this information.

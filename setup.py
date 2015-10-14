@@ -11,7 +11,7 @@ with open(path.join(here, "README.rst"), encoding="utf-8") as fp:
 setup(
     name="i8c",
     version="0.0.1",
-    description="GNU Infinity note compiler",
+    description="Infinity note compiler",
     long_description=long_description,
     license="GPLv3+",
     author="Gary Benson",

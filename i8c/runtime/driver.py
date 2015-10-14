@@ -15,7 +15,7 @@ USAGE = u"""\
 Usage: i8x [OPTION]... TESTFILE...
    or: i8x [OPTION]... [-q|--quick] FUNCTION [ARGUMENT]...
 
-GNU Infinity note execution environment.
+Infinity note execution environment.
 
 Options:
   --help                Display this information.

@@ -1,11 +1,11 @@
-GNU Infinity Note Compiler
-==========================
+Infinity Note Compiler
+======================
 
-GNU Infinity is a platform-independent system for executables and
-shared libraries to export information to software development tools
-such as debuggers.
+Infinity is a platform-independent system for executables and shared
+libraries to export information to software development tools such as
+debuggers.
 
-In GNU Infinity, executable and shared library files contain *infinity
+In Infinity, executable and shared library files contain *infinity
 notes* in addition to their regular contents.  Each infinity note
 contains a function encoded in a platform-independent instruction
 set that note-consuming tools can load and execute.
@@ -48,7 +48,7 @@ make sense.
 Execution Environment
 ---------------------
 
-I8X is an execution environment for testing GNU Infinity notes.  When
+I8X is an execution environment for testing Infinity notes.  When
 invoked as |i8x --quick| (or |i8x -q|) I8X executes a single note
 function, taking arguments from the command line and displaying the
 result on the console::
