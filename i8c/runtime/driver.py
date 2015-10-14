@@ -34,7 +34,7 @@ USAGE = u"""\
 Usage: i8x [OPTION]... TESTFILE...
    or: i8x [OPTION]... [-q|--quick] FUNCTION [ARGUMENT]...
 
-Infinity note execution environment.
+Infinity Note Execution Environment.
 
 Options:
   --help                Display this information.

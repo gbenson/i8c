@@ -37,7 +37,7 @@ import sys
 USAGE = u"""\
 Usage: i8c [OPTION]... [FILE]...
 
-Infinity note compiler.
+Infinity Note Compiler.
 
 Options:
   --help     Display this information.
