@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from i8c.tests import TestCase
 
 # Simple testcase with only the load constant in the blocks

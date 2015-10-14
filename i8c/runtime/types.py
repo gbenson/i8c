@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from . import CorruptNoteError, UnhandledNoteError
 
 class Type(object):

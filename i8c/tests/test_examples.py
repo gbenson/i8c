@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from i8c.tests import TestCase
 from i8c import compiler
 from i8c import runtime

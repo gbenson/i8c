@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 NT_GNU_INFINITY = 5
 
 I8_FUNCTION_MAGIC = (ord("i") << 8) | ord("8")

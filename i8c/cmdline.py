@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from . import version
 
 def version_message_for(program):

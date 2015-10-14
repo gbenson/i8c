@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from i8c.tests import TestCase
 
 # In this miscompilation the final "call" was dropped as unreachable

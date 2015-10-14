@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from .exceptions import *
 from .logger import loggers
 import sys

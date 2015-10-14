@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from . import I8XError, HeaderFileError, TestFileError
 import copy
 import inspect

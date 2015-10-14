@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from i8c.tests import TestCase
 
 SOURCE = "define test::pretty_minimal"

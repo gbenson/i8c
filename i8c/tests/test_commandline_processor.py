@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from i8c.tests import TestCase
 from i8c.compiler import I8CError, loggers
 from i8c.compiler.driver import CommandLine

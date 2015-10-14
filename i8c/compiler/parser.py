@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from . import lexer
 from . import logger
 from . import ParserError

@@ -1,5 +1,4 @@
-# This file is an i8x testcase and cannot be run standalone
-
+# -*- coding: utf-8 -*-
 from i8c.runtime import TestCase
 
 class TestFactorial(TestCase):
