@@ -22,9 +22,10 @@ class Stack(object):
     def depth(self):
         return len(self.slots)
 
-    def push(self, item):
+    def push(self, elem):
         assert self.is_mutable
-        self.slots.insert(0, item)
+        assert isinstance(elem, Element)
+        self.slots.insert(0, elem)
         self.max_depth = max(self.max_depth, self.depth)
 
     def pop(self):
@@ -36,18 +37,18 @@ class Stack(object):
         assert self.is_mutable
         assert name is None or isinstance(name, names.Name)
         self.underflow_check(index)
-        value = copy.copy(self.slots[index])
-        value.names = copy.copy(value.names)
-        value.names.append(name)
-        self.slots[index] = value
+        elem = copy.copy(self.slots[index])
+        elem.names = copy.copy(elem.names)
+        elem.names.append(name)
+        self.slots[index] = elem
 
     def cast_slot(self, index, type):
         assert self.is_mutable
         assert isinstance(type, Type)
         self.underflow_check(index)
-        value = copy.copy(self.slots[index])
-        value.type = type
-        self.slots[index] = value
+        elem = copy.copy(self.slots[index])
+        elem.type = type
+        self.slots[index] = elem
 
     def indexes_for(self, name):
         assert isinstance(name, names.Name)
@@ -63,12 +64,12 @@ class Stack(object):
         else:
             search = [name]
         results = []
-        for value, index in zip(self.slots, xrange(self.depth)):
+        for elem, index in zip(self.slots, xrange(self.depth)):
             # Does this slot match the names we're looking for?
-            if not self.__names_match(search, value.names):
+            if not self.__names_match(search, elem.names):
                 continue
             # Is this slot just a copy of a previous result?
-            if value in (self.slots[result] for result in results):
+            if elem in (self.slots[result] for result in results):
                 continue
             # This is a new match
             results.append(index)
@@ -87,8 +88,8 @@ class Stack(object):
     def mutable_copy(self):
         assert not self.is_mutable
         # Don't use deepcopy.  We want to copy the slots list
-        # but copying values is wasteful (we don't need it)
-        # and copying value types is problematic as it breaks
+        # but copying elements is wasteful (we don't need it)
+        # and copying element types is problematic as it breaks
         # "is" comparison.
         result = copy.copy(self)
         result.slots = copy.copy(self.slots)
@@ -109,7 +110,7 @@ class Stack(object):
         return "\n".join(("%4d: %s" % (slot, self[slot])
                           for slot in xrange(self.depth)))
 
-class Value:
+class Element:
     def __init__(self, thetype, name=None, value=None):
         assert thetype is not None
         assert isinstance(thetype, Type)
@@ -170,7 +171,7 @@ class StackWalker(object):
     def visit_parameter(self, param):
         type = param.typename.type
         name = param.name.value
-        self.entry_stack.push(Value(type, name))
+        self.entry_stack.push(Element(type, name))
 
     def visit_externals(self, externals):
         for node in externals.children:
@@ -189,7 +190,7 @@ class StackWalker(object):
                     external.name,
                     u"%s: invalid name for ‘extern %s’" % (
                         name, type.name))
-        self.entry_stack.push(Value(type, name))
+        self.entry_stack.push(Element(type, name))
 
     # Build the return types
 
@@ -266,7 +267,7 @@ class StackWalker(object):
         # Now pop everything and push the result
         self.stack.pop()
         self.stack.pop()
-        self.stack.push(Value(rtype))
+        self.stack.push(Element(rtype))
 
     def visit_branchop(self, op):
         assert self.stack[0].type is BOOLTYPE
@@ -285,7 +286,7 @@ class StackWalker(object):
         assert rtype is not None
         self.stack.pop()
         self.stack.pop()
-        self.stack.push(Value(rtype))
+        self.stack.push(Element(rtype))
 
     def visit_callop(self, op):
         # Check the types before mutating the stack
@@ -308,7 +309,7 @@ class StackWalker(object):
         num_returns = len(ftype.returntypes)
         for sindex in xrange(num_returns):
             rindex = num_returns - sindex - 1
-            self.stack.push(Value(ftype.returntypes[rindex]))
+            self.stack.push(Element(ftype.returntypes[rindex]))
 
     def visit_castop(self, op):
         self.__pick_op = op
@@ -330,10 +331,10 @@ class StackWalker(object):
         # Now pop everything and push the result
         self.stack.pop()
         self.stack.pop()
-        self.stack.push(Value(BOOLTYPE))
+        self.stack.push(Element(BOOLTYPE))
 
     def visit_constop(self, op):
-        self.stack.push(Value(op.type, value=op.value))
+        self.stack.push(Element(op.type, value=op.value))
 
     def visit_derefop(self, op):
         rtype = op.type
@@ -346,7 +347,7 @@ class StackWalker(object):
         if not type.basetype is PTRTYPE:
             raise StackTypeError(op, self.stack)
         self.stack.pop()
-        self.stack.push(Value(rtype))
+        self.stack.push(Element(rtype))
 
     def visit_dropop(self, op):
         self.stack.pop()
@@ -406,7 +407,7 @@ class StackWalker(object):
             raise StackTypeError(op, self.stack)
         self.stack.pop()
         self.stack.pop()
-        self.stack.push(Value(rtype))
+        self.stack.push(Element(rtype))
 
     def visit_returnop(self, op):
         num_returns = len(self.returntypes)
@@ -433,7 +434,7 @@ class StackWalker(object):
         if self.stack[0].basetype is not INTTYPE:
             raise StackTypeError(op, self.stack)
         a = self.stack.pop()
-        self.stack.push(Value(a.type))
+        self.stack.push(Element(a.type))
 
     def visit_swapop(self, op):
         a = self.stack.pop()
