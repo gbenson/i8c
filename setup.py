@@ -30,7 +30,7 @@ setup(
     version="0.0.1",
     description="Infinity note compiler",
     long_description=long_description,
-    license="GPLv3+",
+    license="GPLv3+ and LGPLv2.1+",
     author="Gary Benson",
     author_email="gbenson@redhat.com",
     url="https://github.com/gbenson/i8c/",
@@ -41,6 +41,8 @@ setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved" +
             " :: GNU General Public License v3 or later (GPLv3+)",
+        "License :: OSI Approved" +
+            " :: GNU Lesser General Public License v2 or later (LGPLv2+)"
         "Operating System :: OS Independent",
         "Topic :: Software Development :: Compilers",
         "Programming Language :: Python :: 2",
