@@ -13,7 +13,7 @@ class Stack(object):
     def __init__(self, funcname):
         assert isinstance(funcname, names.Name)
         assert funcname.provider is not None
-        self.funcprovider = funcname.provider
+        self.funcname = funcname
         self.slots = []
         self.is_mutable = True
         self.max_depth = 0
@@ -51,14 +51,15 @@ class Stack(object):
 
     def indexes_for(self, name):
         assert isinstance(name, names.Name)
+        ourprovider = self.funcname.provider
         # Set search to either
-        #   shortname, funcprovider::shortname
+        #   shortname, ourprovider::shortname
         # or
         #   otherprovider::shortname
-        if name.is_fullname and name.provider == self.funcprovider:
-            search = [name.without_provider(self.funcprovider), name]
+        if name.is_fullname and name.provider == ourprovider:
+            search = [name.without_provider(ourprovider), name]
         elif name.is_shortname:
-            search = [name, name.with_provider(self.funcprovider)]
+            search = [name, name.with_provider(ourprovider)]
         else:
             search = [name]
         results = []
