@@ -30,6 +30,9 @@ Options:
                         specified multiple times for greater detail.""" \
     + cmdline.usage_message_footer()
 
+LICENSE = ("LGPLv2.1+: GNU LGPL version 2.1 or later",
+           "http://www.gnu.org/licenses/lgpl-2.1.html")
+
 class TestSuite(unittest.TestSuite):
     def __init__(self, *args, **kwargs):
         unittest.TestSuite.__init__(self, *args, **kwargs)
@@ -61,7 +64,7 @@ def main(args):
             print USAGE
             return
         elif opt == "--version":
-            print cmdline.version_message_for("i8x")
+            print cmdline.version_message_for("i8x", LICENSE)
             return
         elif opt == "-I":
             TestCase.include_path.append(arg)
