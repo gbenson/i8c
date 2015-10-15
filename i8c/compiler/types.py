@@ -179,10 +179,9 @@ __create_builtin_types()
 class TypeAnnotator(object):
     def visit_toplevel(self, toplevel):
         self.types = {}
-        map(self.add_type,
-            (type
-             for name, type in globals().items()
-             if name.endswith("TYPE")))
+        for name, type in globals().items():
+            if name.endswith("TYPE"):
+                self.add_type(type)
         self.in_toplevel = True
         for node in toplevel.children:
             node.accept(self)
