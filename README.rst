@@ -19,11 +19,18 @@ compiled notes.
 Installation
 ------------
 
-The easiest way to install this software is to use pip::
+The easiest way to install I8C and I8X is to use pip::
 
   sudo pip install -U i8c
 
-The latest development version is available from GitHub_.
+That command installs them both.  If you don’t have pip please refer
+to `installing pip`_.  Hint: try one of these commands::
+
+  sudo apt-get install python-pip
+  sudo yum install python-pip
+
+The latest development versions of I8C and I8X are available from
+GitHub_.
 
 
 License
@@ -106,9 +113,10 @@ the issue tracker or email gbenson@redhat.com so we don’t collide.
 .. reStructuredText stuff:
 
 .. Links
+.. _GitHub: https://github.com/gbenson/i8c/
+.. _installing pip: https://pip.pypa.io/en/stable/installing/
 .. _version 3: http://gnu.org/licenses/gpl-3.0.html
 .. _version 2.1: http://gnu.org/licenses/lgpl-2.1.html
-.. _GitHub: https://github.com/gbenson/i8c/
 .. _issue tracker: https://github.com/gbenson/i8c/issues/
 .. _unittest: https://docs.python.org/2/library/unittest.html
 
