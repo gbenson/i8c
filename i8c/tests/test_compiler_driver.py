@@ -54,7 +54,7 @@ class TestCompilerDriver(TestCase):
         tmpfile = os.path.join(self.workdir, "stderr")
         self.stderr_fd = os.open(tmpfile,
                                  os.O_RDWR | os.O_CREAT | os.O_EXCL,
-                                 0600)
+                                 0o600)
         sys.stderr.flush()
         self.saved_stderr_fd = os.dup(2)
         os.dup2(self.stderr_fd, 2)
@@ -66,7 +66,7 @@ class TestCompilerDriver(TestCase):
         os.close(self.saved_stderr_fd)
         os.close(self.stderr_fd)
         # Delete the working directory
-        os.chmod(self.workdir, 0700)
+        os.chmod(self.workdir, 0o700)
         subprocess.call(("rm", "-rf", self.workdir))
 
     # Test all specifiable permutations of (with_cpp,with_i8c,with_asm)
@@ -124,7 +124,7 @@ class TestCompilerDriver(TestCase):
 
     def test_asm_failure(self):
         """Check that assembler errors are handled correctly."""
-        os.chmod(self.workdir, 0500)
+        os.chmod(self.workdir, 0o500)
         self.__run_failtest()
 
     # Test that multiple input files with no output file is caught

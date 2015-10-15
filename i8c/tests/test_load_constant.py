@@ -50,10 +50,10 @@ class TestLoadConstantInput(TestCase):
                 self.assertIsInstance(node, parser.Constant)
                 constants.append([node.type, node.value])
         self.assertEqual([[INTTYPE, 23],
-                          [INTTYPE, 023],
+                          [INTTYPE, 0o23],
                           [INTTYPE, 0x23],
                           [INTTYPE, -17],
-                          [INTTYPE, -017],
+                          [INTTYPE, -0o17],
                           [INTTYPE, -0x17],
                           [PTRTYPE, 0],
                           [BOOLTYPE, 1],

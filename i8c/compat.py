@@ -39,3 +39,17 @@ def fwrite(file, text):
     if sys.version_info < (3,):
         text = text.encode(getattr(file, "encoding", "utf-8"))
     file.write(text)
+
+def strtoint_c(text, exception):
+    if text in ("0", "-0"):
+        return 0
+    if not text.startswith("0o"):
+        if text.startswith("0") and not text.startswith("0x"):
+            text = "0o" + text[1:]
+        elif text.startswith("-0") and not text.startswith("-0x"):
+            text = "-0o" + text[2:]
+        try:
+            return int(text, 0)
+        except ValueError:
+            pass
+    raise exception("invalid integer literal: " + text)

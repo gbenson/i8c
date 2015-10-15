@@ -53,7 +53,7 @@ class TestExamples(TestCase):
                 os.unlink(outfile)
             new_fd = os.open(outfile,
                              os.O_RDWR | os.O_CREAT | os.O_EXCL,
-                             0600)
+                             0o600)
             stream.flush()
             saved_fd = os.dup(fileno)
             os.dup2(new_fd, fileno)

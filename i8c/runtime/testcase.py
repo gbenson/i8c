@@ -23,6 +23,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from ..compat import strtoint_c
 from . import I8XError, HeaderFileError, TestFileError
 import copy
 import inspect
@@ -71,7 +72,7 @@ class TestCase(BaseTestCase):
             try:
                 assert len(bits) == 3 and bits[0] == "#define"
                 name, value = bits[1:]
-                value = int(value, 0)
+                value = strtoint_c(value, I8XError)
                 frame.f_globals[name] = value
             except:
                 raise HeaderFileError(filename, linenumber)

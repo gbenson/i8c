@@ -21,7 +21,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from . import LexerError
+from ..compat import strtoint_c
+from . import I8CError, LexerError
 import re
 
 TOKEN = re.compile(r"\s+|::|[:,()]|"
@@ -59,7 +60,7 @@ class WORD(Token): pass
 class NUMBER(Token):
     def __init__(self, *args):
         Token.__init__(self, *args)
-        self.value = int(self.text, 0)
+        self.value = strtoint_c(self.text, I8CError)
 
 SIMPLE_CLASSES = {
     ",": COMMA,

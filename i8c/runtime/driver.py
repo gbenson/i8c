@@ -24,7 +24,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from .. import cmdline
-from ..compat import fprint
+from ..compat import fprint, strtoint_c
 from . import context
 from . import I8XError
 from . import TestCase
@@ -105,7 +105,7 @@ def main(args):
 
     if quickmode:
         function = args.pop(0)
-        args = [int(arg, 0) for arg in args]
+        args = [strtoint_c(arg, I8XError) for arg in args]
         result = map(str, ctx.call(function, *args))
         fprint(sys.stdout, ", ".join(result))
         return
