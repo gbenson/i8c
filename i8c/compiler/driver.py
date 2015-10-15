@@ -172,7 +172,7 @@ class CommandLine(object):
 def setup_input(args):
     process = infile = None
     if args.with_cpp:
-        command = ["gcc", "-E", "-x", "c"] + args.cpp_args
+        command = ["gcc", "-E", "-x", "c", "-D__INFINITY__"] + args.cpp_args
         process = subprocess.Popen(command, stdout=subprocess.PIPE)
         infile = process.stdout
     elif args.infiles in ([], ["-"]):
