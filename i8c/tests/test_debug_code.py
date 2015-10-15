@@ -21,7 +21,7 @@ from __future__ import unicode_literals
 
 from i8c.tests import TestCase
 from i8c.compiler import loggers
-import cStringIO as stringio
+import io
 import sys
 
 SOURCE = """\
@@ -72,7 +72,7 @@ class TestDebugCode(TestCase):
         """Exercise all the debug printers."""
         for logger in loggers.values():
             logger.enable()
-        sys.stderr = stringio.StringIO()
+        sys.stderr = io.StringIO()
         self.compile(SOURCE)
 
     def test_str_methods(self):

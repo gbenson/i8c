@@ -142,7 +142,7 @@ class FuncRef(object):
 
 class Emitter(object):
     def __init__(self, write):
-        self.write = write
+        self.__write = write
         self.num_labels = 0
         self.__label = None
         self.__init_opcodes()
@@ -152,6 +152,9 @@ class Emitter(object):
         for name in dir(constants):
             if name.startswith("DW_OP_"):
                 self.opcodes[name] = getattr(constants, name)
+
+    def write(self, text):
+        self.__write(text.encode("utf-8"))
 
     def new_label(self):
         self.num_labels += 1

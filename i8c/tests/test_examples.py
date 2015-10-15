@@ -41,11 +41,11 @@ class TestExamples(TestCase):
         self.__streams = {}
         for name in "stdout", "stderr":
             stream = getattr(sys, name)
-            if not hasattr(stream, "fileno"):
+            try:
+                fileno = stream.fileno()
+            except:
                 # Already captured by nosetests?
                 continue
-
-            fileno = stream.fileno()
             outfile = os.path.join(self.__output, name)
             if os.path.exists(outfile):
                 os.unlink(outfile)

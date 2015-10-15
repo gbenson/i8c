@@ -32,8 +32,8 @@ from . import serializer
 from . import stack
 from . import types
 import copy
+import io
 import os
-import cStringIO as stringio
 import subprocess
 import sys
 
@@ -181,7 +181,7 @@ def setup_input(args):
     elif args.infiles in ([], ["-"]):
         infile = sys.stdin
     else:
-        infile = stringio.StringIO()
+        infile = io.BytesIO()
         for filename in args.infiles:
             infile.write(open(filename, "rb").read())
         infile.seek(0)
@@ -230,7 +230,7 @@ def main(args):
     if not (args.with_cpp or args.with_i8c or args.with_asm):
         raise I8CError("nothing to do!")
 
-    outfile = stringio.StringIO()
+    outfile = io.BytesIO()
     process, infile = setup_input(args)
     try:
         if args.with_i8c:

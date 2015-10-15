@@ -22,17 +22,17 @@ from __future__ import unicode_literals
 from i8c import compiler
 from i8c import runtime
 from i8c.runtime.testcase import BaseTestCase
+import io
 import os
-import StringIO as stringio
 import struct
 import subprocess
 
-class SourceReader(stringio.StringIO):
+class SourceReader(io.BytesIO):
     def readline(self):
-        line = stringio.StringIO.readline(self)
-        trim = line.find("//")
+        line = io.BytesIO.readline(self)
+        trim = line.find(b"//")
         if trim >= 0:
-            line = line[:trim] + "\n"
+            line = line[:trim] + b"\n"
         return line
 
 class TestOutput(runtime.Context):
@@ -104,8 +104,8 @@ class TestCase(BaseTestCase):
 
     def compile(self, input):
         self.compilecount += 1
-        input = SourceReader('# 1 "<testcase>"\n' + input)
-        output = stringio.StringIO()
+        input = SourceReader(b'# 1 "<testcase>"\n' + input.encode("utf-8"))
+        output = io.BytesIO()
         tree = compiler.compile(input.readline, output.write)
         return tree, TestOutput(self, self.compilecount, output.getvalue())
 
