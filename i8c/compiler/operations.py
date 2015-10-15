@@ -85,7 +85,7 @@ class Operation(visitors.Visitable):
         # should not be entered.  If it is entered from the
         # testsuite the exception will cause whatever test
         # entered it to fail.
-        raise NotImplementedError, "%s.__ne__" % self.classname
+        raise NotImplementedError("%s.__ne__" % self.classname)
 
     def __str__(self):
         return '%s("%s")' % (self.classname, self.source)
