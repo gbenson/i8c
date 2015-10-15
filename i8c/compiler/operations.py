@@ -89,6 +89,12 @@ class Operation(visitors.Visitable):
         # entered it to fail.
         raise NotImplementedError("%s.__ne__" % self.classname)
 
+    def __hash__(self):
+        # This is just the default implementation (I think!)  but
+        # it's needed for Python 3 which marks objects unhashable
+        # if they define __eq__ without also defining __hash__.
+        return hash(id(self))
+
     def __str__(self):
         return '%s("%s")' % (self.classname, self.source)
 
@@ -113,6 +119,12 @@ class ClassComparableOp(Operation):
         # not currently entered (but it must be defined because
         # we've defined __eq__ above).
         return not (self == other)
+
+    def __hash__(self):
+        # This is just the default implementation (I think!)  but
+        # it's needed for Python 3 which marks objects unhashable
+        # if they define __eq__ without also defining __hash__.
+        return hash(id(self))
 
 # Block-terminating operations.  Note that these are class-comparable,
 # meaning exits are not checked, only the operations themselves.  Code
