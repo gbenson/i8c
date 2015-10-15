@@ -30,7 +30,7 @@ class Operation(object):
     NAMES = {}
     for name in dir(constants):
         if name.startswith("DW_OP_"):
-            assert not NAMES.has_key(name)
+            assert name not in NAMES
             NAMES[getattr(constants, name)] = name
     del name
 
@@ -118,7 +118,7 @@ class Operation(object):
         code = bytes(code.encode("utf-8"))
         size = struct.calcsize(code)
         type = "%s%d" % (code.isupper() and "u" or "s", size)
-        assert not FIXEDSIZE.has_key(type)
+        assert type not in FIXEDSIZE
         FIXEDSIZE[type] = size, code
     del code, size, type
 
@@ -126,7 +126,7 @@ class Operation(object):
         src = function.code + pc
         # Read the opcode
         self.opcode = ord(src[0])
-        if not self.NAMES.has_key(self.opcode):
+        if self.opcode not in self.NAMES:
             raise UnhandledNoteError(src)
         next = src + 1
         # Read the operands
@@ -211,7 +211,7 @@ class Operation(object):
         elif (self.opcode >= constants.DW_OP_const1u
               and self.opcode <= constants.DW_OP_consts):
             impl = self.__exec_constX
-        elif self.OPTABLE.has_key(self.opcode):
+        elif self.opcode in self.OPTABLE:
             impl = self.__exec_optable
         else:
             impl = getattr(self, "exec_" + self.name, None)

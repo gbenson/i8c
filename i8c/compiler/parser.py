@@ -457,7 +457,7 @@ class LoadOp(TreeOp):
                 klass = Integer
             else:
                 for klass in Pointer, Boolean:
-                    if klass.VALUES.has_key(tokens[1].text):
+                    if tokens[1].text in klass.VALUES:
                         break
                 else:
                     klass = ShortName
@@ -521,19 +521,19 @@ class Operations(TreeNode):
 
     # Do not add an "addr" instruction for DW_OP_addr.
     # See XXX UNWRITTEN DOCS.
-    assert not CLASSES.has_key("addr")
+    assert "addr" not in CLASSES
 
     # Do not add a "bra" instruction, it gives no clue as to why
     # it would branch and makes code harder to read.  Users should
     # use "load NULL, bne" or "load 0, bne" and let the optimizer
     # figure it out.
-    assert not CLASSES.has_key("bra")
+    assert "bra" not in CLASSES
 
     # Do not add "plus" or "minus" operations.  To calculate the
     # sum of two values you add them.  To calculate the difference
     # of two values you sub(tract) them.  That is all.
-    assert not CLASSES.has_key("plus")
-    assert not CLASSES.has_key("minus")
+    assert "plus" not in CLASSES
+    assert "minus" not in CLASSES
 
     def consume(self, tokens):
         if not self.tokens:

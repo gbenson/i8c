@@ -156,7 +156,7 @@ class BlockOptimizer(Optimizer):
             # To ensure things don't get lost we propagate
             # the exception if it looks like we're being run
             # by the testsuite.
-            if sys.modules.has_key("i8c.tests"):
+            if "i8c.tests" in sys.modules:
                 raise
             debug_print("warning: missed an optimization?"
                         + " (implement %s)\n" % e)

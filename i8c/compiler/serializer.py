@@ -66,11 +66,11 @@ class OperationStream(visitors.Visitable):
         assert not self.is_closed
         source, target = self.last_op, target.first_op
 
-        if not self.labels.has_key(target):
+        if target not in self.labels:
             self.labels[target] = []
         self.labels[target].append(source)
 
-        assert not self.jumps.has_key(source)
+        assert source not in self.jumps
         self.jumps[source] = target
 
     def jump_from_last_to_EOF(self):
@@ -97,7 +97,7 @@ class OperationStream(visitors.Visitable):
         assert self.is_closed
 
         for dict in self.labels, self.jumps:
-            assert not dict.has_key(new_op)
+            assert new_op not in dict
             tmp = dict.pop(old_op, None)
             if tmp is not None:
                 dict[new_op] = tmp
@@ -115,7 +115,7 @@ class OperationStream(visitors.Visitable):
 
     def remove_by_index_op(self, index, op):
         assert self.is_closed
-        assert not self.labels.has_key(op)
+        assert op not in self.labels
 
         target = self.jumps.pop(op, None)
         if target is not None:

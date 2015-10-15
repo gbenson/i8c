@@ -30,7 +30,7 @@ class Type(object):
         for item in globals().values():
             code = getattr(item, "code", None)
             if code is not None:
-                assert not cls.types.has_key(code)
+                assert code not in cls.types
                 cls.types[code] = item
 
 class BasicType(Type):

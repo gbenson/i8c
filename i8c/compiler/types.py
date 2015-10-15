@@ -191,7 +191,7 @@ class TypeAnnotator(object):
         assert self.in_toplevel
 
     def add_type(self, type, node=None):
-        if self.types.has_key(type.name):
+        if type.name in self.types:
             raise TypeAnnotatorError(
                 node, "type ‘%s’ already exists" % type.name)
         self.types[type.name] = type

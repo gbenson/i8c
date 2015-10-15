@@ -145,7 +145,7 @@ class BlockCreator(object):
         # means it cannot clash with any user-supplied
         # labels as they are all strings.
         label = len(self.labels)
-        assert not self.labels.has_key(label)
+        assert label not in self.labels
         self.labels[label] = target
         return label
 
@@ -180,7 +180,7 @@ class BlockCreator(object):
     @property
     def current_block(self):
         if self.__block is None:
-            assert not self.blocks.has_key(self.pc)
+            assert self.pc not in self.blocks
             self.__block = BasicBlock(len(self.blocks))
             self.blocks[self.pc] = self.__block
         return self.__block
@@ -201,7 +201,7 @@ class BlockCreator(object):
 
     def visit_label(self, label):
         name = label.name
-        if self.labels.has_key(name):
+        if name in self.labels:
             raise BlockCreatorError(label, "duplicate label ‘%s’" % name)
         self.labels[name] = self.pc
         self.drop_current_block()

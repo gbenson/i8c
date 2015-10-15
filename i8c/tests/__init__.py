@@ -119,7 +119,7 @@ class TestCase(BaseTestCase):
         return result
 
     def __collect_blocks(self, result, block):
-        if not result.has_key(block.index):
+        if block.index not in result:
             result[block.index] = block
             for block in block.exits:
                 self.__collect_blocks(result, block)
