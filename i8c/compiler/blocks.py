@@ -87,7 +87,7 @@ class BasicBlock(visitors.Visitable):
         try:
             self.exits = [labels[label]
                           for label in self.last_op.exit_labels]
-        except KeyError, e:
+        except KeyError as e:
             raise BlockCreatorError(self.last_op.ast,
                                "undefined label ‘%s’" % e.args[0])
 

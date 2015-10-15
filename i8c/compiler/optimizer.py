@@ -149,7 +149,7 @@ class BlockOptimizer(Optimizer):
         try:
             if block.exits[0].ops[1:] != block.exits[1].ops[1:]:
                 return
-        except NotImplementedError, e: # pragma: no cover
+        except NotImplementedError as e: # pragma: no cover
             # This block is excluded from coverage because it
             # should not be entered.  If it is entered then
             # we need to implement the relevant comparison.
