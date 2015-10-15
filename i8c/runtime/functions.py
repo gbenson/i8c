@@ -19,6 +19,7 @@
 # see <http://www.gnu.org/licenses/>.
 
 from __future__ import division
+from __future__ import unicode_literals
 
 from .. import constants
 from . import *
@@ -77,7 +78,7 @@ class BytecodeFunction(Function):
         Function.__init__(self, src)
 
         # Parse the header
-        hdrformat = self.byteorder + "11H"
+        hdrformat = self.byteorder + b"11H"
         expect_hdrsize = struct.calcsize(hdrformat)
         (magic, version, hdrsize, codesize, externsize, provider_o,
          name_o, ptypes_o, rtypes_o, etypes_o, self.max_stack) \
@@ -115,7 +116,7 @@ class BytecodeFunction(Function):
         # Set our signature
         ptypes = types.decode(ptypes)
         rtypes = types.decode(rtypes)
-        self.set_signature(provider.bytes, name.bytes, ptypes, rtypes)
+        self.set_signature(provider.text, name.text, ptypes, rtypes)
 
         # Load the bytecode and externals
         self.__load_bytecode()
@@ -123,7 +124,7 @@ class BytecodeFunction(Function):
 
     def get_string(self, start):
         unterminated = self.__strings + start
-        limit = unterminated.bytes.find("\0")
+        limit = unterminated.bytes.find(b"\0")
         if limit < 0:
             raise CorruptNoteError(unterminated)
         return unterminated[:limit]
@@ -192,21 +193,21 @@ class UnresolvedFunction(Function):
     def __init__(self, referrer, slot):
         Function.__init__(self, slot)
         self.referrer = referrer
-        format = slot.byteorder + "4H"
+        format = slot.byteorder + b"4H"
         slotsize = struct.calcsize(format)
         provider, name, ptypes, rtypes \
             = map(referrer.get_string,
                   struct.unpack(format, slot[:slotsize].bytes))
         ptypes = types.decode(ptypes)
         rtypes = types.decode(rtypes)
-        self.set_signature(provider.bytes, name.bytes, ptypes, rtypes)
+        self.set_signature(provider.text, name.text, ptypes, rtypes)
 
     def resolve(self, ctx):
         return self.type, ctx.get_function(self)
 
 class UnrelocatedAddress(object):
     def __init__(self, referrer, slot):
-        format = {4: "I", 8: "Q"}.get(len(slot), None)
+        format = {4: b"I", 8: b"Q"}.get(len(slot), None)
         if format is None:
             raise UnhandledNoteError(slot)
         format = slot.byteorder + format

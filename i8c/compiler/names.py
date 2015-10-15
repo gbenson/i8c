@@ -17,6 +17,7 @@
 # <http://www.gnu.org/licenses/>.
 
 from __future__ import division
+from __future__ import unicode_literals
 
 from . import NameAnnotatorError
 
@@ -112,4 +113,4 @@ class NameAnnotator(object):
         provider = name.value.provider
         if provider.startswith("i8"):
             raise NameAnnotatorError(
-                name, u"provider ‘%s’ is reserved" % provider)
+                name, "provider ‘%s’ is reserved" % provider)

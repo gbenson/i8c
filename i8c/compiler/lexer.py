@@ -17,6 +17,7 @@
 # <http://www.gnu.org/licenses/>.
 
 from __future__ import division
+from __future__ import unicode_literals
 
 from . import LexerError
 import re
@@ -36,7 +37,7 @@ class Token(object):
         return "%s:%d" % (self.filename, self.linenumber)
 
     def __str__(self):
-        return "%s: %s" % (self.fileline, repr(self.text))
+        return "%s: %s" % (self.fileline, repr(self.text).lstrip("u"))
 
 class SyntheticToken(Token):
     """A token that the parser inserted.
@@ -84,7 +85,7 @@ def generate_tokens(readline):
             match = TOKEN.match(line)
             if match is None:
                 raise LexerError(filename, linenumber,
-                                 u"invalid syntax: ‘%s’" % line.rstrip())
+                                 "invalid syntax: ‘%s’" % line.rstrip())
             tokentext = match.group(0)
             assert len(tokentext) > 0
             assert line.startswith(tokentext)

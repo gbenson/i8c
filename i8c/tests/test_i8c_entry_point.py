@@ -17,6 +17,7 @@
 # <http://www.gnu.org/licenses/>.
 
 from __future__ import division
+from __future__ import unicode_literals
 
 from i8c.tests import TestCase
 from i8c.compiler import main

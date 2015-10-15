@@ -17,6 +17,7 @@
 # <http://www.gnu.org/licenses/>.
 
 from __future__ import division
+from __future__ import unicode_literals
 
 from i8c.tests import TestCase
 from i8c.compiler import I8CError
@@ -111,7 +112,7 @@ class TestCompilerDriver(TestCase):
         self.assertIsNot(status, None)
         size = os.lseek(self.stderr_fd, 0, 1)
         os.lseek(self.stderr_fd, 0, 0)
-        output = os.read(self.stderr_fd, size)
+        output = os.read(self.stderr_fd, size).decode("utf-8")
         self.assertGreaterEqual(output.find("error:"), 0)
 
     def test_cpp_failure(self):

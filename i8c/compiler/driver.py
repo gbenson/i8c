@@ -17,6 +17,7 @@
 # <http://www.gnu.org/licenses/>.
 
 from __future__ import division
+from __future__ import unicode_literals
 
 from .. import cmdline
 from . import blocks
@@ -36,7 +37,7 @@ import cStringIO as stringio
 import subprocess
 import sys
 
-USAGE = u"""\
+USAGE = """\
 Usage: i8c [OPTION]... [FILE]...
 
 Infinity Note Compiler.
@@ -126,7 +127,7 @@ class CommandLine(object):
             # it just uses the last one it saw, so we do too.
             elif arg == "-o":
                 if not args:
-                    raise I8CError(u"missing filename after ‘-o’")
+                    raise I8CError("missing filename after ‘-o’")
 
                 self.asm_args.append(arg)
                 self.outfile = args.pop(0)
@@ -150,7 +151,7 @@ class CommandLine(object):
             # Don't allow users to specify this, we need to use
             # it ourselves.
             elif arg.startswith("-x"):
-                raise I8CError(u"unrecognized option ‘%s’" % arg)
+                raise I8CError("unrecognized option ‘%s’" % arg)
 
             # --debug[=faculty1[,faculty2]...]
             #
@@ -182,7 +183,7 @@ def setup_input(args):
     else:
         infile = stringio.StringIO()
         for filename in args.infiles:
-            infile.write(open(filename).read())
+            infile.write(open(filename, "rb").read())
         infile.seek(0)
     return process, infile
 
@@ -205,7 +206,7 @@ def setup_output(args):
     elif args.outfile in (None, "-"):
         outfile = sys.stdout
     else:
-        outfile = open(args.outfile, "w")
+        outfile = open(args.outfile, "wb")
     return process, outfile
 
 def compile(readline, write):
@@ -248,7 +249,10 @@ def main(args):
 
     process, outfile = setup_output(args)
     try:
-        outfile.write(infile.read())
+        data = infile.read()
+        if outfile is sys.stdout:
+            data = data.decode("utf-8")
+        outfile.write(data)
     finally:
         if process is not None:
             outfile.close()

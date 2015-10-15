@@ -17,6 +17,7 @@
 # <http://www.gnu.org/licenses/>.
 
 from __future__ import division
+from __future__ import unicode_literals
 
 from . import ParsedError
 from . import logger
@@ -265,11 +266,11 @@ class StackWalker(object):
             if not type.basetype is PTRTYPE:
                 raise ParsedError(
                     external.typename,
-                    op, u"%s: invalid type for ‘extern’" % type.name)
+                    op, "%s: invalid type for ‘extern’" % type.name)
             if not name.is_shortname:
                 raise ParsedError(
                     external.name,
-                    u"%s: invalid name for ‘extern %s’" % (
+                    "%s: invalid name for ‘extern %s’" % (
                         name, type.name))
         self.entry_stack.push(Element(type, name))
 
@@ -412,7 +413,7 @@ class StackWalker(object):
         rtype = op.type
         if not rtype.is_computable:
             raise ParsedError(
-                op, u"%s: invalid type for ‘deref’" % rtype.name)
+                op, "%s: invalid type for ‘deref’" % rtype.name)
         # Check the types before mutating the stack
         # so any error messages show the whole setup
         type = self.stack[0].type
@@ -436,7 +437,7 @@ class StackWalker(object):
             if indexes[0] == op.slot:
                 return # first result already has this name
             raise StackError(op, self.stack,
-                             u"declaration shadows slot %s" % (
+                             "declaration shadows slot %s" % (
                                  ", ".join(map(str, indexes))))
         self.stack.name_slot(op.slot, op.name)
 
@@ -458,10 +459,10 @@ class StackWalker(object):
         indexes = self.stack.indexes_for(name)
         if not indexes:
             raise StackError(self.__pick_op, self.stack,
-                             u"no slot matches ‘%s’" % name)
+                             "no slot matches ‘%s’" % name)
         elif len(indexes) != 1:
             raise StackError(self.__pick_op, self.stack,
-                             u"multiple slots match ‘%s’" % name)
+                             "multiple slots match ‘%s’" % name)
         else:
             self.__pick_index = indexes[0]
 

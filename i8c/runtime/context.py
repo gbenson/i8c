@@ -19,7 +19,9 @@
 # see <http://www.gnu.org/licenses/>.
 
 from __future__ import division
+from __future__ import unicode_literals
 
+from ..compat import str
 from . import *
 from . import elffile
 from . import functions
@@ -46,9 +48,11 @@ class Context(object):
             reference = sig_or_ref
             signature = reference.signature
         else:
-            assert isinstance(sig_or_ref, str)
+            if isinstance(sig_or_ref, bytes):
+                sig_or_ref = sig_or_ref.decode("utf-8")
             signature = sig_or_ref
             reference = None
+        assert isinstance(signature, str)
         # First check the registered functions
         funclist = self.functions.get(signature, None)
         if funclist is not None:

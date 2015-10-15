@@ -19,6 +19,7 @@
 # see <http://www.gnu.org/licenses/>.
 
 from __future__ import division
+from __future__ import unicode_literals
 
 class I8Error(Exception):
     """Base class for all errors.

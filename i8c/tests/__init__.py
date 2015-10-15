@@ -17,6 +17,7 @@
 # <http://www.gnu.org/licenses/>.
 
 from __future__ import division
+from __future__ import unicode_literals
 
 from i8c import compiler
 from i8c import runtime
@@ -40,7 +41,7 @@ class TestOutput(runtime.Context):
         self.__set_fileprefix(testcase, index)
         # Store the assembly language we generated
         asmfile = self.fileprefix + ".S"
-        open(asmfile, "w").write(asm)
+        open(asmfile, "wb").write(asm)
         # Assemble it
         objfile = self.fileprefix + ".o"
         subprocess.check_call(["gcc", "-c", asmfile, "-o", objfile])

@@ -19,6 +19,7 @@
 # see <http://www.gnu.org/licenses/>.
 
 from __future__ import division
+from __future__ import unicode_literals
 
 from .. import constants
 from . import UnhandledNoteError
@@ -114,6 +115,7 @@ class Operation(object):
 
     FIXEDSIZE = {}
     for code in "bBhHiIqQ":
+        code = bytes(code.encode("utf-8"))
         size = struct.calcsize(code)
         type = "%s%d" % (code.isupper() and "u" or "s", size)
         assert not FIXEDSIZE.has_key(type)
@@ -143,7 +145,7 @@ class Operation(object):
         self.src = src[:next.start - src.start]
         # Store our location and encoded form for tracing
         self.location = (function, pc)
-        self.encoded = self.src.bytes
+        self.encoded = self.src.text
 
     @property
     def size(self):

@@ -19,10 +19,12 @@
 # see <http://www.gnu.org/licenses/>.
 
 from __future__ import division
+from __future__ import unicode_literals
 
 from .. import constants
 from . import ELFFileError
 import struct
+import sys
 import weakref
 
 class ELFFile(object):
@@ -32,18 +34,18 @@ class ELFFile(object):
 
     ELFDATA2LSB = 1
     ELFDATA2MSB = 2
-    BYTEORDERS = {ELFDATA2LSB: "<", ELFDATA2MSB: ">"}
+    BYTEORDERS = {ELFDATA2LSB: b"<", ELFDATA2MSB: b">"}
 
     __open = open
 
     def __init__(self, filename):
         self.filename = filename
-        self.bytes = self.__open(self.filename).read()
+        self.bytes = self.__open(self.filename, "rb").read()
         self.start, self.limit = 0, len(self.bytes)
-        hdrfmt = "4sBB"
+        hdrfmt = b"4sBB"
         hdrlen = struct.calcsize(hdrfmt)
         magic, ei_class, ei_data = struct.unpack(hdrfmt, self.bytes[:hdrlen])
-        if magic != "\x7fELF":
+        if magic != b"\x7fELF":
             raise ELFFileError(filename, "not an ELF file")
         try:
             self.wordsize = self.WORDSIZES[ei_class]
@@ -53,11 +55,11 @@ class ELFFile(object):
 
     @property
     def infinity_notes(self):
-        notename = "GNU\0"
-        markerfmt = "%sI%dsH" % (self.byteorder, len(notename))
+        notename = b"GNU\0"
+        markerfmt = self.byteorder + ("I%dsH" % len(notename)).encode("utf-8")
         marker = struct.pack(markerfmt, constants.NT_GNU_INFINITY,
                              notename, constants.I8_FUNCTION_MAGIC)
-        hdrfmt = self.byteorder + "2I"
+        hdrfmt = self.byteorder + b"2I"
         start = hdrsz = struct.calcsize(hdrfmt)
         while True:
             start = self.bytes.find(marker, start)
@@ -95,7 +97,10 @@ class ELFSlice(object):
 
     def __getitem__(self, key):
         if isinstance(key, (int, long)):
-            return self.bytes[key]
+            result = self.bytes[key]
+            if isinstance(result, int):
+                result = chr(result)
+            return result
 
         assert isinstance(key, slice)
         assert key.step in (None, 1)
@@ -122,5 +127,13 @@ class ELFSlice(object):
     @property
     def bytes(self):
         return self.elffile().bytes[self.start:self.limit]
+
+    @property
+    def text(self):
+        text = self.bytes
+        if sys.version_info >= (3,):
+            text = "".join(map(chr, text))
+        assert isinstance(text, str)
+        return text
 
 open = ELFFile

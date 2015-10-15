@@ -17,6 +17,7 @@
 # <http://www.gnu.org/licenses/>.
 
 from __future__ import division
+from __future__ import unicode_literals
 
 from . import TypeAnnotatorError
 from . import logger
@@ -192,7 +193,7 @@ class TypeAnnotator(object):
     def add_type(self, type, node=None):
         if self.types.has_key(type.name):
             raise TypeAnnotatorError(
-                node, u"type ‘%s’ already exists" % type.name)
+                node, "type ‘%s’ already exists" % type.name)
         self.types[type.name] = type
 
     def get_type(self, basictype):
@@ -200,7 +201,7 @@ class TypeAnnotator(object):
         result = self.types.get(name, None)
         if result is None:
             raise TypeAnnotatorError(
-                basictype, u"undefined type ‘%s’" % name)
+                basictype, "undefined type ‘%s’" % name)
         return result
 
     def visit_basictype(self, basictype):

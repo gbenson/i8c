@@ -19,6 +19,7 @@
 # see <http://www.gnu.org/licenses/>.
 
 from __future__ import division
+from __future__ import unicode_literals
 
 from i8c import I8Error
 
@@ -47,7 +48,7 @@ class HeaderFileError(InputFileError):
     """
     def __init__(self, filename, linenumber):
         I8XError.__init__(self,
-                          u"expected ‘#define NAME VALUE’",
+                          "expected ‘#define NAME VALUE’",
                           "%s:%d" % (filename, linenumber))
 
 class NoteError(I8XError):
@@ -82,14 +83,14 @@ class UndefinedFunctionError(FunctionLookupError):
     """
     def __init__(self, signature, reference=None):
         FunctionLookupError.__init__(
-            self, u"undefined function ‘%s’" % signature, reference)
+            self, "undefined function ‘%s’" % signature, reference)
 
 class AmbiguousFunctionError(FunctionLookupError):
     """Multiple copies of the requested function were found.
     """
     def __init__(self, signature, reference=None):
         FunctionLookupError.__init__(
-            self, u"function ‘%s’ defined more than once" % signature,
+            self, "function ‘%s’ defined more than once" % signature,
             reference)
 
 class ExecutionError(I8XError):

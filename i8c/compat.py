@@ -21,15 +21,9 @@
 from __future__ import division
 from __future__ import unicode_literals
 
-from .exceptions import *
-from .context import Context
-from .testcase import TestCase
 import sys
 
-def main():
-    from .driver import main
-    try:
-        main(sys.argv[1:])
-    except I8XError as e:
-        print >>sys.stderr, unicode(e).encode("utf-8")
-        return 1
+if sys.version_info < (3,):
+    str = unicode
+else:
+    str = str

@@ -19,6 +19,7 @@
 # see <http://www.gnu.org/licenses/>.
 
 from __future__ import division
+from __future__ import unicode_literals
 
 from .. import cmdline
 from . import context
@@ -32,7 +33,7 @@ try:
 except ImportError: # pragma: no cover
     import unittest
 
-USAGE = u"""\
+USAGE = """\
 Usage: i8x [OPTION]... TESTFILE...
    or: i8x [OPTION]... [-q|--quick] FUNCTION [ARGUMENT]...
 
@@ -76,8 +77,7 @@ def main(args):
             "i:I:qt",
             ("help", "version", "import=", "quick", "trace"))
     except getopt.GetoptError as e:
-        raise I8XError(unicode(e)
-                       + u"\nTry ‘i8x --help’ for more information.")
+        raise I8XError("%s\nTry ‘i8x --help’ for more information." % e)
     ctx = context.Context()
     quickmode = False
     for opt, arg in opts:
@@ -102,7 +102,8 @@ def main(args):
     if quickmode:
         function = args.pop(0)
         args = [int(arg, 0) for arg in args]
-        print ", ".join(map(str, ctx.call(function, *args)))
+        result = map(str, ctx.call(function, *args))
+        print (", ".join(result)).encode("utf-8")
         return
 
     TestCase.i8ctx = ctx

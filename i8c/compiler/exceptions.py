@@ -17,6 +17,7 @@
 # <http://www.gnu.org/licenses/>.
 
 from __future__ import division
+from __future__ import unicode_literals
 
 from i8c import I8Error
 
@@ -43,7 +44,7 @@ class ParserError(LexedError):
     """
     def __init__(self, tokens):
         token = tokens[0]
-        LexedError.__init__(self, token, u"unexpected ‘%s’" % token.text)
+        LexedError.__init__(self, token, "unexpected ‘%s’" % token.text)
 
 class ParsedError(LexedError):
     """An error occurred while processing the AST.
@@ -75,7 +76,7 @@ class StackTypeError(StackError):
     """
     def __init__(self, cause, stack):
         # Sorry translators...
-        types = [u"‘%s’" % stack[index].type.name
+        types = ["‘%s’" % stack[index].type.name
                  for index in range(cause.arity - 1, -1, -1)]
         if len(types) > 1:
             types[:-1] = [", ".join(types[:-1])]
