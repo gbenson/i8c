@@ -18,14 +18,15 @@
 # License along with the Infinity Note Execution Environment; if not,
 # see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
 from ..compat import fprint, integer
 from . import functions
+from . import types
 import ctypes
-import types
 import sys
 
 # XXX most every assert here should be a proper error
