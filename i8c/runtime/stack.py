@@ -22,7 +22,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from ..compat import fprint
+from ..compat import fprint, integer
 from . import functions
 import ctypes
 import types
@@ -64,7 +64,7 @@ class Stack(object):
         return self.__unbox(type, self.pop_boxed())
 
     def push_boxed(self, boxed_value):
-        assert not isinstance(boxed_value, (int, long))
+        assert not isinstance(boxed_value, integer)
         self.slots.insert(0, boxed_value)
 
     def pop_boxed(self):
@@ -95,7 +95,7 @@ class Stack(object):
             self, "_Stack__unbox_" + type.name.upper())(type, value)
 
     def __box_INTPTR(self, type, value):
-        assert isinstance(value, (int, long))
+        assert isinstance(value, integer)
         return self.__uint_t(value)
 
     def __unbox_INTPTR(self, type, boxed):

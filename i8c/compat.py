@@ -26,8 +26,10 @@ import sys
 
 if sys.version_info < (3,):
     str = unicode
+    integer = (int, long,)
 else:
     str = str
+    integer = (int,)
 
 def fprint(file, text=""):
     fwrite(file, text + "\n")

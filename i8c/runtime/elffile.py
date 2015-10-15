@@ -22,6 +22,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from ..compat import integer
 from .. import constants
 from . import ELFFileError
 import struct
@@ -97,7 +98,7 @@ class ELFSlice(object):
         assert self.limit <= elffile.limit
 
     def __getitem__(self, key):
-        if isinstance(key, (int, long)):
+        if isinstance(key, integer):
             result = self.bytes[key]
             if isinstance(result, int):
                 result = chr(result)

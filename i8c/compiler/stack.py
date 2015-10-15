@@ -20,6 +20,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from ..compat import integer
 from . import ParsedError
 from . import logger
 from . import names
@@ -203,7 +204,7 @@ class Element:
             assert isinstance(name, names.Name)
             self.names.append(name)
         if value is not None:
-            assert isinstance(value, (int, long))
+            assert isinstance(value, integer)
         self.value = value
 
     @property
