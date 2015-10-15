@@ -81,8 +81,7 @@ class TestOutput(runtime.Context):
 
     @property
     def ops(self):
-        ops = self.note.ops.items()
-        ops.sort()
+        ops = sorted(self.note.ops.items())
         return [op for pc, op in ops]
 
     @property

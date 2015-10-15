@@ -140,8 +140,9 @@ class BlockOptimizer(Optimizer):
             return
 
         # Do the successors start with "const 0" and "const 1"?
-        constants = map(self.__tecbcc_helper, (block.nobranch_exit,
-                                               block.branched_exit))
+        constants = list(map(
+                self.__tecbcc_helper, (block.nobranch_exit,
+                                       block.branched_exit)))
         if 0 not in constants or 1 not in constants:
             return
 

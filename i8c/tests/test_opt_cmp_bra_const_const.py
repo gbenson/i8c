@@ -69,8 +69,7 @@ label:
 class TestOptimizeCmpBraConstConst(TestCase):
     REVERSE = {"lt": "ge", "le": "gt", "eq": "ne",
                "ne": "eq", "ge": "lt", "gt": "le"}
-    OPERATIONS = REVERSE.keys()
-    OPERATIONS.sort()
+    OPERATIONS = sorted(REVERSE.keys())
 
     def test_optimize_cmp_bra_const_const(self):
         """Check that cmp-bra-{const,const} is optimized."""

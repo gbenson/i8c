@@ -143,8 +143,7 @@ class OperationStream(visitors.Visitable):
 
     def __reindex(self):
         assert self.is_closed
-        ops = self.ops.items()
-        ops.sort()
+        ops = sorted(self.ops.items())
         self.ops = {}
         for index, op in ops:
             self.ops[len(self.ops)] = op

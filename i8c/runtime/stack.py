@@ -45,7 +45,7 @@ class Stack(object):
 
     def push_multi(self, types, values):
         assert len(types) == len(values)
-        typedvalues = zip(types, values)
+        typedvalues = list(zip(types, values))
         typedvalues.reverse()
         for type, value in typedvalues:
             self.push_typed(type, value)

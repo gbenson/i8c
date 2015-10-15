@@ -88,7 +88,6 @@ class TestDebugCode(TestCase):
         node = func.externals.children[0]
         self.assertEqual(str(node), EXTERN0_NODE)
         # blocks.Block.__str_
-        blocks = self.collect_blocks(func).items()
-        blocks.sort()
+        blocks = sorted(self.collect_blocks(func).items())
         for index, block in blocks:
             self.assertTrue(str(block).startswith("Block #%d " % index))

@@ -332,8 +332,7 @@ class Emitter(object):
         self.labels = {}
         for op in stream.labels.keys():
             self.labels[op] = self.new_label()
-        ops = stream.ops.items()
-        ops.sort()
+        ops = sorted(stream.ops.items())
         for index, op in ops:
             label = self.labels.get(op, None)
             if label is not None:

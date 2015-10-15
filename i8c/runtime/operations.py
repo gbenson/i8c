@@ -203,7 +203,7 @@ class Operation(object):
                             " ".join("%02x" % ord(c)
                                      for c in self.encoded),
                             " ".join(["DW_OP_%s" % self.name]
-                                     + map(str, self.operands)))
+                                     + list(map(str, self.operands))))
 
     def execute(self, ctx, stack):
         self.__trace(ctx, stack)

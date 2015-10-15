@@ -127,8 +127,7 @@ class BlockCreator(object):
             labels[name] = self.blocks[pc]
         del self.labels
 
-        blocks = self.blocks.items()
-        blocks.sort()
+        blocks = sorted(self.blocks.items())
         blocks = [block for start_pc, block in blocks]
         del self.blocks
 
@@ -137,7 +136,7 @@ class BlockCreator(object):
             for exit_block in block.exits:
                 exit_block.entries[block] = True
         for block in blocks:
-            block.entries = block.entries.keys()
+            block.entries = list(block.entries.keys())
 
         function.entry_block = blocks[0]
         function.entry_block.entries.append(None)
@@ -157,8 +156,7 @@ class BlockCreator(object):
         self.add_op(SyntheticReturn(Operation(function)))
 
     def ensure_all_blocks_terminated(self):
-        blocks = self.blocks.items()
-        blocks.sort()
+        blocks = sorted(self.blocks.items())
         start_pcs = [start_pc for start_pc, block in blocks]
         blocks = [block for start_pc, block in blocks]
         for block, next_pc in zip(blocks, start_pcs[1:] + [None]):
