@@ -17,3 +17,5 @@ tests.out/
 
 .coverage
 htmlcov/
+
+.eggs/
