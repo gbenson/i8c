@@ -23,7 +23,8 @@ from __future__ import unicode_literals
 
 from . import version
 
-def version_message_for(program, (license_txt, license_url)):
+def version_message_for(program, license):
+    license_txt, license_url = license
     license_url = "<%s>" % license_url
     return """\
 %s %s

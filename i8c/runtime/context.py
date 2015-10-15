@@ -87,7 +87,8 @@ class Context(object):
         function.execute(self, stack)
         return stack.pop_multi(function.rtypes)
 
-    def __trace(self, (function, pc), stack, encoded, decoded):
+    def __trace(self, location, stack, encoded, decoded):
+        function, pc = location
         if self.tracelevel > 0:
             if function != self.__last_traced:
                 print "\n%s:" % function

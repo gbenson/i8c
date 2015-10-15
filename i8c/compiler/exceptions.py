@@ -85,7 +85,9 @@ class StackTypeError(StackError):
         StackError.__init__(self, cause, stack, msg)
 
 class StackMergeError(StackError):
-    def __init__(self, (from_op, to_op), (prev_stack, new_stack), slot=None):
+    def __init__(self, ops, stacks, slot=None):
+        from_op, to_op = ops
+        prev_stack, new_stack = stacks
         msg = "\narriving from %s with stack:\n%s\n" % (
             from_op.fileline, new_stack)
         msg += "can't merge with previously walked stack:\n%s\n" % prev_stack
