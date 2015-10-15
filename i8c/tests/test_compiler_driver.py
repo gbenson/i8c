@@ -49,7 +49,8 @@ class TestCompilerDriver(TestCase):
         self.workdir = tempfile.mkdtemp()
         self.filebase = os.path.join(self.workdir, "test")
         self.infile = self.filebase + ".i8"
-        open(self.infile, "w").write(SOURCE)
+        with open(self.infile, "w") as fp:
+            fp.write(SOURCE)
         # Pipe stderr to a file
         tmpfile = os.path.join(self.workdir, "stderr")
         self.stderr_fd = os.open(tmpfile,

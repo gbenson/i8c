@@ -43,7 +43,8 @@ class ELFFile(object):
 
     def __init__(self, filename):
         self.filename = filename
-        self.bytes = self.__open(self.filename, "rb").read()
+        with self.__open(self.filename, "rb") as fp:
+            self.bytes = fp.read()
         self.start, self.limit = 0, len(self.bytes)
         hdrfmt = b"4sBB"
         hdrlen = struct.calcsize(hdrfmt)

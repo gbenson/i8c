@@ -43,7 +43,8 @@ class TestOutput(runtime.Context):
         self.__set_fileprefix(testcase, index)
         # Store the assembly language we generated
         asmfile = self.fileprefix + ".S"
-        open(asmfile, "wb").write(asm)
+        with open(asmfile, "wb") as fp:
+            fp.write(asm)
         # Assemble it
         objfile = self.fileprefix + ".o"
         subprocess.check_call(["gcc", "-c", asmfile, "-o", objfile])
