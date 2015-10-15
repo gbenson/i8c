@@ -117,7 +117,7 @@ class ExternTable(object):
                 "".join((t.encoding for t in basetype.returntypes))))))
 
     def emit(self, emitter):
-        for entry, index in zip(self.entries, xrange(len(self.entries))):
+        for entry, index in zip(self.entries, range(len(self.entries))):
             entry.emit(emitter, "extern %d " % index)
 
 class RelAddr(object):

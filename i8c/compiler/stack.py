@@ -90,7 +90,7 @@ class Stack(object):
         else:
             search = [name]
         results = []
-        for elem, index in zip(self.slots, xrange(self.depth)):
+        for elem, index in zip(self.slots, range(self.depth)):
             # Does this slot match the names we're looking for?
             if not self.__names_match(search, elem.names):
                 continue
@@ -134,7 +134,7 @@ class Stack(object):
         if not self.slots:
             return "   <empty stack>"
         return "\n".join(("%4d: %s" % (slot, self[slot])
-                          for slot in xrange(self.depth)))
+                          for slot in range(self.depth)))
 
     def merge_into(self, previous, ops):
         # There is a direction to this.  We (self) are a new stack
@@ -369,7 +369,7 @@ class StackWalker(object):
             raise StackError(op, self.stack, "stack[0] not a function:")
         num_params = len(ftype.paramtypes)
         self.stack.underflow_check(1 + num_params)
-        for pindex in xrange(num_params):
+        for pindex in range(num_params):
             sindex = num_params - pindex
             ptype = ftype.paramtypes[pindex]
             stype = self.stack[sindex].type
@@ -377,10 +377,10 @@ class StackWalker(object):
                 raise StackError(op, self.stack,
                                  "wrong type in stack[%d]" % sindex)
         # Now pop everything and push the result
-        for i in xrange(1 + num_params):
+        for i in range(1 + num_params):
             self.stack.pop()
         num_returns = len(ftype.returntypes)
-        for sindex in xrange(num_returns):
+        for sindex in range(num_returns):
             rindex = num_returns - sindex - 1
             self.stack.push(Element(ftype.returntypes[rindex]))
 
@@ -484,7 +484,7 @@ class StackWalker(object):
 
     def visit_returnop(self, op):
         num_returns = len(self.returntypes)
-        for index in xrange(num_returns):
+        for index in range(num_returns):
             rtype = self.returntypes[index].basetype
             stype = self.stack[index].basetype
             if rtype != stype:

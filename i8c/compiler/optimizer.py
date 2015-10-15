@@ -244,7 +244,7 @@ class BlockOptimizer(Optimizer):
     def __try_peephole(self, block, action, size):
         """Helper for try_peephole.
         """
-        for index in xrange(len(block.ops) - size):
+        for index in range(len(block.ops) - size):
             if action(block, index):
                 return index
 

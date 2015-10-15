@@ -103,7 +103,7 @@ class OperationStream(visitors.Visitable):
                 dict[new_op] = tmp
 
         for lbl_ops in self.labels.values():
-            for lbl_op, lbl_index in zip(lbl_ops, xrange(len(lbl_ops))):
+            for lbl_op, lbl_index in zip(lbl_ops, range(len(lbl_ops))):
                 if lbl_op is old_op:
                     lbl_ops[lbl_index] = new_op
 
