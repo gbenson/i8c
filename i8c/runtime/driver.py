@@ -19,6 +19,7 @@
 # see <http://www.gnu.org/licenses/>.
 
 from __future__ import division
+from __future__ import print_function
 from __future__ import unicode_literals
 
 from .. import cmdline
@@ -82,10 +83,10 @@ def main(args):
     quickmode = False
     for opt, arg in opts:
         if opt == "--help":
-            print USAGE
+            print(USAGE)
             return
         elif opt == "--version":
-            print cmdline.version_message_for("i8x", LICENSE)
+            print(cmdline.version_message_for("i8x", LICENSE))
             return
         elif opt == "-I":
             TestCase.include_path.append(arg)
@@ -103,7 +104,7 @@ def main(args):
         function = args.pop(0)
         args = [int(arg, 0) for arg in args]
         result = map(str, ctx.call(function, *args))
-        print (", ".join(result)).encode("utf-8")
+        print((", ".join(result)).encode("utf-8"))
         return
 
     TestCase.i8ctx = ctx

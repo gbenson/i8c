@@ -17,6 +17,7 @@
 # <http://www.gnu.org/licenses/>.
 
 from __future__ import division
+from __future__ import print_function
 from __future__ import unicode_literals
 
 from .. import cmdline
@@ -224,7 +225,7 @@ def compile(readline, write):
 def main(args):
     args = CommandLine(args)
     if args.showinfo is not None:
-        print args.showinfo.encode("utf-8")
+        print(args.showinfo.encode("utf-8"))
         return
 
     if not (args.with_cpp or args.with_i8c or args.with_asm):

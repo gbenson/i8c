@@ -19,6 +19,7 @@
 # see <http://www.gnu.org/licenses/>.
 
 from __future__ import division
+from __future__ import print_function
 from __future__ import unicode_literals
 
 from ..compat import str
@@ -91,11 +92,11 @@ class Context(object):
         function, pc = location
         if self.tracelevel > 0:
             if function != self.__last_traced:
-                print "\n%s:" % function
+                print("\n%s:" % function)
                 self.__last_traced = function
             if self.tracelevel > 1:
                 stack.trace(self.tracelevel)
-            print "  %04x: %-12s %s" % (pc, encoded, decoded)
+            print("  %04x: %-12s %s" % (pc, encoded, decoded))
 
     def trace_operation(self, *args):
         self.__trace(*args)
@@ -103,8 +104,8 @@ class Context(object):
     def trace_call(self, function, stack):
         if not isinstance(function, functions.BytecodeFunction):
             if self.tracelevel > 0:
-                print "\n%s:" % function
-                print "  NON-BYTECODE FUNCTION"
+                print("\n%s:" % function)
+                print("  NON-BYTECODE FUNCTION")
         self.__last_traced = None
 
     def trace_return(self, location, stack):

@@ -17,6 +17,7 @@
 # <http://www.gnu.org/licenses/>.
 
 from __future__ import division
+from __future__ import print_function
 from __future__ import unicode_literals
 
 from .exceptions import *
@@ -32,5 +33,5 @@ def main():
     try:
         main(sys.argv[1:])
     except I8CError as e:
-        print >>sys.stderr, unicode(e).encode("utf-8")
+        print(unicode(e).encode("utf-8"), file=sys.stderr)
         return 1
