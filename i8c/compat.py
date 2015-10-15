@@ -28,9 +28,11 @@ import sys
 if sys.version_info < (3,):
     str = unicode
     integer = (int, long,)
+    next = lambda i: i.next()
 else:
     str = str
     integer = (int,)
+    next = next
 
 def fprint(file, text=""):
     fwrite(file, text + "\n")

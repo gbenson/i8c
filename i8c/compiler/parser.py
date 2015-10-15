@@ -21,6 +21,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from ..compat import next
 from . import lexer
 from . import logger
 from . import ParserError
@@ -570,7 +571,7 @@ def build_tree(tokens):
                 group = []
                 terminators.append(lexer.NEWLINE)
             try:
-                token = tokens.next()
+                token = next(tokens)
             except StopIteration:
                 break
             if isinstance(token, terminators[-1]):
