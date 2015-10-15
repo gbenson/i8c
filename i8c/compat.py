@@ -28,3 +28,11 @@ if sys.version_info < (3,):
     str = unicode
 else:
     str = str
+
+def fprint(file, text=""):
+    fwrite(file, text + "\n")
+
+def fwrite(file, text):
+    if sys.version_info < (3,):
+        text = text.encode(getattr(file, "encoding", "utf-8"))
+    file.write(text)

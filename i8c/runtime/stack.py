@@ -22,9 +22,11 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from ..compat import fprint
 from . import functions
 import ctypes
 import types
+import sys
 
 # XXX most every assert here should be a proper error
 
@@ -120,5 +122,5 @@ class Stack(object):
                 item = "%d" % value
                 if value < 0 or value > 15:
                     item += " (0x%x)" % value
-            print("    stack[%d] = %s" % (index, item))
-        print()
+            fprint(sys.stdout, "    stack[%d] = %s" % (index, item))
+        fprint(sys.stdout)

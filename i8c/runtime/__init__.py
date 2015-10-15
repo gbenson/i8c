@@ -22,15 +22,19 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from ..compat import fprint
 from .exceptions import *
 from .context import Context
 from .testcase import TestCase
 import sys
+
+if sys.version_info < (3,):
+    str = unicode
 
 def main():
     from .driver import main
     try:
         main(sys.argv[1:])
     except I8XError as e:
-        print(unicode(e).encode("utf-8"), file=sys.stderr)
+        fprint(sys.stderr, str(e))
         return 1

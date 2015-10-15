@@ -20,9 +20,13 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from ..compat import fprint
 from .exceptions import *
 from .logger import loggers
 import sys
+
+if sys.version_info < (3,):
+    str = unicode
 
 def compile(readline, write):
     from .driver import compile
@@ -33,5 +37,5 @@ def main():
     try:
         main(sys.argv[1:])
     except I8CError as e:
-        print(unicode(e).encode("utf-8"), file=sys.stderr)
+        fprint(sys.stderr, str(e))
         return 1

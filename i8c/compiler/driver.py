@@ -21,6 +21,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from .. import cmdline
+from ..compat import fprint
 from . import blocks
 from . import emitter
 from . import I8CError
@@ -225,7 +226,7 @@ def compile(readline, write):
 def main(args):
     args = CommandLine(args)
     if args.showinfo is not None:
-        print(args.showinfo.encode("utf-8"))
+        fprint(sys.stdout, args.showinfo)
         return
 
     if not (args.with_cpp or args.with_i8c or args.with_asm):

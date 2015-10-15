@@ -21,6 +21,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from .. import constants
+from ..compat import fwrite
 from . import logger
 from .types import PTRTYPE
 

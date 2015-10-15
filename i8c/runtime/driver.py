@@ -23,12 +23,14 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from .. import cmdline
+from ..compat import fprint
 from . import context
 from . import I8XError
 from . import TestCase
 import getopt
 import imp
 import os
+import sys
 try:
     import unittest2 as unittest
 except ImportError: # pragma: no cover
@@ -83,10 +85,10 @@ def main(args):
     quickmode = False
     for opt, arg in opts:
         if opt == "--help":
-            print(USAGE)
+            fprint(sys.stdout, USAGE)
             return
         elif opt == "--version":
-            print(cmdline.version_message_for("i8x", LICENSE))
+            fprint(sys.stdout, cmdline.version_message_for("i8x", LICENSE))
             return
         elif opt == "-I":
             TestCase.include_path.append(arg)
@@ -104,7 +106,7 @@ def main(args):
         function = args.pop(0)
         args = [int(arg, 0) for arg in args]
         result = map(str, ctx.call(function, *args))
-        print((", ".join(result)).encode("utf-8"))
+        fprint(sys.stdout, ", ".join(result))
         return
 
     TestCase.i8ctx = ctx
