@@ -26,10 +26,30 @@ The easiest way to install this software is to use pip::
 The latest development version is available from GitHub_.
 
 
+License
+-------
+
+I8C is licensed under the terms of the GNU General Public License,
+either `version 3`_ of the License, or (at your option) any later
+version.
+
+I8X is licensed under the terms of the GNU Lesser General Public
+License, either `version 2.1`_ of the License, or (at your option)
+any later version.
+
+I8X loads user-supplied note testcases into itself, making a combined
+work.  The LGPL allows note testcases to be licensed however their
+authors choose.
+
+For the avoidance of doubt, I8C does not make a combined work with
+its input.  I8C’s input may also be licensed however its authors
+choose.
+
+
 Note Compiler
 -------------
 
-The note compiler’s standard mode of operation is to translate I8
+The note compiler’s standard mode of operation is to translate
 source code into object files which can be linked into executables
 or shared libraries in the usual manner.  This example will
 generate the file |factorial.o|::
@@ -86,6 +106,8 @@ the issue tracker or email gbenson@redhat.com so we don’t collide.
 .. reStructuredText stuff:
 
 .. Links
+.. _version 3: http://gnu.org/licenses/gpl-3.0.html
+.. _version 2.1: http://gnu.org/licenses/lgpl-2.1.html
 .. _GitHub: https://github.com/gbenson/i8c/
 .. _issue tracker: https://github.com/gbenson/i8c/issues/
 .. _unittest: https://docs.python.org/2/library/unittest.html
