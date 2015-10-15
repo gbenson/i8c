@@ -16,6 +16,8 @@
 # along with the Infinity Note Compiler.  If not, see
 # <http://www.gnu.org/licenses/>.
 
+from __future__ import division
+
 from i8c import compiler
 from i8c import runtime
 from i8c.runtime.testcase import BaseTestCase

@@ -18,6 +18,8 @@
 # License along with the Infinity Note Execution Environment; if not,
 # see <http://www.gnu.org/licenses/>.
 
+from __future__ import division
+
 from .. import constants
 from . import UnhandledNoteError
 import operator
@@ -241,7 +243,7 @@ class Operation(object):
             return self.operand
 
     def exec_deref(self, ctx, stack):
-        self.__exec_deref(ctx, stack, ctx.wordsize / 8)
+        self.__exec_deref(ctx, stack, ctx.wordsize // 8)
 
     def exec_deref_size(self, ctx, stack):
         self.__exec_deref(ctx, stack, self.operand)

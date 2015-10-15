@@ -18,6 +18,8 @@
 # License along with the Infinity Note Execution Environment; if not,
 # see <http://www.gnu.org/licenses/>.
 
+from __future__ import division
+
 NT_GNU_INFINITY = 5
 
 I8_FUNCTION_MAGIC = (ord("i") << 8) | ord("8")

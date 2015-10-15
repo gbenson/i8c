@@ -16,6 +16,8 @@
 # along with the Infinity Note Compiler.  If not, see
 # <http://www.gnu.org/licenses/>.
 
+from __future__ import division
+
 from . import BlockCreatorError
 from . import visitors
 from .operations import *

@@ -16,6 +16,8 @@
 # along with the Infinity Note Compiler.  If not, see
 # <http://www.gnu.org/licenses/>.
 
+from __future__ import division
+
 from i8c.tests import TestCase
 from i8c.compiler import I8CError, loggers
 from i8c.compiler.driver import CommandLine

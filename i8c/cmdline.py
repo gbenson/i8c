@@ -18,6 +18,8 @@
 # License along with the Infinity Note Execution Environment; if not,
 # see <http://www.gnu.org/licenses/>.
 
+from __future__ import division
+
 from . import version
 
 def version_message_for(program, (license_txt, license_url)):

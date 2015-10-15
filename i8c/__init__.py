@@ -18,6 +18,8 @@
 # License along with the Infinity Note Execution Environment; if not,
 # see <http://www.gnu.org/licenses/>.
 
+from __future__ import division
+
 class I8Error(Exception):
     """Base class for all errors.
     """
