@@ -21,28 +21,12 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from i8c.tests import TestCase
-from i8c.compiler import StackError
+from tests import TestCase
 
-SOURCE = """\
-define test::unary_ops_test
-    argument %s arg
-    %s
-"""
+SOURCE = "define test::pretty_minimal"
 
-class TestUnaryOperations(TestCase):
-    OPERATIONS = "abs", "neg", "not"
-
-    def test_int_arg(self):
-        """Check that unary operations work with int arguments."""
-        for type in ("int", "bool"):
-            for op in self.OPERATIONS:
-                tree, output = self.compile(SOURCE % (type, op))
-                self.assertEqual([op], output.opnames)
-
-    def test_nonint_arg(self):
-        """Check unary operations with non-int arguments are rejected."""
-        for type in ("ptr", "opaque", "func ()"):
-            for op in self.OPERATIONS:
-                self.assertRaises(StackError, self.compile,
-                                  SOURCE % (type, op))
+class TestEmptyFunction(TestCase):
+    def test_empty_function(self):
+        """Check that empty functions can be compiled."""
+        tree, output = self.compile(SOURCE)
+        self.assertEqual([], output.opnames)

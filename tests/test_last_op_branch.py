@@ -21,35 +21,28 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from i8c.tests import TestCase
+from tests import TestCase
 
-SOURCE1 = """\
-define test::optimize_cmp_bra_const_const returns ptr
-    argument ptr x
+SOURCE = """\
+define test::last_op_is_branch
+    argument bool x
+    argument bool y
 
-    dup
-    load NULL
-    beq return_the_null
-    deref ptr
+    goto label2
+label1:
     return
-return_the_null:
+
+label2:
+    bne label1
 """
 
-SOURCE2 = """\
-define test::optimize_cmp_bra_const_const returns ptr
-    argument ptr x
+class TestFuncWithLastOpBra(TestCase):
+    def test_last_op_is_branch(self):
+        """Check that functions whose last op is a branch work.
 
-    dup
-    load NULL
-    bne dereference
-    return
-dereference:
-    deref ptr
-"""
-
-class TestOptimizeLit0CmpBeforeBra(TestCase):
-    def test_optimize_lit0_cmp_before_bra(self):
-        """Check that lit0,cmp before bra is eliminated."""
-        for source in SOURCE1, SOURCE2:
-            tree, output = self.compile(source)
-            self.assertEqual(["dup", "bra", "skip", "deref"], output.opnames)
+        This is testing the code that adds the synthetic return.
+        As a side-effect it also exercises the code that stops
+        us generating unnecessary gotos.
+        """
+        tree, output = self.compile(SOURCE)
+        self.assertEqual(["ne", "bra"], output.opnames)

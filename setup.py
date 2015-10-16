@@ -19,9 +19,9 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-from __future__ import unicode_literals
+# Python2 distutils can't cope with __future__.unicode_literals
 
-from setuptools import setup
+from setuptools import find_packages, setup
 from codecs import open
 from os import path
 
@@ -59,7 +59,8 @@ setup(
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
     ],
-    packages=["i8c", "i8c.compiler", "i8c.runtime"],
+    packages=find_packages("src"),
+    package_dir = {"": "src"},
     entry_points={"console_scripts": ["i8c = i8c.compiler:main",
                                       "i8x = i8c.runtime:main"]},
     tests_require=["nose"],

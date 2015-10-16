@@ -21,26 +21,34 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from i8c.tests import TestCase
+from tests import TestCase
 
 SOURCE = """\
-define test::optimize_reverse_branch_exits returns int
-    argument int x
+define test::stack_ops_test
+    argument int arg_1
+    argument ptr arg_2
+    argument bool arg_3
 
-    load 1
-    bne label1
-    goto label2
-label1:
-    load 2
-    return
-label2:
-    load 3
+    dup
+    drop
+    pick 0
+    pick 1
+    pick 2
+    over
+    swap
+    rot
 """
 
-class TestOptimizeReverseBranchExits(TestCase):
-    def test_optimize_reverse_branch_exits(self):
-        """Check we don't emit "bra, skip" if we don't need to."""
+class TestStackOperations(TestCase):
+    def test_stack_ops(self):
+        """Basic checks for stack-manipulation bytecodes."""
         tree, output = self.compile(SOURCE)
-        self.assertEqual(["lit1", "eq", "bra",
-                          "lit2", "skip",
-                          "lit3"], output.opnames)
+        # Check the assembler contains the expected operations
+        self.assertEqual(["dup",
+                          "drop",
+                          "dup",    # pick 0
+                          "over",   # pick 1
+                          "pick",   # pick 2
+                          "over",
+                          "swap",
+                          "rot"], output.opnames)

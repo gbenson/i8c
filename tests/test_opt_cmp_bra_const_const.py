@@ -21,7 +21,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from i8c.tests import TestCase
+from tests import TestCase
 
 # Simple testcase with only the load constant in the blocks
 SIMPLE = """\

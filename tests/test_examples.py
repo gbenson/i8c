@@ -21,7 +21,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from i8c.tests import TestCase
+from tests import TestCase
 from i8c import compiler
 from i8c import runtime
 import os
@@ -31,8 +31,8 @@ class TestExamples(TestCase):
     def setUp(self):
         # Locate the directories
         self.__examples = os.path.join(self.topdir, "examples")
-        self.__output = os.path.join(self.topdir, "tests.out",
-                                     "test_examples")
+        self.__output = os.path.join(self.topdir, "tests",
+                                     "output", "test_examples")
         if not os.path.exists(self.__output):
             os.makedirs(self.__output)
         # Create a list of files to delete

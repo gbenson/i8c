@@ -21,7 +21,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from i8c.tests import TestCase
+from tests import TestCase
 
 # In this miscompilation the final "call" was dropped as unreachable
 SOURCE = """\

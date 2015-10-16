@@ -21,25 +21,28 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from i8c.tests import TestCase
+from tests import TestCase
+from i8c.compiler import StackError
 
 SOURCE = """\
-define test::optimize_use_plus_uconst returns int
-    argument int x
-
-    load %s
+define test::unary_ops_test
+    argument %s arg
     %s
 """
 
-IDENTITIES = (("add", 0), ("sub", 0),
-              ("mul", 1), ("div", 1),
-              ("shl", 0), ("shr", 0),
-              ("shra", 0), ("or", 0),
-              ("xor", 0))
+class TestUnaryOperations(TestCase):
+    OPERATIONS = "abs", "neg", "not"
 
-class TestEliminateIdentityMath(TestCase):
-    def test_eliminate_identity_math(self):
-        """Check that identity math and logic are eliminated."""
-        for op, identity in IDENTITIES:
-            tree, output = self.compile(SOURCE % (identity, op))
-            self.assertEqual(len(output.ops), 0)
+    def test_int_arg(self):
+        """Check that unary operations work with int arguments."""
+        for type in ("int", "bool"):
+            for op in self.OPERATIONS:
+                tree, output = self.compile(SOURCE % (type, op))
+                self.assertEqual([op], output.opnames)
+
+    def test_nonint_arg(self):
+        """Check unary operations with non-int arguments are rejected."""
+        for type in ("ptr", "opaque", "func ()"):
+            for op in self.OPERATIONS:
+                self.assertRaises(StackError, self.compile,
+                                  SOURCE % (type, op))

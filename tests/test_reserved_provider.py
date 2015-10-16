@@ -21,12 +21,24 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from i8c.tests import TestCase
+from tests import TestCase
+from i8c.compiler import NameAnnotatorError
 
-SOURCE = "define test::pretty_minimal"
+SOURCE = """\
+define %s::test_reserved_provider returns ptr
+    extern ptr __some_symbol
+"""
 
-class TestEmptyFunction(TestCase):
-    def test_empty_function(self):
-        """Check that empty functions can be compiled."""
-        tree, output = self.compile(SOURCE)
-        self.assertEqual([], output.opnames)
+class TestReservedProvider(TestCase):
+    """Check that reserved provider names are rejected."""
+
+    def test_reserved_provider(self):
+        """Check that reserved provider names are rejected."""
+        for provider in ("test", "libpthread", "i8test",
+                         "i8core", "i8", "hello"):
+            source = SOURCE % provider
+            if provider.startswith("i8"):
+                self.assertRaises(NameAnnotatorError, self.compile, source)
+            else:
+                tree, output = self.compile(source)
+                self.assertEqual([], output.opnames)

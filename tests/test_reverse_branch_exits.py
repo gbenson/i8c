@@ -21,28 +21,26 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from i8c.tests import TestCase
+from tests import TestCase
 
 SOURCE = """\
-define test::last_op_is_branch
-    argument bool x
-    argument bool y
+define test::optimize_reverse_branch_exits returns int
+    argument int x
 
+    load 1
+    bne label1
     goto label2
 label1:
+    load 2
     return
-
 label2:
-    bne label1
+    load 3
 """
 
-class TestFuncWithLastOpBra(TestCase):
-    def test_last_op_is_branch(self):
-        """Check that functions whose last op is a branch work.
-
-        This is testing the code that adds the synthetic return.
-        As a side-effect it also exercises the code that stops
-        us generating unnecessary gotos.
-        """
+class TestOptimizeReverseBranchExits(TestCase):
+    def test_optimize_reverse_branch_exits(self):
+        """Check we don't emit "bra, skip" if we don't need to."""
         tree, output = self.compile(SOURCE)
-        self.assertEqual(["ne", "bra"], output.opnames)
+        self.assertEqual(["lit1", "eq", "bra",
+                          "lit2", "skip",
+                          "lit3"], output.opnames)

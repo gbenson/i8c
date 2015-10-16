@@ -60,16 +60,14 @@ class TestOutput(runtime.Context):
 
     def __set_fileprefix(self, testcase, index):
         test_id = testcase.id().split(".")
-        # Remove the common prefix
-        for expect in "i8c", "tests":
-            actual = test_id.pop(0)
-            assert actual == expect
-        # Remove the name of the class
+        # Remove the common prefix and the name of the class
+        assert test_id[0] == "tests"
+        test_id.pop(0)
         test_id.pop(-2)
         # Build the result
         index = "_%04d" % index
         self.fileprefix = os.path.join(
-            testcase.topdir, "tests.out", *test_id) + index
+            testcase.topdir, "tests", "output", *test_id) + index
         # Ensure the directory we'll write to exists
         dir = os.path.dirname(self.fileprefix)
         if not os.path.exists(dir):
@@ -94,9 +92,8 @@ class TestCase(BaseTestCase):
         self.topdir = os.path.realpath(__file__)
         self.topdir, check = os.path.split(self.topdir)
         assert check.startswith("__init__.py")
-        for expect in ("tests", "i8c"):
-            self.topdir, check = os.path.split(self.topdir)
-            assert check == expect
+        self.topdir, check = os.path.split(self.topdir)
+        assert check == "tests"
         assert os.path.exists(os.path.join(self.topdir, "setup.py"))
 
     def run(self, *args, **kwargs):

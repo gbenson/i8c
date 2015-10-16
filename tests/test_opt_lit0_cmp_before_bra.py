@@ -21,24 +21,35 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from i8c.tests import TestCase
-from i8c.compiler import NameAnnotatorError
+from tests import TestCase
 
-SOURCE = """\
-define %s::test_reserved_provider returns ptr
-    extern ptr __some_symbol
+SOURCE1 = """\
+define test::optimize_cmp_bra_const_const returns ptr
+    argument ptr x
+
+    dup
+    load NULL
+    beq return_the_null
+    deref ptr
+    return
+return_the_null:
 """
 
-class TestReservedProvider(TestCase):
-    """Check that reserved provider names are rejected."""
+SOURCE2 = """\
+define test::optimize_cmp_bra_const_const returns ptr
+    argument ptr x
 
-    def test_reserved_provider(self):
-        """Check that reserved provider names are rejected."""
-        for provider in ("test", "libpthread", "i8test",
-                         "i8core", "i8", "hello"):
-            source = SOURCE % provider
-            if provider.startswith("i8"):
-                self.assertRaises(NameAnnotatorError, self.compile, source)
-            else:
-                tree, output = self.compile(source)
-                self.assertEqual([], output.opnames)
+    dup
+    load NULL
+    bne dereference
+    return
+dereference:
+    deref ptr
+"""
+
+class TestOptimizeLit0CmpBeforeBra(TestCase):
+    def test_optimize_lit0_cmp_before_bra(self):
+        """Check that lit0,cmp before bra is eliminated."""
+        for source in SOURCE1, SOURCE2:
+            tree, output = self.compile(source)
+            self.assertEqual(["dup", "bra", "skip", "deref"], output.opnames)
