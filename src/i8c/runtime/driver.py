@@ -24,12 +24,11 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from .. import cmdline
-from ..compat import fprint, strtoint_c
+from ..compat import fprint, load_module_from_source, strtoint_c
 from . import context
 from . import I8XError
 from . import TestCase
 import getopt
-import imp
 import os
 import sys
 try:
@@ -66,7 +65,7 @@ class TestSuite(unittest.TestSuite):
 
     def load_i8tests(self, ctx, filename):
         name = os.path.splitext(os.path.basename(filename))[0]
-        module = imp.load_source(name, filename)
+        module = load_module_from_source(name, filename)
         for name in dir(module):
             item = getattr(module, name)
             if (item is not TestCase

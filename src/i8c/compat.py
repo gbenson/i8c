@@ -55,3 +55,12 @@ def strtoint_c(text, exception):
         except ValueError:
             pass
     raise exception("invalid integer literal: " + text)
+
+if sys.version_info < (3, 3):
+    from imp import load_source as load_module_from_source
+else:
+    from importlib.machinery import SourceFileLoader
+
+    def load_module_from_source(name, filename):
+        return SourceFileLoader(name, filename).load_module()
+
