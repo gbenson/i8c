@@ -24,6 +24,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from .. import cmdline
+from .. import version
 from ..compat import fprint, load_module_from_source, strtoint_c
 from . import context
 from . import I8XError
@@ -110,12 +111,16 @@ def main(args):
         fprint(sys.stdout, ", ".join(result))
         return
 
+    print("I8X", version(), "on Python", sys.version)
+    print()
+
     TestCase.i8ctx = ctx
 
     tests = TestSuite()
     for filename in args:
         tests.load_i8tests(ctx, filename)
 
-    result = unittest.TextTestRunner(stream=sys.stdout).run(tests)
+    result = unittest.TextTestRunner(stream=sys.stdout,
+                                     verbosity=2).run(tests)
     if not result.wasSuccessful():
         return 1
