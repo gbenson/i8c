@@ -92,6 +92,12 @@ class TestExamples(TestCase):
         sys.argv[1:] = ["-i", objfile, testfile]
         self.assertIs(runtime.main(), None)
 
+        # Check nothing was output to stderr
+        sys.stderr.flush()
+        errors = open(self.__streams["stderr"][0]).read()
+        self.assertEqual(errors, "")
+
+        # Check the output of the two I8X invocations
         if hasattr(sys.stdout, "getvalue"):
             # Captured by nosetests
             output = sys.stdout.getvalue()
@@ -99,9 +105,7 @@ class TestExamples(TestCase):
             # Captured by us
             sys.stdout.flush()
             output = open(self.__streams["stdout"][0]).read()
-        self.assertEqual(output, "479001600\n")
-
-        sys.stderr.flush()
-        output = open(self.__streams["stderr"][0]).read()
-        self.assertGreaterEqual(output.find("\nRan 1 test in "), 0)
-        self.assertTrue(output.endswith("\nOK\n"))
+        lines = output.split("\n")
+        self.assertEqual(lines[0], "479001600")
+        self.assertTrue(lines[-4].startswith("Ran 1 test in "))
+        self.assertEqual(lines[-2], "OK")
