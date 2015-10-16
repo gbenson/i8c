@@ -30,7 +30,9 @@ to `installing pip`_.  Hint: try one of these commands::
   sudo yum install python-pip
 
 The latest development versions of I8C and I8X are available from
-GitHub_.
+GitHub_.  To build and install from source use this command::
+
+  sudo python setup.py install
 
 
 License
