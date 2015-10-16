@@ -230,8 +230,10 @@ def main(args):
         fprint(sys.stdout, args.showinfo)
         return
 
-    if not (args.with_cpp or args.with_i8c or args.with_asm):
-        raise I8CError("nothing to do!")
+    clue = "Try ‘i8c --help’ for more information."
+    if ((args.with_cpp and not args.cpp_args)
+            or not (args.with_cpp or args.with_i8c or args.with_asm)):
+        raise I8CError("nothing to do!\n%s" % clue)
 
     outfile = io.BytesIO()
     process, infile = setup_input(args)

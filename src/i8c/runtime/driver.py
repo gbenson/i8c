@@ -75,13 +75,14 @@ class TestSuite(unittest.TestSuite):
                 self.addTest(self.__loader.loadTestsFromTestCase(item))
 
 def main(args):
+    clue = "Try ‘i8x --help’ for more information."
     try:
         opts, args = getopt.gnu_getopt(
             args,
             "i:I:qt",
             ("help", "version", "import=", "quick", "trace"))
     except getopt.GetoptError as e:
-        raise I8XError("%s\nTry ‘i8x --help’ for more information." % e)
+        raise I8XError("%s\n%s" % (e, clue))
     ctx = context.Context()
     quickmode = False
     for opt, arg in opts:
@@ -101,7 +102,7 @@ def main(args):
             ctx.tracelevel += 1
 
     if len(args) < 1:
-        raise I8XError("nothing to do!")
+        raise I8XError("nothing to do!\n%s" % clue)
 
     if quickmode:
         function = args.pop(0)
