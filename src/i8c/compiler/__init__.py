@@ -36,7 +36,7 @@ def compile(readline, write):
 def main():
     from .driver import main
     try:
-        main(sys.argv[1:])
+        return main(sys.argv[1:])
     except I8CError as e:
         fprint(sys.stderr, str(e))
         return 1

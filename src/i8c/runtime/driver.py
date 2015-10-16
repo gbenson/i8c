@@ -117,4 +117,6 @@ def main(args):
     for filename in args:
         tests.load_i8tests(ctx, filename)
 
-    unittest.TextTestRunner().run(tests)
+    result = unittest.TextTestRunner().run(tests)
+    if not result.wasSuccessful():
+        return 1
