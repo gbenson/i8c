@@ -90,7 +90,7 @@ def main(args):
             fprint(sys.stdout, USAGE)
             return
         elif opt == "--version":
-            fprint(sys.stdout, cmdline.version_message_for("i8x", LICENSE))
+            fprint(sys.stdout, cmdline.version_message_for("I8X", LICENSE))
             return
         elif opt == "-I":
             TestCase.include_path.append(arg)

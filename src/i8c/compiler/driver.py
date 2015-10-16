@@ -98,7 +98,7 @@ class CommandLine(object):
                 return
 
             elif arg == "--version":
-                self.showinfo = cmdline.version_message_for("i8c", LICENSE)
+                self.showinfo = cmdline.version_message_for("I8C", LICENSE)
                 return
 
             # -E  Preprocess only; do not compile, assemble or link
