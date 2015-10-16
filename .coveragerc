@@ -1,3 +1,2 @@
 [run]
-include=i8c/*
-omit=i8c/tests/*
+include=src/i8c/*
