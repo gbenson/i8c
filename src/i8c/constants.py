@@ -172,5 +172,40 @@ DW_OP_piece = 0x93
 DW_OP_deref_size = 0x94
 DW_OP_xderef_size = 0x95
 DW_OP_nop = 0x96
+DW_OP_push_object_address = 0x97
+DW_OP_call2 = 0x98
+DW_OP_call4 = 0x99
+DW_OP_call_ref = 0x9a
+DW_OP_form_tls_address = 0x9b
+DW_OP_call_frame_cfa = 0x9c
+DW_OP_bit_piece = 0x9d
+DW_OP_implicit_value = 0x9e
+DW_OP_stack_value = 0x9f
 
+# GNU extensions
+DW_OP_GNU_push_tls_address = 0xe0  # same as DW_OP_HP_unknown
 DW_OP_GNU_i8call = 0xef
+DW_OP_GNU_uninit = 0xf0
+DW_OP_GNU_encoded_addr = 0xf1
+DW_OP_GNU_implicit_pointer = 0xf2
+DW_OP_GNU_entry_value = 0xf3
+DW_OP_GNU_const_type = 0xf4
+DW_OP_GNU_regval_type = 0xf5
+DW_OP_GNU_deref_type = 0xf6
+DW_OP_GNU_convert = 0xf7
+DW_OP_GNU_reinterpret = 0xf9
+DW_OP_GNU_parameter_ref = 0xfa
+DW_OP_GNU_addr_index = 0xfb
+DW_OP_GNU_const_index = 0xfc
+
+# HP extensions
+DW_OP_HP_unknown = 0xe0  # same as GNU_push_tls_address
+DW_OP_HP_is_value = 0xe1
+DW_OP_HP_fltconst4 = 0xe2
+DW_OP_HP_fltconst8 = 0xe3
+DW_OP_HP_mod_range = 0xe4
+DW_OP_HP_unmod_range = 0xe5
+DW_OP_HP_tls = 0xe6
+
+# PGI (STMicroelectronics) extensions
+DW_OP_PGI_omp_thread_num = 0xf8
