@@ -146,9 +146,6 @@ class FuncRef(object):
 class Emitter(object):
     def __init__(self, write):
         self.__write = write
-        self.num_labels = 0
-        self.__label = None
-        self.__init_opcodes()
 
     def __init_opcodes(self):
         self.opcodes = {}
@@ -217,6 +214,9 @@ class Emitter(object):
         self.emit_byte(name, comment)
 
     def visit_toplevel(self, toplevel):
+        self.num_labels = 0
+        self.__label = None
+        self.__init_opcodes()
         self.emit("#define NT_GNU_INFINITY %d"
                   % constants.NT_GNU_INFINITY)
         self.emit("#define I8_FUNCTION_MAGIC 0x%x"
