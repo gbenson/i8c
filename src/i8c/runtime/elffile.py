@@ -59,10 +59,10 @@ class ELFFile(object):
 
     @property
     def infinity_notes(self):
+        # XXX this is not a real ELF parser!
         notename = b"GNU\0"
-        markerfmt = self.byteorder + ("I%dsH" % len(notename)).encode("utf-8")
-        marker = struct.pack(markerfmt, constants.NT_GNU_INFINITY,
-                             notename, constants.I8_FUNCTION_MAGIC)
+        markerfmt = self.byteorder + ("I%ds" % len(notename)).encode("utf-8")
+        marker = struct.pack(markerfmt, constants.NT_GNU_INFINITY, notename)
         hdrfmt = self.byteorder + b"2I"
         start = hdrsz = struct.calcsize(hdrfmt)
         while True:

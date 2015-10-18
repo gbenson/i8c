@@ -25,7 +25,12 @@ from __future__ import unicode_literals
 
 NT_GNU_INFINITY = 5
 
-I8_FUNCTION_MAGIC = (ord("i") << 8) | ord("8")
+I8_CHUNK_FSIG = 1
+I8_CHUNK_CODE = 2
+I8_CHUNK_ETAB = 3
+I8_CHUNK_STAB = 4
+
+I8_BYTE_ORDER_MARK = (ord("i") << 8) | ord("8")
 
 I8_TYPE_INT = "i"
 I8_TYPE_PTR = "p"

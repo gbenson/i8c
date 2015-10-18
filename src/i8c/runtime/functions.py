@@ -25,8 +25,10 @@ from __future__ import unicode_literals
 
 from .. import constants
 from . import *
+from . import leb128
 from . import operations
 from . import types
+import copy
 import struct
 
 class Function(object):
@@ -76,63 +78,85 @@ class BuiltinFunction(Function):
         stack.push_multi(self.rtypes, result)
 
 class BytecodeFunction(Function):
+    CHUNKNAMES = {}
+    for name in dir(constants):
+        if name.startswith("I8_CHUNK_"):
+            value = getattr(constants, name)
+            assert not value in CHUNKNAMES
+            CHUNKNAMES[value] = name
+    del name, value
+
     def __init__(self, src):
         Function.__init__(self, src)
+        self.__split_chunks()
+        self.__unpack_fsig()
+        self.__unpack_code()
+        self.__unpack_etab()
 
-        # Parse the header
-        hdrformat = self.byteorder + b"11H"
-        expect_hdrsize = struct.calcsize(hdrformat)
-        (magic, version, hdrsize, codesize, externsize, provider_o,
-         name_o, ptypes_o, rtypes_o, etypes_o, self.max_stack) \
-            = struct.unpack(hdrformat, src[:expect_hdrsize].bytes)
-
-        # Check the header
-        if magic != constants.I8_FUNCTION_MAGIC:
-            if magic >> 8 == magic & 0xFF:
-                raise CorruptNoteError(self.src)
-            else:
-                raise UnhandledNoteError(self.src)
-        if version != 1:
-            raise UnhandledNoteError(self.src + 2)
-        if hdrsize != expect_hdrsize - 4:
-            raise CorruptNoteError(self.src + 4)
-
-        # Work out where everything is
-        codestart = 4 + hdrsize
-        codelimit = codestart + codesize
-        self.code = self.src[codestart:codelimit]
-
-        externstart = codelimit
-        externlimit = externstart + externsize
-        externs = self.src[externstart:externlimit]
-
-        stringstart = externlimit
-        self.__strings = src[stringstart:]
-
-        # Extract the header's strings
-        provider, name, ptypes, rtypes, etypes \
-            = map(self.get_string,
-                  (provider_o, name_o,
-                   ptypes_o, rtypes_o, etypes_o))
-
-        # Set our signature
-        ptypes = types.decode(ptypes)
-        rtypes = types.decode(rtypes)
-        self.set_signature(provider.text, name.text, ptypes, rtypes)
-
-        # Load the bytecode and externals
-        self.__load_bytecode()
-        self.__load_externals(externs, etypes)
+    def __split_chunks(self):
+        offset = 0
+        while offset < len(self.src):
+            start = offset
+            offset, type = leb128.read_uleb128(self.src, offset)
+            offset, size = leb128.read_uleb128(self.src, offset)
+            limit = offset + size
+            name = self.CHUNKNAMES.get(type, None)
+            if name is not None:
+                assert name.startswith("I8_CHUNK_")
+                name = name[9:].lower()
+                if hasattr(self, name):
+                    raise CorruptNoteError(self.src + start)
+                setattr(self, name, self.src[offset:limit])
+            offset = limit
+        if offset != len(self.src):
+            raise CorruptNoteError(self.src)
 
     def get_string(self, start):
-        unterminated = self.__strings + start
+        if not hasattr(self, "stab"):
+            raise UnhandledNoteError(self.src)
+        unterminated = self.stab + start
         limit = unterminated.bytes.find(b"\0")
         if limit < 0:
             raise CorruptNoteError(unterminated)
         return unterminated[:limit]
 
-    def __load_bytecode(self):
-        self.ops = {}
+    def __unpack_fsig(self):
+        if not hasattr(self, "fsig"):
+            raise UnhandledNoteError(self.src)
+        offset = 0
+        offset, provider_o = leb128.read_uleb128(self.fsig, offset)
+        offset, name_o = leb128.read_uleb128(self.fsig, offset)
+        offset, ptypes_o = leb128.read_uleb128(self.fsig, offset)
+        offset, rtypes_o = leb128.read_uleb128(self.fsig, offset)
+        if offset != len(self.fsig):
+            raise UnhandledNoteError(self.fsig)
+
+        provider, name, ptypes, rtypes \
+            = map(self.get_string,
+                  (provider_o, name_o, ptypes_o, rtypes_o))
+
+        ptypes = types.decode(ptypes)
+        rtypes = types.decode(rtypes)
+        self.set_signature(provider.text, name.text, ptypes, rtypes)
+
+    def __unpack_code(self):
+        if not hasattr(self, "code"):
+            raise UnhandledNoteError(self.src)
+        self.ops, offset = {}, 0
+        offset, self.max_stack = leb128.read_uleb128(self.code, offset)
+        if offset == len(self.code):
+            return
+
+        bomfmt = self.byteorder + b"H"
+        bomsize = struct.calcsize(bomfmt)
+        byteorder = struct.unpack(bomfmt,
+                                  self.code[offset:offset
+                                            + bomsize].bytes)[0]
+        if byteorder != constants.I8_BYTE_ORDER_MARK:
+            raise UnhandledNoteError(self.code)
+        offset += bomsize
+
+        self.code += offset
         pc, limit = 0, len(self.code)
         while pc < limit:
             op = operations.Operation(self, pc)
@@ -141,23 +165,22 @@ class BytecodeFunction(Function):
         if pc != limit:
             raise CorruptNoteError(self.code + pc)
 
-    def __load_externals(self, table, types):
+    def __unpack_etab(self):
         self.externals = []
-        num_slots = len(types)
-        if num_slots == 0:
+        if not hasattr(self, "etab"):
             return
-        slotsize, check = divmod(len(table), num_slots)
-        if check != 0:
-            raise CorruptNoteError(types)
-        for index in range(num_slots):
+        unterminated = copy.copy(self.etab)
+        while len(unterminated):
+            offset, type = leb128.read_uleb128(unterminated, 0)
             klass = {constants.I8_TYPE_RAWFUNC: UnresolvedFunction,
                      constants.I8_TYPE_RELADDR: UnrelocatedAddress}.get(
-                types[index], None)
+                chr(type), None)
             if klass is None:
-                raise UnhandledNoteError(self)
-            start = index * slotsize
-            limit = start + slotsize
-            self.externals.append(klass(self, table[start:limit]))
+                raise UnhandledNoteError(unterminated)
+            unterminated += offset
+            extern = klass(self, unterminated)
+            self.externals.append(extern)
+            unterminated += len(extern.src)
 
     @property
     def external_functions(self):
@@ -193,14 +216,17 @@ class BytecodeFunction(Function):
         stack.pop_multi_onto(self.rtypes, caller_stack)
 
 class UnresolvedFunction(Function):
-    def __init__(self, referrer, slot):
-        Function.__init__(self, slot)
-        self.referrer = referrer
-        format = slot.byteorder + b"4H"
-        slotsize = struct.calcsize(format)
+    def __init__(self, referrer, unterminated):
+        offset, provider_o = leb128.read_uleb128(unterminated, 0)
+        offset, name_o = leb128.read_uleb128(unterminated, offset)
+        offset, ptypes_o = leb128.read_uleb128(unterminated, offset)
+        offset, rtypes_o = leb128.read_uleb128(unterminated, offset)
+        Function.__init__(self, unterminated[:offset])
+
         provider, name, ptypes, rtypes \
             = map(referrer.get_string,
-                  struct.unpack(format, slot[:slotsize].bytes))
+                  (provider_o, name_o, ptypes_o, rtypes_o))
+
         ptypes = types.decode(ptypes)
         rtypes = types.decode(rtypes)
         self.set_signature(provider.text, name.text, ptypes, rtypes)
@@ -209,12 +235,9 @@ class UnresolvedFunction(Function):
         return self.type, ctx.get_function(self)
 
 class UnrelocatedAddress(object):
-    def __init__(self, referrer, slot):
-        format = {4: b"I", 8: b"Q"}.get(len(slot), None)
-        if format is None:
-            raise UnhandledNoteError(slot)
-        format = slot.byteorder + format
-        self.value = struct.unpack(format, slot.bytes)[0]
+    def __init__(self, referrer, unterminated):
+        offset, self.value = leb128.read_uleb128(unterminated, 0)
+        self.src = unterminated[:offset]
 
     def resolve(self, ctx):
         return types.PointerType, self.value

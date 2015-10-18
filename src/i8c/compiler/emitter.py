@@ -22,7 +22,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from .. import constants
-from ..compat import fwrite
+from ..compat import fwrite, str
 from . import logger
 from .types import PTRTYPE
 
@@ -128,7 +128,8 @@ class RelAddr(object):
         self.name = str(name)
 
     def emit(self, emitter, prefix):
-        emitter.emit_8byte(self.name, prefix + "relative address")
+        emitter.emit_byte("I8_TYPE_RELADDR", prefix + "type")
+        emitter.emit_uleb128(self.name, prefix + "relative address")
 
 class FuncRef(object):
     def __init__(self, provider, name, params, returns):
@@ -138,10 +139,11 @@ class FuncRef(object):
         self.returns = returns
 
     def emit(self, emitter, prefix):
-        emitter.emit_2byte(self.provider.offset, prefix + "provider offset")
-        emitter.emit_2byte(self.name.offset, prefix + "name offset")
-        emitter.emit_2byte(self.params.offset, prefix + "ptypes offset")
-        emitter.emit_2byte(self.returns.offset, prefix + "rtypes offset")
+        emitter.emit_byte("I8_TYPE_RAWFUNC", prefix + "type")
+        emitter.emit_uleb128(self.provider.offset, prefix + "provider offset")
+        emitter.emit_uleb128(self.name.offset, prefix + "name offset")
+        emitter.emit_uleb128(self.params.offset, prefix + "ptypes offset")
+        emitter.emit_uleb128(self.returns.offset, prefix + "rtypes offset")
 
 class Emitter(object):
     def __init__(self, write):
@@ -184,7 +186,12 @@ class Emitter(object):
         value = getattr(constants, name, None)
         if value is None:
             return
-        self.emit("#define %s 0x%02x" % (name, value))
+        if isinstance(value, str):
+            format = "'%s'"
+        else:
+            format = "0x%02x"
+        value = format % value
+        self.emit("#define %s %s" % (name, value))
         self.__constants[name] = True
 
     def to_string(self, value):
@@ -217,6 +224,9 @@ class Emitter(object):
         self.emit(".sleb128 " + self.to_string(value), comment)
 
     def emit_op(self, name, comment=None):
+        if not self.__BOM_emitted:
+            self.emit_2byte("I8_BYTE_ORDER_MARK")
+            self.__BOM_emitted = True
         widename = "I8_OP_" + name
         widecode = getattr(constants, widename, None)
         if widecode is not None:
@@ -261,50 +271,45 @@ class Emitter(object):
         self.emit(".balign 4")
 
     def __visit_function(self, function):
-        headerstart = self.new_label()
-        codestart = self.new_label()
-        etablestart = self.new_label()
-
         strings = StringTable()
         self.externs = ExternTable(strings, function.name.provider)
 
-        # Populate the tables
-        provider = strings.new(function.name.provider)
-        name = strings.new(function.name.shortname)
+        # Populate the string and extern tables
+        self.provider = strings.new(function.name.provider)
+        self.name = strings.new(function.name.shortname)
         self.paramtypes = strings.new()
-        self.externtypes = strings.new()
         self.returntypes = strings.new()
         for node in function.entry_stack:
             node.accept(self)
         function.returntypes.accept(self)
         strings.layout_table(self.new_label)
 
-        # Emit the Infinity note header
-        self.emit_2byte("I8_FUNCTION_MAGIC")
-        self.emit_2byte(1, "version")
+        # Emit the chunks
+        self.emit_chunk("fsig", Emitter.emit_signature)
+        self.emit_chunk("code", Emitter.emit_code, function)
+        if self.externs.entries:
+            self.emit_chunk("etab", self.externs.emit)
+        self.emit_chunk("stab", strings.emit)
 
-        # Emit the Infinity function header
-        self.emit_label(headerstart)
-        self.emit_2byte(codestart - headerstart, "header size")
-        self.emit_2byte(etablestart - codestart, "code size")
-        self.emit_2byte(strings.start_label - etablestart, "externs size")
-        self.emit_2byte(provider.offset, "provider offset")
-        self.emit_2byte(name.offset, "name offset")
-        self.emit_2byte(self.paramtypes.offset, "param types offset")
-        self.emit_2byte(self.returntypes.offset, "return types offset")
-        self.emit_2byte(self.externtypes.offset, "externs types offset")
-        self.emit_2byte(function.max_stack, "max stack")
+    def emit_chunk(self, name, emitfunc, *args):
+        start = self.new_label()
+        limit = self.new_label()
+        self.emit_uleb128("I8_CHUNK_" + name.upper())
+        self.emit_uleb128(limit - start, "chunk size")
+        self.emit_label(start)
+        emitfunc(self, *args)
+        self.emit_label(limit)
 
-        # Emit the code
-        self.emit_label(codestart)
+    def emit_signature(self):
+        self.emit_uleb128(self.provider.offset, "provider offset")
+        self.emit_uleb128(self.name.offset, "name offset")
+        self.emit_uleb128(self.paramtypes.offset, "param types offset")
+        self.emit_uleb128(self.returntypes.offset, "return types offset")
+
+    def emit_code(self, function):
+        self.emit_uleb128(function.max_stack, "max stack")
+        self.__BOM_emitted = False
         function.ops.accept(self)
-
-        # Emit the extern table
-        self.emit_label(etablestart)
-        self.externs.emit(self)
-
-        # Emit the string table
-        strings.emit(self)
 
     # Populate the string and extern tables
 
@@ -326,12 +331,6 @@ class Emitter(object):
             self.returntypes.append(node.type.encoding)
 
     def visit_external(self, external):
-        basetype = external.typename.type.basetype
-        if basetype is PTRTYPE:
-            self.externtypes.append(constants.I8_TYPE_RELADDR)
-        else:
-            assert basetype.is_function
-            self.externtypes.append(constants.I8_TYPE_RAWFUNC)
         external.accept(self.externs)
 
     # Emit the bytecode
