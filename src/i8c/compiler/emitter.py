@@ -147,12 +147,6 @@ class Emitter(object):
     def __init__(self, write):
         self.__write = write
 
-    def __init_opcodes(self):
-        self.opcodes = {}
-        for name in dir(constants):
-            if name.startswith("DW_OP_"):
-                self.opcodes[name] = getattr(constants, name)
-
     def write(self, text):
         self.__write(text.encode("utf-8"))
 
@@ -184,8 +178,23 @@ class Emitter(object):
         self.__label = label
         label.emitted = True
 
+    def maybe_define_constant(self, name):
+        if name in self.__constants:
+            return
+        value = getattr(constants, name, None)
+        if value is None:
+            return
+        self.emit("#define %s 0x%02x" % (name, value))
+        self.__constants[name] = True
+
+    def to_string(self, value):
+        value = str(value)
+        if not (value[0].isdigit() or value[0] == "-"):
+            self.maybe_define_constant(value)
+        return value
+
     def __emit_nbyte(self, n, value, comment):
-        self.emit((".%sbyte " % n) + str(value), comment)
+        self.emit((".%sbyte " % n) + self.to_string(value), comment)
 
     def emit_byte(self, value, comment=None):
         self.__emit_nbyte("", value, comment)
@@ -200,27 +209,20 @@ class Emitter(object):
         self.__emit_nbyte(8, value, comment)
 
     def emit_uleb128(self, value, comment=None):
-        self.emit(".uleb128 " + str(value), comment)
+        self.emit(".uleb128 " + self.to_string(value), comment)
 
     def emit_sleb128(self, value, comment=None):
-        self.emit(".sleb128 " + str(value), comment)
+        self.emit(".sleb128 " + self.to_string(value), comment)
 
     def emit_op(self, name, comment=None):
         assert name != "addr" # See XXX UNWRITTEN DOCS.
         name = "DW_OP_" + name
-        code = self.opcodes.pop(name, None)
-        if code is not None:
-            self.emit("#define %s 0x%02x" % (name, code))
         self.emit_byte(name, comment)
 
     def visit_toplevel(self, toplevel):
         self.num_labels = 0
         self.__label = None
-        self.__init_opcodes()
-        self.emit("#define NT_GNU_INFINITY %d"
-                  % constants.NT_GNU_INFINITY)
-        self.emit("#define I8_FUNCTION_MAGIC 0x%x"
-                  % constants.I8_FUNCTION_MAGIC)
+        self.__constants = {}
         self.emit('.section .note.infinity, "", "note"')
         self.emit(".balign 4")
         for node in toplevel.functions:
