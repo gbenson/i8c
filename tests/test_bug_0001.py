@@ -55,12 +55,12 @@ class TestBug0001(TestCase):
         """Miscompilation check #0001"""
         tree, output = self.compile(SOURCE)
         ops = output.opnames
-        # Robust test: check the stream contains two DW_OP_GNU_i8calls.
-        # They refer to different functions so there's no way the two
+        # Robust test: check the stream contains two calls. They
+        # refer to different functions so there's no way the two
         # can be combined.
-        self.assertEqual(len([op for op in ops if op == "GNU_i8call"]), 2)
+        self.assertEqual(len([op for op in ops if op == "call"]), 2)
         # Fragile test: check that the stream is as we expect.
         # This may need fixing up to cope with future compiler changes.
         self.assertEqual(["deref", "bra", "swap", "drop",
-                          "lit0", "rot", "GNU_i8call", "ne",
-                          "skip", "drop", "GNU_i8call"], ops)
+                          "lit0", "rot", "call", "ne",
+                          "skip", "drop", "call"], ops)

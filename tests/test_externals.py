@@ -45,4 +45,4 @@ class TestExternals(TestCase):
         """Check that externals work."""
         for source in SOURCE1, SOURCE2:
             tree, output = self.compile(source)
-            self.assertEqual(["GNU_i8call"], output.opnames)
+            self.assertEqual(["call"], output.opnames)

@@ -31,7 +31,7 @@ import struct
 class Operation(object):
     NAMES = {}
     for name in dir(constants):
-        if name.startswith("DW_OP_"):
+        if name[2:6] == "_OP_":
             assert name not in NAMES
             NAMES[getattr(constants, name)] = name
     del name
@@ -128,9 +128,13 @@ class Operation(object):
         src = function.code + pc
         # Read the opcode
         self.opcode = ord(src[0])
+        next = src + 1
+        if self.opcode == constants.DW_OP_GNU_wide_op:
+            size, widecode = self.decode_uleb128(next)
+            self.opcode = widecode + 0x100
+            next += size
         if self.opcode not in self.NAMES:
             raise UnhandledNoteError(src)
-        next = src + 1
         # Read the operands
         self.operands = []
         for type in self.OPERANDS.get(self.opcode, ()):
@@ -190,7 +194,7 @@ class Operation(object):
     @property
     def name(self):
         result = self.NAMES[self.opcode]
-        assert result.startswith("DW_OP_")
+        assert result[2:6] == "_OP_"
         return result[6:]
 
     @property
@@ -202,7 +206,7 @@ class Operation(object):
         ctx.trace_operation(self.location, stack,
                             " ".join("%02x" % ord(c)
                                      for c in self.encoded),
-                            " ".join(["DW_OP_%s" % self.name]
+                            " ".join([self.NAMES[self.opcode]]
                                      + list(map(str, self.operands))))
 
     def execute(self, ctx, stack):
@@ -268,7 +272,7 @@ class Operation(object):
     def exec_dup(self, ctx, stack):
         stack.push_boxed(stack.slots[0])
 
-    def exec_GNU_i8call(self, ctx, stack):
+    def exec_call(self, ctx, stack):
         callee = stack.pop_function()
         ctx.trace_call(callee, stack)
         callee.execute(ctx, stack)

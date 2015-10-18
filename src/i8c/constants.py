@@ -184,7 +184,6 @@ DW_OP_stack_value = 0x9f
 
 # GNU extensions
 DW_OP_GNU_push_tls_address = 0xe0  # same as DW_OP_HP_unknown
-DW_OP_GNU_i8call = 0xef
 DW_OP_GNU_uninit = 0xf0
 DW_OP_GNU_encoded_addr = 0xf1
 DW_OP_GNU_implicit_pointer = 0xf2
@@ -197,6 +196,7 @@ DW_OP_GNU_reinterpret = 0xf9
 DW_OP_GNU_parameter_ref = 0xfa
 DW_OP_GNU_addr_index = 0xfb
 DW_OP_GNU_const_index = 0xfc
+DW_OP_GNU_wide_op = 0xff
 
 # HP extensions
 DW_OP_HP_unknown = 0xe0  # same as GNU_push_tls_address
@@ -209,3 +209,6 @@ DW_OP_HP_tls = 0xe6
 
 # PGI (STMicroelectronics) extensions
 DW_OP_PGI_omp_thread_num = 0xf8
+
+# Infinity wide operations
+I8_OP_call = 0x100

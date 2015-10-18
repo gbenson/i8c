@@ -191,6 +191,8 @@ class Emitter(object):
         value = str(value)
         if not (value[0].isdigit() or value[0] == "-"):
             self.maybe_define_constant(value)
+            if value.startswith("I8_OP_"):
+                value += " - 0x100"
         return value
 
     def __emit_nbyte(self, n, value, comment):
@@ -215,9 +217,15 @@ class Emitter(object):
         self.emit(".sleb128 " + self.to_string(value), comment)
 
     def emit_op(self, name, comment=None):
+        widename = "I8_OP_" + name
+        widecode = getattr(constants, widename, None)
+        if widecode is not None:
+            name = "GNU_wide_op"
         assert name != "addr" # See XXX UNWRITTEN DOCS.
         name = "DW_OP_" + name
         self.emit_byte(name, comment)
+        if widecode is not None:
+            self.emit_uleb128(widename)
 
     def visit_toplevel(self, toplevel):
         self.num_labels = 0

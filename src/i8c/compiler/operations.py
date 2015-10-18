@@ -205,7 +205,7 @@ class PlusUConst(Operation):
         self.value = template.value
 
 class CallOp(ClassComparableOp):
-    dwarfname = "GNU_i8call"
+    dwarfname = "call"
 
 class CastOp(Operation):
     @property
