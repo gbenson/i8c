@@ -25,6 +25,7 @@ from __future__ import unicode_literals
 
 from .. import constants
 from . import UnhandledNoteError
+from . import leb128
 import operator
 import struct
 
@@ -167,29 +168,13 @@ class Operation(object):
         # should never be implemented.  See XXX UNWRITTEN.
         raise NotImplementedError
 
-    @classmethod
-    def decode_uleb128(cls, code):
-        return cls.__decode_leb128(code, False)
-
-    @classmethod
-    def decode_sleb128(cls, code):
-        return cls.__decode_leb128(code, True)
+    @staticmethod
+    def decode_uleb128(code):
+        return leb128.read_uleb128(code, 0)
 
     @staticmethod
-    def __decode_leb128(code, is_signed):
-        result = shift = offset = 0
-        while True:
-            byte = ord(code[offset])
-            offset += 1
-            result |= ((byte & 0x7f) << shift)
-            if (byte & 0x80) == 0:
-                break
-            shift += 7
-        if is_signed and (byte & 0x40):
-            sign = 0x40 << shift
-            result &= ~(0x40 << shift)
-            result -= sign
-        return offset, result
+    def decode_sleb128(code):
+        return leb128.read_sleb128(code, 0)
 
     @property
     def name(self):
