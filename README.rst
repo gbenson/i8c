@@ -77,7 +77,7 @@ make sense.
 Execution Environment
 ---------------------
 
-I8X is an execution environment for testing Infinity notes.  When
+I8X is an execution environment for testing infinity notes.  When
 invoked as |i8x --quick| (or |i8x -q|) I8X executes a single note
 function, taking arguments from the command line and displaying the
 result on the console::
@@ -106,11 +106,14 @@ Right now there is no documentation apart from this file (sorry!)
 Contributing
 ------------
 
-To report a bug please email the mailing list.  You can find its
-address at the end of the message printed by |i8c --help|.
+For help or to report bugs please email infinity@sourceware.org.
 
 If you’re working on this software please join the mailing list and
 mention what you’re doing so we don’t collide.
+
+Definitely mention if you’re writing software to *consume* infinity
+notes because I8X doesn’t fully implement the as-yet unwritten spec
+and is not a good model to base things on.
 
 
 .. reStructuredText stuff:
