@@ -89,7 +89,7 @@ class BytecodeFunction(Function):
     def __init__(self, src):
         Function.__init__(self, src)
         self.__split_chunks()
-        self.__unpack_fsig()
+        self.__unpack_info()
         self.__unpack_code()
         self.__unpack_etab()
 
@@ -120,16 +120,19 @@ class BytecodeFunction(Function):
             raise CorruptNoteError(unterminated)
         return unterminated[:limit]
 
-    def __unpack_fsig(self):
-        if not hasattr(self, "fsig"):
+    def __unpack_info(self):
+        if not hasattr(self, "info"):
             raise UnhandledNoteError(self.src)
-        offset = 0
-        offset, provider_o = leb128.read_uleb128(self.fsig, offset)
-        offset, name_o = leb128.read_uleb128(self.fsig, offset)
-        offset, ptypes_o = leb128.read_uleb128(self.fsig, offset)
-        offset, rtypes_o = leb128.read_uleb128(self.fsig, offset)
-        if offset != len(self.fsig):
-            raise UnhandledNoteError(self.fsig)
+        offset, version = leb128.read_uleb128(self.info, 0)
+        if version != 1:
+            raise UnhandledNoteError(self.info)
+        offset, provider_o = leb128.read_uleb128(self.info, offset)
+        offset, name_o = leb128.read_uleb128(self.info, offset)
+        offset, ptypes_o = leb128.read_uleb128(self.info, offset)
+        offset, rtypes_o = leb128.read_uleb128(self.info, offset)
+        offset, self.max_stack = leb128.read_uleb128(self.info, offset)
+        if offset != len(self.info):
+            raise UnhandledNoteError(self.info)
 
         provider, name, ptypes, rtypes \
             = map(self.get_string,
@@ -140,23 +143,17 @@ class BytecodeFunction(Function):
         self.set_signature(provider.text, name.text, ptypes, rtypes)
 
     def __unpack_code(self):
+        self.ops = {}
         if not hasattr(self, "code"):
-            raise UnhandledNoteError(self.src)
-        self.ops, offset = {}, 0
-        offset, self.max_stack = leb128.read_uleb128(self.code, offset)
-        if offset == len(self.code):
             return
 
         bomfmt = self.byteorder + b"H"
         bomsize = struct.calcsize(bomfmt)
-        byteorder = struct.unpack(bomfmt,
-                                  self.code[offset:offset
-                                            + bomsize].bytes)[0]
+        byteorder = struct.unpack(bomfmt, self.code[:bomsize].bytes)[0]
         if byteorder != constants.I8_BYTE_ORDER_MARK:
             raise UnhandledNoteError(self.code)
-        offset += bomsize
+        self.code += bomsize
 
-        self.code += offset
         pc, limit = 0, len(self.code)
         while pc < limit:
             op = operations.Operation(self, pc)

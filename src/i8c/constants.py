@@ -25,7 +25,7 @@ from __future__ import unicode_literals
 
 NT_GNU_INFINITY = 5
 
-I8_CHUNK_FSIG = 1
+I8_CHUNK_INFO = 1
 I8_CHUNK_CODE = 2
 I8_CHUNK_ETAB = 3
 I8_CHUNK_STAB = 4

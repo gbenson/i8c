@@ -145,7 +145,17 @@ class FuncRef(object):
         emitter.emit_uleb128(self.params.offset, prefix + "ptypes offset")
         emitter.emit_uleb128(self.returns.offset, prefix + "rtypes offset")
 
-class Emitter(object):
+class NoOutputOpSkipper(object):
+    def visit_castop(self, op):
+        pass
+
+    def visit_nameop(self, op):
+        pass
+
+    def visit_stopop(self, op):
+        pass
+
+class Emitter(NoOutputOpSkipper):
     def __init__(self, write):
         self.__write = write
 
@@ -285,8 +295,9 @@ class Emitter(object):
         strings.layout_table(self.new_label)
 
         # Emit the chunks
-        self.emit_chunk("fsig", Emitter.emit_signature)
-        self.emit_chunk("code", Emitter.emit_code, function)
+        self.emit_chunk("info", Emitter.emit_info, function)
+        if self.has_code(function):
+            self.emit_chunk("code", Emitter.emit_code, function)
         if self.externs.entries:
             self.emit_chunk("etab", self.externs.emit)
         self.emit_chunk("stab", strings.emit)
@@ -300,14 +311,26 @@ class Emitter(object):
         emitfunc(self, *args)
         self.emit_label(limit)
 
-    def emit_signature(self):
+    def emit_info(self, function):
+        self.emit_uleb128(1, "version")
         self.emit_uleb128(self.provider.offset, "provider offset")
         self.emit_uleb128(self.name.offset, "name offset")
         self.emit_uleb128(self.paramtypes.offset, "param types offset")
         self.emit_uleb128(self.returntypes.offset, "return types offset")
+        self.emit_uleb128(function.max_stack, "max stack")
+
+    @staticmethod
+    def has_code(function):
+        ops = sorted(function.ops.ops.items())
+        skipper = NoOutputOpSkipper()
+        try:
+            for index, op in ops:
+                op.accept(skipper)
+            return False
+        except AttributeError:
+            return True
 
     def emit_code(self, function):
-        self.emit_uleb128(function.max_stack, "max stack")
         self.__BOM_emitted = False
         function.ops.accept(self)
 
@@ -362,10 +385,6 @@ class Emitter(object):
     visit_binaryop = emit_simple_op
     visit_branchop = emit_branch_op
     visit_callop = emit_simple_op
-
-    def visit_castop(self, op):
-        pass
-
     visit_compareop = emit_simple_op
 
     def visit_constop(self, op):
@@ -458,10 +477,6 @@ class Emitter(object):
     visit_dropop = emit_simple_op
     visit_dupop = emit_simple_op
     visit_gotoop = emit_branch_op
-
-    def visit_nameop(self, op):
-        pass
-
     visit_overop = emit_simple_op
 
     def visit_pickop(self, op):
@@ -478,10 +493,6 @@ class Emitter(object):
         self.emit_uleb128(op.value)
 
     visit_rotop = emit_simple_op
-
-    def visit_stopop(self, op):
-        pass
-
     visit_subop = emit_simple_op
     visit_swapop = emit_simple_op
     visit_unaryop = emit_simple_op
