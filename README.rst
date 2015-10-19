@@ -113,7 +113,7 @@ mention what you’re doing so we don’t collide.
 
 Definitely mention if you’re writing software to *consume* infinity
 notes because I8X doesn’t fully implement the as-yet unwritten spec
-and is not a good model to base things on.
+and isn’t a good model to base things on.
 
 
 .. reStructuredText stuff:
