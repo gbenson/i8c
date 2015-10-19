@@ -27,6 +27,14 @@ NT_GNU_INFINITY = 5
 
 I8_FUNCTION_MAGIC = (ord("i") << 8) | ord("8")
 
+I8_TYPE_INT = "i"
+I8_TYPE_PTR = "p"
+I8_TYPE_OPA = "o"
+I8_TYPE_FUNC = "F"
+
+I8_TYPE_RELADDR = "x"
+I8_TYPE_RAWFUNC = "f"
+
 DW_OP_addr = 0x03
 DW_OP_deref = 0x06
 DW_OP_const1u = 0x08

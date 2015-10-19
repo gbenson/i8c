@@ -150,8 +150,9 @@ class BytecodeFunction(Function):
         if check != 0:
             raise CorruptNoteError(types)
         for index in range(num_slots):
-            klass = {"f": UnresolvedFunction,
-                     "x": UnrelocatedAddress}.get(types[index], None)
+            klass = {constants.I8_TYPE_RAWFUNC: UnresolvedFunction,
+                     constants.I8_TYPE_RELADDR: UnrelocatedAddress}.get(
+                types[index], None)
             if klass is None:
                 raise UnhandledNoteError(self)
             start = index * slotsize

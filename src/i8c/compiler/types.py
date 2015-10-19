@@ -21,6 +21,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from .. import constants
 from . import TypeAnnotatorError
 from . import logger
 
@@ -63,14 +64,11 @@ class CoreType(BaseType):
     class_init_complete = False
     is_function = False
 
-    def __init__(self, name, is_computable):
+    def __init__(self, name, encoding, is_computable):
         assert not CoreType.class_init_complete
         BaseType.__init__(self, name)
+        self.encoding = encoding
         self.is_computable = is_computable
-
-    @property
-    def encoding(self):
-        return self.name[0]
 
 class FuncType(BaseType):
     """Function types.
@@ -91,7 +89,8 @@ class FuncType(BaseType):
 
     @property
     def encoding(self):
-        return "F%s(%s)" % (
+        return "%s%s(%s)" % (
+            constants.I8_TYPE_FUNC,
             "".join((type.encoding for type in self.returntypes)),
             "".join((type.encoding for type in self.paramtypes)))
 
@@ -171,7 +170,8 @@ def __create_builtin_types():
     def add_builtin_type(type):
         globals()[type.name.upper() + "TYPE"] = type
     for name in ("int", "ptr", "opaque"):
-        add_builtin_type(CoreType(name, name != "opaque"))
+        code = getattr(constants, "I8_TYPE_" + name[:3].upper())
+        add_builtin_type(CoreType(name, code, name != "opaque"))
     CoreType.class_init_complete = True
     add_builtin_type(AliasType("bool", INTTYPE))
     for is_signed in range(2):

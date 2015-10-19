@@ -328,10 +328,10 @@ class Emitter(object):
     def visit_external(self, external):
         basetype = external.typename.type.basetype
         if basetype is PTRTYPE:
-            self.externtypes.append("x")
+            self.externtypes.append(constants.I8_TYPE_RELADDR)
         else:
             assert basetype.is_function
-            self.externtypes.append("f")
+            self.externtypes.append(constants.I8_TYPE_RAWFUNC)
         external.accept(self.externs)
 
     # Emit the bytecode

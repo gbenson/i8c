@@ -23,6 +23,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from .. import constants
 from . import CorruptNoteError, UnhandledNoteError
 
 class Type(object):
@@ -51,17 +52,17 @@ class IntPtrType(BasicType):
     name = "intptr"
 
 class IntegerType(IntPtrType):
-    code = "i"
+    code = constants.I8_TYPE_INT
 
 class PointerType(IntPtrType):
-    code = "p"
+    code = constants.I8_TYPE_PTR
 
 class OpaqueType(BasicType):
-    code = "o"
+    code = constants.I8_TYPE_OPA
     name = "opaque"
 
 class FunctionType(Type):
-    code = "F"
+    code = constants.I8_TYPE_FUNC
     name = "function"
 
     def __init__(self, ptypes=None, rtypes=None):
@@ -100,7 +101,7 @@ def decode(input, start=0, stop=None):
         thetype = Type.types.get(code, None)
         if thetype is None:
             raise UnhandledNoteError(input)
-        if code.isupper():
+        if thetype is FunctionType:
             thetype = thetype()
         start = thetype.unpack(input, start)
         result.append(thetype)
