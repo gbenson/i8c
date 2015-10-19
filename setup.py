@@ -47,7 +47,7 @@ setup(
         "License :: OSI Approved" +
             " :: GNU General Public License v3 or later (GPLv3+)",
         "License :: OSI Approved" +
-            " :: GNU Lesser General Public License v2 or later (LGPLv2+)"
+            " :: GNU Lesser General Public License v2 or later (LGPLv2+)",
         "Operating System :: OS Independent",
         "Topic :: Software Development :: Compilers",
         "Programming Language :: Python :: 2",
