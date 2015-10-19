@@ -54,7 +54,7 @@ Options:
                         command line.
   -t, --trace           Trace function execution.  This option may be
                         specified multiple times for greater detail.""" \
-    + cmdline.usage_message_footer()
+    + cmdline.usage_message_footer_for("I8X")
 
 LICENSE = ("LGPLv2.1+: GNU LGPL version 2.1 or later",
            "http://www.gnu.org/licenses/lgpl-2.1.html")

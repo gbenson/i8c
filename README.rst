@@ -106,10 +106,11 @@ Right now there is no documentation apart from this file (sorry!)
 Contributing
 ------------
 
-To report a bug please use the `issue tracker`_.
+To report a bug please email the mailing list.  You can find its
+address at the end of the message printed by |i8c --help|.
 
-If you’re working on this software please note what you’re doing in
-the issue tracker or email gbenson@redhat.com so we don’t collide.
+If you’re working on this software please join the mailing list and
+mention what you’re doing so we don’t collide.
 
 
 .. reStructuredText stuff:
@@ -119,7 +120,6 @@ the issue tracker or email gbenson@redhat.com so we don’t collide.
 .. _installing pip: https://pip.pypa.io/en/stable/installing/
 .. _version 3: http://gnu.org/licenses/gpl-3.0.html
 .. _version 2.1: http://gnu.org/licenses/lgpl-2.1.html
-.. _issue tracker: https://github.com/gbenson/i8c/issues/
 .. _unittest: https://docs.python.org/2/library/unittest.html
 
 .. Substitutions

@@ -36,8 +36,8 @@ This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.""" % (
         (program, version(), license_txt, license_url))
 
-def usage_message_footer():
+def usage_message_footer_for(program):
     return """
 
-Home page: <https://pypi.python.org/pypi/i8c/>
-Bug tracker: <https://github.com/gbenson/i8c/issues/>"""
+Report %s bugs to infinity@sourceware.org
+I8C and I8X home page: <https://pypi.python.org/pypi/i8c/>""" % program

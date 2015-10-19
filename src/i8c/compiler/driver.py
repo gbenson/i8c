@@ -65,7 +65,7 @@ should make sense.  Try it!
 
 In most cases the command you want is ‘i8c -c file.i8’, which reads
 and compiles ‘file.i8’ and writes the result to ‘file.o’.""" \
-    + cmdline.usage_message_footer()
+    + cmdline.usage_message_footer_for("I8C")
 
 LICENSE = ("GPLv3+: GNU GPL version 3 or later",
            "http://gnu.org/licenses/gpl-3.0.html")

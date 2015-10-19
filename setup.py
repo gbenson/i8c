@@ -37,7 +37,7 @@ setup(
     long_description=long_description,
     license="GPLv3+ and LGPLv2.1+",
     author="Gary Benson",
-    author_email="gbenson@redhat.com",
+    author_email="infinity@sourceware.org",
     url="https://github.com/gbenson/i8c/",
     classifiers=[
         # https://pypi.python.org/pypi?%3Aaction=list_classifiers
