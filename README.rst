@@ -34,6 +34,8 @@ GitHub_.  To build and install from source use this command::
 
   sudo python setup.py install
 
+I8C and I8X require Python 2.6 or newer.
+
 
 License
 -------
