@@ -295,24 +295,24 @@ class Emitter(NoOutputOpSkipper):
         strings.layout_table(self.new_label)
 
         # Emit the chunks
-        self.emit_chunk("info", Emitter.emit_info, function)
+        self.emit_chunk("info", 1, Emitter.emit_info, function)
         if self.has_code(function):
-            self.emit_chunk("code", Emitter.emit_code, function)
+            self.emit_chunk("code", 1, Emitter.emit_code, function)
         if self.externs.entries:
-            self.emit_chunk("etab", self.externs.emit)
-        self.emit_chunk("stab", strings.emit)
+            self.emit_chunk("etab", 1, self.externs.emit)
+        self.emit_chunk("stab", 1, strings.emit)
 
-    def emit_chunk(self, name, emitfunc, *args):
+    def emit_chunk(self, name, version, emitfunc, *args):
         start = self.new_label()
         limit = self.new_label()
         self.emit_uleb128("I8_CHUNK_" + name.upper())
+        self.emit_uleb128(version, "chunk version")
         self.emit_uleb128(limit - start, "chunk size")
         self.emit_label(start)
         emitfunc(self, *args)
         self.emit_label(limit)
 
     def emit_info(self, function):
-        self.emit_uleb128(1, "version")
         self.emit_uleb128(self.provider.offset, "provider offset")
         self.emit_uleb128(self.name.offset, "name offset")
         self.emit_uleb128(self.paramtypes.offset, "param types offset")

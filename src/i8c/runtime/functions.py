@@ -98,6 +98,7 @@ class BytecodeFunction(Function):
         while offset < len(self.src):
             start = offset
             offset, type = leb128.read_uleb128(self.src, offset)
+            offset, version = leb128.read_uleb128(self.src, offset)
             offset, size = leb128.read_uleb128(self.src, offset)
             limit = offset + size
             name = self.CHUNKNAMES.get(type, None)
@@ -106,7 +107,9 @@ class BytecodeFunction(Function):
                 name = name[9:].lower()
                 if hasattr(self, name):
                     raise CorruptNoteError(self.src + start)
-                setattr(self, name, self.src[offset:limit])
+                chunk = self.src[offset:limit]
+                chunk.version = version
+                setattr(self, name, chunk)
             offset = limit
         if offset != len(self.src):
             raise CorruptNoteError(self.src)
@@ -114,6 +117,8 @@ class BytecodeFunction(Function):
     def get_string(self, start):
         if not hasattr(self, "stab"):
             raise UnhandledNoteError(self.src)
+        if self.stab.version != 1:
+            raise UnhandledNoteError(self.stab)
         unterminated = self.stab + start
         limit = unterminated.bytes.find(b"\0")
         if limit < 0:
@@ -123,16 +128,13 @@ class BytecodeFunction(Function):
     def __unpack_info(self):
         if not hasattr(self, "info"):
             raise UnhandledNoteError(self.src)
-        offset, version = leb128.read_uleb128(self.info, 0)
-        if version != 1:
+        if self.info.version != 1:
             raise UnhandledNoteError(self.info)
-        offset, provider_o = leb128.read_uleb128(self.info, offset)
+        offset, provider_o = leb128.read_uleb128(self.info, 0)
         offset, name_o = leb128.read_uleb128(self.info, offset)
         offset, ptypes_o = leb128.read_uleb128(self.info, offset)
         offset, rtypes_o = leb128.read_uleb128(self.info, offset)
         offset, self.max_stack = leb128.read_uleb128(self.info, offset)
-        if offset != len(self.info):
-            raise UnhandledNoteError(self.info)
 
         provider, name, ptypes, rtypes \
             = map(self.get_string,
@@ -146,6 +148,8 @@ class BytecodeFunction(Function):
         self.ops = {}
         if not hasattr(self, "code"):
             return
+        if self.code.version != 1:
+            raise UnhandledNoteError(self.code)
 
         bomfmt = self.byteorder + b"H"
         bomsize = struct.calcsize(bomfmt)
@@ -166,6 +170,8 @@ class BytecodeFunction(Function):
         self.externals = []
         if not hasattr(self, "etab"):
             return
+        if self.etab.version != 1:
+            raise UnhandledNoteError(self.etab)
         unterminated = copy.copy(self.etab)
         while len(unterminated):
             offset, type = leb128.read_uleb128(unterminated, 0)
