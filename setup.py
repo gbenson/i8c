@@ -32,7 +32,7 @@ with open(path.join(here, "README.rst"), encoding="utf-8") as fp:
 
 setup(
     name="i8c",
-    version="0.0.1",
+    version="0.0.2",
     description="Infinity Note Compiler",
     long_description=long_description,
     license="GPLv3+ and LGPLv2.1+",
