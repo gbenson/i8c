@@ -40,4 +40,4 @@ def usage_message_footer_for(program):
     return """
 
 Report %s bugs to infinity@sourceware.org
-I8C and I8X home page: <https://pypi.python.org/pypi/i8c/>""" % program
+Infinity home page: <https://sourceware.org/gdb/wiki/Infinity>""" % program

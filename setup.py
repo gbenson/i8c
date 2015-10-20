@@ -38,7 +38,7 @@ setup(
     license="GPLv3+ and LGPLv2.1+",
     author="Gary Benson",
     author_email="infinity@sourceware.org",
-    url="https://github.com/gbenson/i8c/",
+    url="https://sourceware.org/gdb/wiki/Infinity",
     classifiers=[
         # https://pypi.python.org/pypi?%3Aaction=list_classifiers
         "Development Status :: 3 - Alpha",
