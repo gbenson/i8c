@@ -5,13 +5,13 @@ Infinity is a platform-independent system for executables and shared
 libraries to export information to software development tools such as
 debuggers.
 
-In Infinity, executable and shared library files contain *infinity
-notes* in addition to their regular contents.  Each infinity note
+In Infinity, executable and shared library files contain *Infinity
+notes* in addition to their regular contents.  Each Infinity note
 contains a function encoded in a platform-independent instruction
 set that note-consuming tools can load and execute.
 
 This package provides I8C, a compiler for creating object files
-containing infinity notes.  This package also provides I8X, an
+containing Infinity notes.  This package also provides I8X, an
 execution environment that can be used to create unit tests for
 compiled notes.
 
@@ -88,7 +88,7 @@ make sense.
 Execution Environment
 ---------------------
 
-I8X is an execution environment for testing infinity notes.  When
+I8X is an execution environment for testing Infinity notes.  When
 invoked as |i8x --quick| (or |i8x -q|) I8X executes a single note
 function, taking arguments from the command line and displaying the
 result on the console::
@@ -111,10 +111,10 @@ example above::
 Documentation
 -------------
 
-Infinity’s documentation is currently being put together on the
+Documentation for Infinity is currently being put together on the
 `GDB wiki`_.  Good starting points are I8Language_ and NoteFormat_.
 
-Right now there is no documentation for I8C and I8X besides this
+Right now there’s no documentation for I8C and I8X aside from this
 file and what you see in |i8c --help| and |i8x --help|.  This is
 being worked on.  You could help!
 
@@ -125,9 +125,9 @@ Contributing
 For help or to report bugs please email infinity@sourceware.org.
 
 If you’re working on this software please join the mailing list and
-mention what you’re doing so we don’t collide.
+coordinate so we don’t collide.
 
-Definitely mention if you’re writing software to *consume* infinity
+Definitely mention if you’re writing software to *consume* Infinity
 notes because I8X doesn’t fully implement the as-yet unwritten spec
 and isn’t a good model to base things on.
 
