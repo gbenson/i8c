@@ -100,7 +100,12 @@ example above::
 Documentation
 -------------
 
-Right now there is no documentation apart from this file (sorry!)
+Infinity’s documentation is currently being put together on the
+`GDB wiki`_.  Good starting points are I8Language_ and NoteFormat_.
+
+Right now there is no documentation for I8C and I8X besides this
+file and what you see in |i8c --help| and |i8x --help|.  This is
+being worked on.  You could help!
 
 
 Contributing
@@ -124,6 +129,9 @@ and isn’t a good model to base things on.
 .. _version 3: http://gnu.org/licenses/gpl-3.0.html
 .. _version 2.1: http://gnu.org/licenses/lgpl-2.1.html
 .. _unittest: https://docs.python.org/2/library/unittest.html
+.. _GDB wiki: https://sourceware.org/gdb/wiki/Infinity
+.. _I8Language: https://sourceware.org/gdb/wiki/I8Language
+.. _NoteFormat: https://sourceware.org/gdb/wiki/NoteFormat
 
 .. Substitutions
 .. |factorial.o| replace:: :code:`factorial.o`
@@ -131,6 +139,7 @@ and isn’t a good model to base things on.
 .. |-E| replace:: :code:`-E`
 .. |-S| replace:: :code:`-S`
 .. |i8c --help| replace:: :code:`i8c --help`
+.. |i8x --help| replace:: :code:`i8x --help`
 .. |i8x -q| replace:: :code:`i8x -q`
 .. |i8x --quick| replace:: :code:`i8x --quick`
 .. |-q| replace:: :code:`-q`
