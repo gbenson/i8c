@@ -74,7 +74,7 @@ class TestCompilerDriver(TestCase):
 
     def __run_permtest(self, args, outext):
         self.outfile = self.filebase + outext
-        if outext != ".o":
+        if "-E" in args:
             args.extend(("-o", self.outfile))
         args.append(self.infile)
         self.assertFalse(os.path.exists(self.outfile))

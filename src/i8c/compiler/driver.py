@@ -192,24 +192,35 @@ def setup_input(args):
 
 def guess_outfile(args):
     assert args.outfile is None
-    assert "-c" in args.asm_args
+    if args.with_asm:
+        assert "-c" in args.asm_args
+        ext = ".o"
+    else:
+        ext = ".S"
     if len(args.infiles) != 1:
         raise I8CError("unable to determine output filename")
-    root, ext = os.path.splitext(args.infiles[0])
-    return root + ".o"
+    root = os.path.splitext(args.infiles[0])[0]
+    return root + ext
 
 def setup_output(args):
-    process = outfile = None
     if args.with_asm:
         command = ["gcc", "-x", "assembler-with-cpp"] + args.asm_args + ["-"]
         if args.outfile is None and "-c" in args.asm_args:
             command.extend(("-o", guess_outfile(args)))
         process = subprocess.Popen(command, stdin=subprocess.PIPE)
         outfile = process.stdin
-    elif args.outfile in (None, "-"):
-        outfile = sys.stdout
     else:
-        outfile = open(args.outfile, "wb")
+        process = None
+        filename = args.outfile
+        if filename is None:
+            if args.with_i8c:
+                filename = guess_outfile(args)
+            else:
+                filename = "-"
+        if filename == "-":
+            outfile = sys.stdout
+        else:
+            outfile = open(filename, "wb")
     return process, outfile
 
 def compile(readline, write):
