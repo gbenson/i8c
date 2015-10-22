@@ -59,6 +59,17 @@ Options:
 LICENSE = ("LGPLv2.1+: GNU LGPL version 2.1 or later",
            "http://www.gnu.org/licenses/lgpl-2.1.html")
 
+def module_install_command(module):
+    dir = os.path.dirname(os.path.realpath(sys.executable))
+    for cmd in ("pip", "pip3"):
+        cmd = os.path.join(dir, cmd)
+        if os.path.exists(cmd):
+            return "%s install %s" % (cmd, module)
+    for cmd in ("easy_install",):
+        cmd = os.path.join(dir, cmd)
+        if os.path.exists(cmd):
+            return "%s %s" % (cmd, module)
+
 class TestSuite(unittest.TestSuite):
     def __init__(self, *args, **kwargs):
         unittest.TestSuite.__init__(self, *args, **kwargs)
@@ -110,6 +121,14 @@ def main(args):
         result = map(str, ctx.call(function, *args))
         fprint(sys.stdout, ", ".join(result))
         return
+
+    if not hasattr(TestCase, "assertIsInstance"):
+        msg = ("unittest2 is required to run testcases"
+               + " with Python %s.%s" % sys.version_info[:2])
+        clue = module_install_command("unittest2")
+        if clue is not None:
+            msg += "\nTry ‘%s’" % clue
+        raise I8XError(msg)
 
     print("I8X", version(), "on Python", sys.version)
     print()

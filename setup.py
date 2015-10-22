@@ -24,11 +24,30 @@ from __future__ import print_function
 from setuptools import find_packages, setup
 from codecs import open
 from os import path
+import sys
 
 here = path.realpath(path.dirname(__file__))
 
 with open(path.join(here, "README.rst"), encoding="utf-8") as fp:
     long_description = fp.read()
+
+# Ensure we have a suitable unittest
+install_requires = []
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+if not hasattr(unittest.TestCase, "assertIsInstance"):
+    install_requires.append("unittest2")
+
+# Ensure we don't ever release packages requiring unittest2
+if install_requires:
+    for arg in sys.argv[1:]:
+        for bail in ("register", "upload", "dist"):
+            if arg.find(bail) >= 0:
+                print("Don't use Python %s.%s for ‘%s’"
+                      % (sys.version_info[:2] + (arg,)))
+                sys.exit(1)
 
 setup(
     name="i8c",
@@ -61,6 +80,7 @@ setup(
     ],
     packages=find_packages("src"),
     package_dir = {"": "src"},
+    install_requires=install_requires,
     entry_points={"console_scripts": ["i8c = i8c.compiler:main",
                                       "i8x = i8c.runtime:main"]},
     tests_require=["nose"],
