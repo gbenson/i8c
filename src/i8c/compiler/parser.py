@@ -380,10 +380,10 @@ class Operation:
 
 # XXX blah blah blah
 
-class TreeOp(TreeNode, Operation):
+class TreeOp(Operation, TreeNode):
     pass
 
-class NoArgOp(LeafNode, Operation):
+class NoArgOp(Operation, LeafNode):
     num_args = 0
 
 class OneArgOp(TreeOp):

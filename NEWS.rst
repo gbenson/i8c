@@ -15,3 +15,6 @@ Bug fixes
   command line.  (https://github.com/gbenson/i8c/issues/32)
 
 * Stack underflow checks in I8C were off by one in some cases.
+
+* I8C's parser now correctly raises an error if arguments are supplied
+  for zero-argument operations.
