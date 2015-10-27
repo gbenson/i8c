@@ -235,9 +235,6 @@ class Emitter(NoOutputOpSkipper):
         self.emit(".sleb128 " + self.to_string(value), comment)
 
     def emit_op(self, name, comment=None):
-        if not self.__BOM_emitted:
-            self.emit_2byte("I8_BYTE_ORDER_MARK")
-            self.__BOM_emitted = True
         widename = "I8_OP_" + name
         widecode = getattr(constants, widename, None)
         if widecode is not None:
@@ -296,9 +293,10 @@ class Emitter(NoOutputOpSkipper):
         strings.layout_table(self.new_label)
 
         # Emit the chunks
-        self.emit_chunk("info", 1, Emitter.emit_info, function)
+        self.emit_chunk("signature", 1, Emitter.emit_signature)
         if self.has_code(function):
-            self.emit_chunk("bytecode", 1, Emitter.emit_code, function)
+            self.emit_chunk("codeinfo", 1, Emitter.emit_codeinfo, function)
+            self.emit_chunk("bytecode", 2, Emitter.emit_bytecode, function)
         if self.externs.entries:
             self.emit_chunk("externals", 1, self.externs.emit)
         self.emit_chunk("strings", 1, strings.emit)
@@ -313,12 +311,11 @@ class Emitter(NoOutputOpSkipper):
         emitfunc(self, *args)
         self.emit_label(limit)
 
-    def emit_info(self, function):
+    def emit_signature(self):
         self.emit_uleb128(self.provider.offset, "provider offset")
         self.emit_uleb128(self.name.offset, "name offset")
         self.emit_uleb128(self.paramtypes.offset, "param types offset")
         self.emit_uleb128(self.returntypes.offset, "return types offset")
-        self.emit_uleb128(function.max_stack, "max stack")
 
     @staticmethod
     def has_code(function):
@@ -331,8 +328,11 @@ class Emitter(NoOutputOpSkipper):
         except visitors.VisitError:
             return True
 
-    def emit_code(self, function):
-        self.__BOM_emitted = False
+    def emit_codeinfo(self, function):
+        self.emit_2byte("I8_BYTE_ORDER_MARK")
+        self.emit_uleb128(function.max_stack, "max stack")
+
+    def emit_bytecode(self, function):
         function.ops.accept(self)
 
     # Populate the string and extern tables
