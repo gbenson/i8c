@@ -25,10 +25,12 @@ from __future__ import unicode_literals
 
 NT_GNU_INFINITY = 5
 
-I8_CHUNK_INFO = 1
+I8_CHUNK_INFO = 1 # XXX deprecated
 I8_CHUNK_BYTECODE = 2
 I8_CHUNK_EXTERNALS = 3
 I8_CHUNK_STRINGS = 4
+I8_CHUNK_SIGNATURE = 5
+I8_CHUNK_CODEINFO = 6
 
 I8_BYTE_ORDER_MARK = (ord("i") << 8) | ord("8")
 

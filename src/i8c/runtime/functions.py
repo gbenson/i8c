@@ -124,13 +124,16 @@ class BytecodeFunction(Function):
         return unterminated[:limit]
 
     def __unpack_signature(self):
-        chunk = self.one_chunk(constants.I8_CHUNK_INFO, 1, True)
+        chunk = self.one_chunk(constants.I8_CHUNK_SIGNATURE, 1, False)
+        if chunk is None:
+            # XXX support for I8_CHUNK_INFO chunks is DEPRECATED
+            # XXX change "False" to "True" above when this is removed
+            chunk = self.one_chunk(constants.I8_CHUNK_INFO, 1, True)
 
         offset, provider_o = leb128.read_uleb128(chunk, 0)
         offset, name_o = leb128.read_uleb128(chunk, offset)
         offset, ptypes_o = leb128.read_uleb128(chunk, offset)
         offset, rtypes_o = leb128.read_uleb128(chunk, offset)
-        offset, self.max_stack = leb128.read_uleb128(chunk, offset)
 
         provider, name, ptypes, rtypes \
             = map(self.get_string,
@@ -143,16 +146,21 @@ class BytecodeFunction(Function):
     def __unpack_bytecode(self):
         self.ops = {}
 
-        chunk = self.one_chunk(constants.I8_CHUNK_BYTECODE, 1, False)
+        chunk = self.one_chunk(constants.I8_CHUNK_BYTECODE, (1, 2), False)
         if chunk is None:
             return
 
-        bomfmt = self.byteorder + b"H"
-        bomsize = struct.calcsize(bomfmt)
-        byteorder = struct.unpack(bomfmt, chunk[:bomsize].bytes)[0]
-        if byteorder != constants.I8_BYTE_ORDER_MARK:
-            raise UnhandledNoteError(self.code)
-        self.bytecode = chunk + bomsize
+        if chunk.version == 1:
+            # XXX support for version 1 chunks is DEPRECATED
+            # XXX change "(1, 2)" to "2" above when this is removed
+            bomfmt = self.byteorder + b"H"
+            bomsize = struct.calcsize(bomfmt)
+            byteorder = struct.unpack(bomfmt, chunk[:bomsize].bytes)[0]
+            if byteorder != constants.I8_BYTE_ORDER_MARK:
+                raise UnhandledNoteError(self.code)
+            self.bytecode = chunk + bomsize
+        else:
+            self.bytecode = chunk
 
         pc, limit = 0, len(self.bytecode)
         while pc < limit:
