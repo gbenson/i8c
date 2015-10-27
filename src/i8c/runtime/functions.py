@@ -23,12 +23,12 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from ..compat import integer
 from .. import constants
 from . import *
 from . import leb128
 from . import operations
 from . import types
-import copy
 import struct
 
 class Function(object):
@@ -78,14 +78,6 @@ class BuiltinFunction(Function):
         stack.push_multi(self.rtypes, result)
 
 class BytecodeFunction(Function):
-    CHUNKNAMES = {}
-    for name in dir(constants):
-        if name.startswith("I8_CHUNK_"):
-            value = getattr(constants, name)
-            assert not value in CHUNKNAMES
-            CHUNKNAMES[value] = name
-    del name, value
-
     def __init__(self, src):
         Function.__init__(self, src)
         self.__split_chunks()
@@ -94,47 +86,51 @@ class BytecodeFunction(Function):
         self.__unpack_etab()
 
     def __split_chunks(self):
-        offset = 0
+        self.chunks, offset = {}, 0
         while offset < len(self.src):
             start = offset
-            offset, type = leb128.read_uleb128(self.src, offset)
+            offset, type_id = leb128.read_uleb128(self.src, offset)
             offset, version = leb128.read_uleb128(self.src, offset)
             offset, size = leb128.read_uleb128(self.src, offset)
             limit = offset + size
-            name = self.CHUNKNAMES.get(type, None)
-            if name is not None:
-                assert name.startswith("I8_CHUNK_")
-                name = name[9:].lower()
-                if hasattr(self, name):
-                    raise CorruptNoteError(self.src + start)
-                chunk = self.src[offset:limit]
-                chunk.version = version
-                setattr(self, name, chunk)
+            if type_id not in self.chunks:
+                self.chunks[type_id] = []
+            chunk = self.src[offset:limit]
+            chunk.version = version
+            self.chunks[type_id].append(chunk)
             offset = limit
         if offset != len(self.src):
             raise CorruptNoteError(self.src)
 
-    def get_string(self, start):
-        if not hasattr(self, "stab"):
+    def one_chunk(self, type_id, supported_versions, is_mandatory):
+        if isinstance(supported_versions, integer):
+            supported_versions = (supported_versions,)
+        chunks = self.chunks.get(type_id, None)
+        if chunks is None:
+            if not is_mandatory:
+                return
             raise UnhandledNoteError(self.src)
-        if self.stab.version != 1:
-            raise UnhandledNoteError(self.stab)
-        unterminated = self.stab + start
+        if len(chunks) != 1:
+            # The second chunk is the first error
+            raise UnsupportedNoteError(chunks[1])
+        return chunks[0]
+
+    def get_string(self, start):
+        chunk = self.one_chunk(constants.I8_CHUNK_STAB, 1, True)
+        unterminated = chunk + start
         limit = unterminated.bytes.find(b"\0")
         if limit < 0:
             raise CorruptNoteError(unterminated)
         return unterminated[:limit]
 
     def __unpack_info(self):
-        if not hasattr(self, "info"):
-            raise UnhandledNoteError(self.src)
-        if self.info.version != 1:
-            raise UnhandledNoteError(self.info)
-        offset, provider_o = leb128.read_uleb128(self.info, 0)
-        offset, name_o = leb128.read_uleb128(self.info, offset)
-        offset, ptypes_o = leb128.read_uleb128(self.info, offset)
-        offset, rtypes_o = leb128.read_uleb128(self.info, offset)
-        offset, self.max_stack = leb128.read_uleb128(self.info, offset)
+        chunk = self.one_chunk(constants.I8_CHUNK_INFO, 1, True)
+
+        offset, provider_o = leb128.read_uleb128(chunk, 0)
+        offset, name_o = leb128.read_uleb128(chunk, offset)
+        offset, ptypes_o = leb128.read_uleb128(chunk, offset)
+        offset, rtypes_o = leb128.read_uleb128(chunk, offset)
+        offset, self.max_stack = leb128.read_uleb128(chunk, offset)
 
         provider, name, ptypes, rtypes \
             = map(self.get_string,
@@ -146,17 +142,17 @@ class BytecodeFunction(Function):
 
     def __unpack_code(self):
         self.ops = {}
-        if not hasattr(self, "code"):
+
+        chunk = self.one_chunk(constants.I8_CHUNK_CODE, 1, False)
+        if chunk is None:
             return
-        if self.code.version != 1:
-            raise UnhandledNoteError(self.code)
 
         bomfmt = self.byteorder + b"H"
         bomsize = struct.calcsize(bomfmt)
-        byteorder = struct.unpack(bomfmt, self.code[:bomsize].bytes)[0]
+        byteorder = struct.unpack(bomfmt, chunk[:bomsize].bytes)[0]
         if byteorder != constants.I8_BYTE_ORDER_MARK:
             raise UnhandledNoteError(self.code)
-        self.code += bomsize
+        self.code = chunk + bomsize
 
         pc, limit = 0, len(self.code)
         while pc < limit:
@@ -168,11 +164,12 @@ class BytecodeFunction(Function):
 
     def __unpack_etab(self):
         self.externals = []
-        if not hasattr(self, "etab"):
+
+        chunk = self.one_chunk(constants.I8_CHUNK_ETAB, 1, False)
+        if chunk is None:
             return
-        if self.etab.version != 1:
-            raise UnhandledNoteError(self.etab)
-        unterminated = copy.copy(self.etab)
+
+        unterminated = chunk
         while len(unterminated):
             offset, type = leb128.read_uleb128(unterminated, 0)
             klass = {constants.I8_TYPE_RAWFUNC: UnresolvedFunction,
