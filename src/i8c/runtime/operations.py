@@ -126,7 +126,7 @@ class Operation(object):
     del code, size, type
 
     def __init__(self, function, pc):
-        src = function.code + pc
+        src = function.bytecode + pc
         # Read the opcode
         self.opcode = ord(src[0])
         next = src + 1

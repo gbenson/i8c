@@ -81,9 +81,9 @@ class BytecodeFunction(Function):
     def __init__(self, src):
         Function.__init__(self, src)
         self.__split_chunks()
-        self.__unpack_info()
-        self.__unpack_code()
-        self.__unpack_etab()
+        self.__unpack_signature()
+        self.__unpack_bytecode()
+        self.__unpack_externals()
 
     def __split_chunks(self):
         self.chunks, offset = {}, 0
@@ -123,7 +123,7 @@ class BytecodeFunction(Function):
             raise CorruptNoteError(unterminated)
         return unterminated[:limit]
 
-    def __unpack_info(self):
+    def __unpack_signature(self):
         chunk = self.one_chunk(constants.I8_CHUNK_INFO, 1, True)
 
         offset, provider_o = leb128.read_uleb128(chunk, 0)
@@ -140,7 +140,7 @@ class BytecodeFunction(Function):
         rtypes = types.decode(rtypes)
         self.set_signature(provider.text, name.text, ptypes, rtypes)
 
-    def __unpack_code(self):
+    def __unpack_bytecode(self):
         self.ops = {}
 
         chunk = self.one_chunk(constants.I8_CHUNK_CODE, 1, False)
@@ -152,17 +152,17 @@ class BytecodeFunction(Function):
         byteorder = struct.unpack(bomfmt, chunk[:bomsize].bytes)[0]
         if byteorder != constants.I8_BYTE_ORDER_MARK:
             raise UnhandledNoteError(self.code)
-        self.code = chunk + bomsize
+        self.bytecode = chunk + bomsize
 
-        pc, limit = 0, len(self.code)
+        pc, limit = 0, len(self.bytecode)
         while pc < limit:
             op = operations.Operation(self, pc)
             self.ops[pc] = op
             pc += op.size
         if pc != limit:
-            raise CorruptNoteError(self.code + pc)
+            raise CorruptNoteError(self.bytecode + pc)
 
-    def __unpack_etab(self):
+    def __unpack_externals(self):
         self.externals = []
 
         chunk = self.one_chunk(constants.I8_CHUNK_ETAB, 1, False)
@@ -199,7 +199,7 @@ class BytecodeFunction(Function):
         caller_stack.pop_multi_onto(self.ptypes, stack)
         for external in self.externals:
             stack.push_typed(*external.resolve(ctx))
-        pc, return_pc = 0, len(self.code)
+        pc, return_pc = 0, len(self.bytecode)
         while pc >= 0 and pc < return_pc:
             op = self.ops.get(pc, None)
             if op is None:
