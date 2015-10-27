@@ -298,10 +298,10 @@ class Emitter(NoOutputOpSkipper):
         # Emit the chunks
         self.emit_chunk("info", 1, Emitter.emit_info, function)
         if self.has_code(function):
-            self.emit_chunk("code", 1, Emitter.emit_code, function)
+            self.emit_chunk("bytecode", 1, Emitter.emit_code, function)
         if self.externs.entries:
-            self.emit_chunk("etab", 1, self.externs.emit)
-        self.emit_chunk("stab", 1, strings.emit)
+            self.emit_chunk("externals", 1, self.externs.emit)
+        self.emit_chunk("strings", 1, strings.emit)
 
     def emit_chunk(self, name, version, emitfunc, *args):
         start = self.new_label()

@@ -116,7 +116,7 @@ class BytecodeFunction(Function):
         return chunks[0]
 
     def get_string(self, start):
-        chunk = self.one_chunk(constants.I8_CHUNK_STAB, 1, True)
+        chunk = self.one_chunk(constants.I8_CHUNK_STRINGS, 1, True)
         unterminated = chunk + start
         limit = unterminated.bytes.find(b"\0")
         if limit < 0:
@@ -143,7 +143,7 @@ class BytecodeFunction(Function):
     def __unpack_bytecode(self):
         self.ops = {}
 
-        chunk = self.one_chunk(constants.I8_CHUNK_CODE, 1, False)
+        chunk = self.one_chunk(constants.I8_CHUNK_BYTECODE, 1, False)
         if chunk is None:
             return
 
@@ -165,7 +165,7 @@ class BytecodeFunction(Function):
     def __unpack_externals(self):
         self.externals = []
 
-        chunk = self.one_chunk(constants.I8_CHUNK_ETAB, 1, False)
+        chunk = self.one_chunk(constants.I8_CHUNK_EXTERNALS, 1, False)
         if chunk is None:
             return
 
