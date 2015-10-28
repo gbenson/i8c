@@ -53,7 +53,7 @@ class TestCast(TestCase):
                      "derived_opaque_t", # cast to derived opaque type
                      ):
             for slot in (0, "an_argument", 15, "no_such_slot"):
-                source = SOURCE + "cast %s %s" % (slot, type)
+                source = SOURCE + "cast %s, %s" % (slot, type)
 
                 if (type in ("ptr", "derived_ptr_t")
                     and slot in (0, "an_argument")):

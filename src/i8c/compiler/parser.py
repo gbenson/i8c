@@ -368,10 +368,35 @@ class Operation:
     def consume(self, tokens):
         if self.tokens:
             raise ParserError(tokens)
-        raise_unless_len(tokens, EXACTLY, 1 + self.num_args)
         self.tokens = tokens
-        if self.num_args > 0:
-            self.add_children(*tokens[1:])
+
+        # Split the argument list
+        tokens, args = tokens[1:], []
+        while tokens:
+            if isinstance(tokens[0], lexer.COMMA):
+                # Comma immediately after operator,
+                # or comma immediately after comma
+                raise ParserError(tokens)
+            arg = []
+            while tokens:
+                token = tokens.pop(0)
+                if not isinstance(token, lexer.COMMA):
+                    arg.append(token)
+                elif not tokens:
+                    # Comma at end of line
+                    raise ParserError(token)
+                else:
+                    break
+            assert arg
+            args.append(arg)
+
+        # Process the arguments
+        if len(args) > self.num_args:
+            raise ParserError(args[self.num_args])
+        elif len(args) < self.num_args:
+            raise ParserError(self.tokens[-1:])
+        else:
+            self.add_children(*args)
 
     @property
     def operand(self):
@@ -386,6 +411,9 @@ class TreeOp(Operation, TreeNode):
 class NoArgOp(Operation, LeafNode):
     num_args = 0
 
+    def add_children(self):
+        pass
+
 class OneArgOp(TreeOp):
     num_args = 1
 
@@ -394,7 +422,7 @@ class TwoArgOp(TreeOp):
 
 class JumpOp(OneArgOp):
     def add_children(self, target):
-        self.add_child(Target).consume([target])
+        self.add_child(Target).consume(target)
 
     @property
     def target(self):
@@ -423,11 +451,12 @@ class CondBranchOp(JumpOp):
 
 class CastOp(TwoArgOp):
     def add_children(self, slot, type):
-        if isinstance(slot, lexer.NUMBER):
-            self.add_child(StackSlot).consume([slot])
+        raise_unless_len(type, EXACTLY, 1)
+        if isinstance(slot[0], lexer.NUMBER):
+            self.add_child(StackSlot).consume(slot)
         else:
-            self.add_child(ShortName).consume([slot])
-        self.add_child(BasicType).pop_consume([type])
+            self.add_child(ShortName).consume(slot)
+        self.add_child(BasicType).pop_consume(type)
 
     @property
     def slot(self):
@@ -445,30 +474,28 @@ class CastOp(TwoArgOp):
 
 class DerefOp(OneArgOp):
     def add_children(self, type):
-        self.add_child(BasicType).pop_consume([type])
+        raise_unless_len(type, EXACTLY, 1)
+        self.add_child(BasicType).pop_consume(type)
 
 class GotoOp(JumpOp):
     pass
 
-class LoadOp(TreeOp):
-    def consume(self, tokens):
-        if self.tokens:
-            raise ParserError(tokens)
-        self.tokens = tokens
-        if len(tokens) == 2:
-            if isinstance(tokens[1], lexer.NUMBER):
+class LoadOp(OneArgOp):
+    def add_children(self, arg):
+        if len(arg) == 1:
+            if isinstance(arg[0], lexer.NUMBER):
                 klass = Integer
             else:
                 for klass in Pointer, Boolean:
-                    if tokens[1].text in klass.VALUES:
+                    if arg[0].text in klass.VALUES:
                         break
                 else:
                     klass = ShortName
-        elif len(self.tokens) == 4:
+        elif len(arg) == 3:
             klass = FullName
         else:
-            raise ParserError(tokens)
-        self.add_child(klass).consume(tokens[1:])
+            raise ParserError(arg)
+        self.add_child(klass).consume(arg)
 
     @property
     def named_operands(self):
@@ -484,8 +511,8 @@ class LoadOp(TreeOp):
 
 class NameOp(TwoArgOp):
     def add_children(self, slot, name):
-        self.add_child(StackSlot).consume([slot])
-        self.add_child(ShortName).consume([name])
+        self.add_child(StackSlot).consume(slot)
+        self.add_child(ShortName).consume(name)
 
     @property
     def slot(self):
@@ -497,7 +524,7 @@ class NameOp(TwoArgOp):
 
 class PickOp(OneArgOp):
     def add_children(self, slot):
-        self.add_child(StackSlot).consume([slot])
+        self.add_child(StackSlot).consume(slot)
 
 class ReturnOp(NoArgOp):
     pass

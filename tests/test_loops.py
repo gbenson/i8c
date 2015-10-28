@@ -93,7 +93,7 @@ loop:
     swap
     load 1
     sub
-    cast 0 ptr
+    cast 0, ptr
 
 check:
     dup
@@ -145,7 +145,7 @@ loop:
     swap
     load 1
     sub
-    name 0 x
+    name 0, x
 
 check:
     dup

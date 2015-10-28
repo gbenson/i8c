@@ -40,7 +40,7 @@ SOURCE_NAMES_SLOTS = (("an_argument", 3),
 
 SOURCE_WITH_NAME = SOURCE + """\
    load 23
-   name 0 a_name
+   name 0, a_name
 """
 
 SWN_NAMES_SLOTS = (("an_argument", 4),
@@ -93,7 +93,7 @@ class TestLoadSlot(TestCase):
             names = ["a_name", name]
             for order in 0, 1:
                 source = SOURCE + "\n".join(
-                    ["name %d a_name" % expect_slot]
+                    ["name %d, a_name" % expect_slot]
                     + ["load %s" % name for name in names])
                 tree, output = self.compile(source)
                 ops = output.ops
@@ -120,7 +120,7 @@ class TestLoadSlot(TestCase):
             if name.find("::") >= 0:
                 continue
             assert expect_slot != 1
-            source = SOURCE_WITH_NAME + "name 1 %s" % name
+            source = SOURCE_WITH_NAME + "name 1, %s" % name
             self.assertRaises(StackError, self.compile, source)
 
     def test_existing_name(self):
@@ -129,7 +129,7 @@ class TestLoadSlot(TestCase):
             if name.find("::") >= 0:
                 continue
             source = SOURCE_WITH_NAME + "\n".join(
-                ["name %d %s" % (expect_slot, name),
+                ["name %d, %s" % (expect_slot, name),
                  "load %s" % name])
             tree, output = self.compile(source)
             ops = output.ops

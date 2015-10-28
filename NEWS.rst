@@ -4,6 +4,13 @@ What has changed in I8C?
 Changes since I8C 0.0.1
 -----------------------
 
+Source language changes
+~~~~~~~~~~~~~~~~~~~~~~~
+
+* Operators with more than one argument now require their arguments to
+  be separated by commas.  Existing code using the "name" and "cast"
+  operators must be updated.
+
 Bug fixes
 ~~~~~~~~~
 
