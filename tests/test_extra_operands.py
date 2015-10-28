@@ -33,14 +33,14 @@ define test::extra_operands_0 returns int
 SOURCE_1arg = """\
 define test::extra_operands_1 returns int
     argument ptr x
-    pick 5 junk
+    pick 5, junk
 label:
 """
 
 SOURCE_2arg = """\
 define test::extra_operands_2 returns int
     argument ptr x
-    cast x int junk
+    cast x, int, junk
 """
 
 class TestExtraOperands(TestCase):

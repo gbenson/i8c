@@ -92,6 +92,8 @@ class TreeNode(visitors.Visitable):
         if isinstance(self, LeafNode):
             line += ': '
             line += " ".join((token.text for token in self.tokens))
+        elif isinstance(self, Operation) and not self.has_own_handler:
+            line += '("%s")' % self.tokens[0].text
         if hasattr(self, "type"):
             # Dump what the type annotator added
             line += " [%s" % self.type.name
@@ -362,9 +364,12 @@ class Label(Identifier):
     def consume(self, tokens):
         Identifier.consume(self, [tokens[0]])
 
-# Base mixin for all operations
+# Base class for all operations
 
-class Operation:
+class Operation(TreeNode):
+    has_own_handler = False
+    may_fold_load = False
+
     def consume(self, tokens):
         if self.tokens:
             raise ParserError(tokens)
@@ -390,6 +395,13 @@ class Operation:
             assert arg
             args.append(arg)
 
+        # Handle any folded loads
+        if self.may_fold_load and len(args) == self.num_args + 1:
+            tokens = args.pop(0)
+            tokens.insert(0, lexer.SyntheticToken(tokens[0],
+                                                  "synthetic load"))
+            self.add_child(LoadOp).consume(tokens)
+
         # Process the arguments
         if len(args) > self.num_args:
             raise ParserError(args[self.num_args])
@@ -399,25 +411,29 @@ class Operation:
             self.add_children(*args)
 
     @property
+    def folded_children(self):
+        return self.some_children(Operation)
+
+    @property
     def operand(self):
-        assert len(self.children) == 1
-        return self.children[0]
+        non_folded = [child
+                      for child in self.children
+                      if not isinstance(child, Operation)]
+        assert len(non_folded) == 1
+        return non_folded[0]
 
 # XXX blah blah blah
 
-class TreeOp(Operation, TreeNode):
-    pass
-
-class NoArgOp(Operation, LeafNode):
+class NoArgOp(Operation):
     num_args = 0
 
     def add_children(self):
         pass
 
-class OneArgOp(TreeOp):
+class OneArgOp(Operation):
     num_args = 1
 
-class TwoArgOp(TreeOp):
+class TwoArgOp(Operation):
     num_args = 2
 
 class JumpOp(OneArgOp):
@@ -441,15 +457,20 @@ class SimpleOp(NoArgOp):
     def name(self):
         return self.tokens[0].text
 
+class SimpleFoldLoadOp(SimpleOp):
+    may_fold_load = True
+
 class CompareOp(NoArgOp):
-    pass
+    may_fold_load = True
 
 class CondBranchOp(JumpOp):
-    pass
+    may_fold_load = True
 
 # Classes for operators that require specific individual parsing
 
 class CastOp(TwoArgOp):
+    has_own_handler = True
+
     def add_children(self, slot, type):
         raise_unless_len(type, EXACTLY, 1)
         if isinstance(slot[0], lexer.NUMBER):
@@ -473,14 +494,19 @@ class CastOp(TwoArgOp):
         return self.some_children(ShortName)
 
 class DerefOp(OneArgOp):
+    has_own_handler = True
+    may_fold_load = True
+
     def add_children(self, type):
         raise_unless_len(type, EXACTLY, 1)
         self.add_child(BasicType).pop_consume(type)
 
 class GotoOp(JumpOp):
-    pass
+    has_own_handler = True
 
 class LoadOp(OneArgOp):
+    has_own_handler = True
+
     def add_children(self, arg):
         if len(arg) == 1:
             if isinstance(arg[0], lexer.NUMBER):
@@ -510,6 +536,8 @@ class LoadOp(OneArgOp):
         return self.some_children(Constant)
 
 class NameOp(TwoArgOp):
+    has_own_handler = True
+
     def add_children(self, slot, name):
         self.add_child(StackSlot).consume(slot)
         self.add_child(ShortName).consume(name)
@@ -523,11 +551,13 @@ class NameOp(TwoArgOp):
         return self.one_child(ShortName)
 
 class PickOp(OneArgOp):
+    has_own_handler = True
+
     def add_children(self, slot):
         self.add_child(StackSlot).consume(slot)
 
 class ReturnOp(NoArgOp):
-    pass
+    has_own_handler = True
 
 # XXX
 
@@ -539,11 +569,12 @@ class Operations(TreeNode):
                "name": NameOp,
                "pick": PickOp,
                "return": ReturnOp}
-    for op in ("abs", "add", "and", "div", "drop", "dup",
-               "call", "mod", "mul", "neg", "not", "or",
-               "over", "rot", "shl", "shr", "shra", "sub",
-               "swap", "xor"):
+    for op in ("abs", "drop", "dup", "neg",
+               "not", "over", "rot", "swap"):
         CLASSES[op] = SimpleOp
+    for op in ("add", "and", "div", "call", "mod", "mul",
+               "or", "shl", "shr", "shra", "sub", "xor"):
+        CLASSES[op] = SimpleFoldLoadOp
     for op in ("lt", "le", "eq", "ne", "ge", "gt"):
         CLASSES[op] = CompareOp
         CLASSES["b" + op] = CondBranchOp
@@ -575,18 +606,6 @@ class Operations(TreeNode):
             if klass is None:
                 raise ParserError(tokens)
         self.add_child(klass).consume(tokens)
-
-    @property
-    def named_operations(self):
-        """Operations that need processing by the name annotator.
-        """
-        return self.some_children((CastOp, LoadOp, NameOp))
-
-    @property
-    def typed_operations(self):
-        """Operations that need processing by the type annotator.
-        """
-        return self.some_children((CastOp, DerefOp, LoadOp))
 
 def build_tree(tokens):
     tree = TopLevel()

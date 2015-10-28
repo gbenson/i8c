@@ -91,8 +91,13 @@ class NameAnnotator(object):
         external.name.accept(self)
 
     def visit_operations(self, ops):
-        for node in ops.named_operations:
+        for node in ops.children:
             node.accept(self)
+
+    def visit_label(self, label):
+        pass
+
+    # Visitors for operations that require annotation
 
     def visit_castop(self, op):
         for node in op.named_operands:
@@ -116,3 +121,8 @@ class NameAnnotator(object):
         if provider.startswith("i8"):
             raise NameAnnotatorError(
                 name, "provider ‘%s’ is reserved" % provider)
+
+    # Generic visitor for operations that don't require annotation
+
+    def visit_operation(self, op):
+        pass

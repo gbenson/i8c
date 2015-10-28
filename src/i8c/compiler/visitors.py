@@ -42,7 +42,13 @@ class Visitable(object):
         return func
 
     def accept(self, visitor):
+        # Find a suitable visitor
         func = self.get_visitfunc(visitor)
         if func is None:
             raise VisitError(visitor, self)
+        # Visit any folded children first
+        if hasattr(self, "folded_children"):
+            for node in self.folded_children:
+                node.accept(visitor)
+        # Now visit ourself
         return func(self)

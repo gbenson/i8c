@@ -11,6 +11,40 @@ Source language changes
   be separated by commas.  Existing code using the "name" and "cast"
   operators must be updated.
 
+* Many operators now have an optional “folded load” first argument.
+  A folded load is exactly equivalent to a load immediately before
+  the statement with the folded load, so, for example, this code::
+
+    load 1
+    add
+    load 5
+    bgt label
+
+  may now be written as::
+
+    add 1
+    bgt 5, label
+
+  Operators which may have folded loads are:
+
+    * All binary math and logic operators: add, and, div, mod, mul,
+      or, shl, shr, shra, sub, xor.
+
+    * All comparisons: eq, ge, gt, le, lt, ne.
+
+    * All conditional branches: beq, bge, bgt, ble, blt, bne.
+
+    * Others: call, deref.
+
+  Operarators which may ''not'' have folded loads are:
+
+    * All unary math and logic operators: abs, neg, not.
+
+    * All stack manipulation operators: drop, dup, over, pick, rot,
+      swap.
+
+    * Others: cast, goto, load, name, return.
+
 Bug fixes
 ~~~~~~~~~
 

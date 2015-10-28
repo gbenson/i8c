@@ -298,8 +298,13 @@ class TypeAnnotator(object):
         functype.type = FuncType(functype)
 
     def visit_operations(self, ops):
-        for node in ops.typed_operations:
+        for node in ops.children:
             node.accept(self)
+
+    def visit_label(self, label):
+        pass
+
+    # Visitors for operations that require annotation
 
     def visit_castop(self, op):
         op.typename.accept(self)
@@ -320,3 +325,8 @@ class TypeAnnotator(object):
 
     def visit_boolean(self, constant):
         constant.type = BOOLTYPE
+
+    # Generic visitors for operations that don't require annotation
+
+    def visit_operation(self, op):
+        pass
