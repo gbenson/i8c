@@ -28,12 +28,7 @@ define example::factorial returns int
 	// stack[0]: x
 	// stack[1]: x
 	// stack[2]: factorial
-    load 1
-	// stack[0]: 1
-	// stack[1]: x
-	// stack[2]: x
-	// stack[3]: factorial
-    bgt not_done_yet
+    bgt 1, not_done_yet
 	// stack[0]: x <= 1
 	// stack[1]: factorial
     load 1
@@ -49,12 +44,7 @@ not_done_yet:
 	// stack[0]: x
 	// stack[1]: x
 	// stack[2]: factorial
-    load 1
-	// stack[0]: 1
-	// stack[1]: x
-	// stack[2]: x
-	// stack[3]: factorial
-    sub
+    sub 1
 	// stack[0]: x - 1
 	// stack[1]: x
 	// stack[2]: factorial
