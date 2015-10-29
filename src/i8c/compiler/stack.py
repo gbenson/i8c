@@ -59,7 +59,7 @@ class Stack(object):
 
     def pop(self):
         assert self.is_mutable
-        self.underflow_check(1)
+        self.underflow_check(0)
         return self.slots.pop(0)
 
     def name_slot(self, index, name):
@@ -126,7 +126,7 @@ class Stack(object):
         return result
 
     def underflow_check(self, depth):
-        if self.depth < depth:
+        if self.depth <= depth:
             raise StackError(self.current_op, None, "stack underflow")
 
     def __getitem__(self, index):
@@ -371,7 +371,7 @@ class StackWalker(object):
         if not ftype.is_function:
             raise StackError(op, self.stack, "stack[0] not a function:")
         num_params = len(ftype.paramtypes)
-        self.stack.underflow_check(1 + num_params)
+        self.stack.underflow_check(num_params)
         for pindex in range(num_params):
             sindex = num_params - pindex
             ptype = ftype.paramtypes[pindex]

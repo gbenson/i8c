@@ -13,3 +13,5 @@ Bug fixes
 
 * "i8c -S" now outputs to a file unless "-o -" is specified on the
   command line.  (https://github.com/gbenson/i8c/issues/32)
+
+* Stack underflow checks in I8C were off by one in some cases.
