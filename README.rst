@@ -21,11 +21,11 @@ Installation
 
 The easiest way to install I8C and I8X is to use pip::
 
-  pip install --user i8c
+  pip install -U --user i8c
 
 or::
 
-  sudo pip install i8c
+  sudo pip install -U i8c
 
 Either of those commands will install both I8C and I8X.  If you don’t
 have pip please refer to `installing pip`_.  Hint: try one of these
