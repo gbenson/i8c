@@ -23,9 +23,10 @@ from __future__ import unicode_literals
 
 from tests import TestCase
 
-# In this miscompilation the final "call" was dropped as unreachable
+# The final "call" was dropped as unreachable.
+
 SOURCE = """\
-define test::bug_0001 returns int, ptr
+define test::i8cfail_0001 returns int, ptr
     argument int arg1
     extern func int, ptr (int) func1
     extern func int () func2
@@ -50,9 +51,9 @@ label2:
     call
 """
 
-class TestBug0001(TestCase):
-    def test_bug_0001(self):
-        """Miscompilation check #0001"""
+class TestI8CFail0001(TestCase):
+    def test_i8cfail_0001(self):
+        """Miscellaneous I8C failure #0001 check"""
         tree, output = self.compile(SOURCE)
         ops = output.opnames
         # Robust test: check the stream contains two calls. They
