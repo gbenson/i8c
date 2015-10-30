@@ -25,7 +25,6 @@ from . import logger
 from . import operations
 from .types import INTTYPE
 import inspect
-import sys
 
 # The primary goal of these optimizations is to reduce the instruction
 # count, to aid consumers using interpreters to execute notes.  The
@@ -147,23 +146,14 @@ class BlockOptimizer(Optimizer):
             return
 
         # Are the successors otherwise the same?
-        if block.exits[0].exits != block.exits[1].exits:
+        s1, s2 = block.exits
+        if s1.exits != s2.exits:
             return
-        try:
-            if block.exits[0].ops[1:] != block.exits[1].ops[1:]:
+        if len(s1.ops) != len(s2.ops):
+            return
+        for op1, op2 in list(zip(s1.ops, s2.ops))[1:-1]:
+            if not op1.is_equivalent_to(op2):
                 return
-        except NotImplementedError as e: # pragma: no cover
-            # This block is excluded from coverage because it
-            # should not be entered.  If it is entered then
-            # we need to implement the relevant comparison.
-            # To ensure things don't get lost we propagate
-            # the exception if it looks like we're being run
-            # by the testsuite.
-            if "i8c.tests" in sys.modules:
-                raise
-            debug_print("warning: missed an optimization?"
-                        + " (implement %s)\n" % e)
-            return
 
         self.debug_print_hit(block.ops[-1])
 

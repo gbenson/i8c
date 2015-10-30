@@ -18,3 +18,7 @@ Bug fixes
 
 * I8C's parser now correctly raises an error if arguments are supplied
   for zero-argument operations.
+
+* I8C's branch-elimination optimizer incorrectly regarded some
+  operations as equivalent.  This caused code to be incorrectly
+  optimized away in some cases.

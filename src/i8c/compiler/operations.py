@@ -41,10 +41,6 @@ class Operation(visitors.Visitable):
         return " ".join((token.text for token in self.ast.tokens))
 
     @property
-    def is_block_terminal(self):
-        return isinstance(self, TerminalOp)
-
-    @property
     def is_branch(self):
         return isinstance(self, BranchOp)
 
@@ -72,64 +68,35 @@ class Operation(visitors.Visitable):
     def is_noop(self):
         return isinstance(self, NoOp)
 
-    def __eq__(self, other): # pragma: no cover
-        # This comparison is excluded from coverage because it's
-        # not currently entered (but it must be defined because
-        # we've defined __ne__ below).
-        return not (self != other)
-
-    def __ne__(self, other): # pragma: no cover
-        # This function is excluded from coverage because it
-        # should not be entered.  If it is entered from the
-        # testsuite the exception will cause whatever test
-        # entered it to fail.
-        raise NotImplementedError("%s.__ne__" % self.classname)
-
-    def __hash__(self):
-        # This is just the default implementation (I think!)  but
-        # it's needed for Python 3 which marks objects unhashable
-        # if they define __eq__ without also defining __hash__.
-        return hash(id(self))
-
     def __str__(self):
         return '%s("%s")' % (self.classname, self.source)
 
-# XXX
+    def is_equivalent_to(self, other):
+        if self.dwarfname != other.dwarfname:
+            return False
+        assert self.operands == other.operands
+        for operand in self.operands:
+            if getattr(self, operand) != getattr(other, operand):
+                return False
+        return True
 
-class NameFromSourceMixin:
+# All operations either terminate or don't terminate basic blocks.
+
+class TerminalOp(Operation):
+    """Base class for all operations that terminate their basic block.
+    """
+    is_block_terminal = True
+
+class NonTerminalOp(Operation):
+    """Base class for all operations that don't terminate basic blocks.
+    """
+    is_block_terminal = False
+
     @property
     def dwarfname(self):
         return self.ast.tokens[0].text
 
-# Operations that can be compared just by comparing their class.
-# We check two ways to allow regular and synthetic operations to
-# be equal.
-
-class ClassComparableOp(Operation):
-    def __eq__(self, other):
-        return (isinstance(self, other.__class__)
-                or isinstance(other, self.__class__))
-
-    def __ne__(self, other): # pragma: no cover
-        # This comparison is excluded from coverage because it's
-        # not currently entered (but it must be defined because
-        # we've defined __eq__ above).
-        return not (self == other)
-
-    def __hash__(self):
-        # This is just the default implementation (I think!)  but
-        # it's needed for Python 3 which marks objects unhashable
-        # if they define __eq__ without also defining __hash__.
-        return hash(id(self))
-
-# Block-terminating operations.  Note that these are class-comparable,
-# meaning exits are not checked, only the operations themselves.  Code
-# comparing block-terminating operations must ensure exits are also
-# checked if required.
-
-class TerminalOp(ClassComparableOp):
-    """Base class for operations that terminate their basic block.
-    """
+# Block-terminating operations.
 
 class BranchOp(TerminalOp):
     BRANCHED_EXIT = 0
@@ -152,7 +119,7 @@ class GotoOp(TerminalOp):
 class ReturnOp(TerminalOp):
     exit_labels = ()
 
-# Synthetic block-terminating operations
+# Synthetic block-terminating operations.
 
 class SyntheticGoto(GotoOp):
     def __init__(self, template, target=None):
@@ -171,55 +138,35 @@ class SyntheticReturn(ReturnOp):
         assert isinstance(template, Operation)
         ReturnOp.__init__(self, parser.SyntheticNode(template.ast,
                                                      "return"))
+# Non-block-terminating operations.
 
-# XXX
+class NoOperandsOp(NonTerminalOp):
+    """Base class for all non-terminal operations without operands.
+    """
+    operands = ()
 
-class UnaryOp(ClassComparableOp, NameFromSourceMixin):
-    """An operator with no operands that pops one value and pushes one
+# Generic non-block-terminating operations.
+
+class UnaryOp(NoOperandsOp):
+    """A math or logic operator that pops one value and pushes one
     back."""
     arity, verb = 1, "operate on"
 
-class BinaryOp(ClassComparableOp, NameFromSourceMixin):
-    """An operator with no operands that pops two values and pushes
-    one back."""
+class BinaryOp(NoOperandsOp):
+    """An math or logic operator that pops two values and pushes one
+    back."""
     arity, verb = 2, "operate on"
 
-# XXX
-
-AbsOp = UnaryOp
-AndOp = BinaryOp
-
-class AddOp(BinaryOp):
-    dwarfname = "plus"
-
-class PlusUConst(Operation):
-    dwarfname = "plus_uconst"
-
-    def __init__(self, template):
-        assert template.value != 0
-        Operation.__init__(self, template.ast)
-        self.value = template.value
-
-class CallOp(ClassComparableOp):
-    dwarfname = "call"
-
-class CastOp(Operation):
-    @property
-    def slot(self):
-        return self.ast.slot
-
-    @property
-    def type(self):
-        return self.ast.typename.type
-
-class CompareOp(Operation):
+class CompareOp(NoOperandsOp):
+    """A comparison operator which pops two values and pushes one
+    back."""
     arity, verb = 2, "compare"
 
     REVERSE = {"lt": "ge", "le": "gt", "eq": "ne",
                "ne": "eq", "ge": "lt", "gt": "le"}
 
     def __init__(self, ast):
-        Operation.__init__(self, ast)
+        NonTerminalOp.__init__(self, ast)
         self.reversed = False
 
     @property
@@ -232,7 +179,40 @@ class CompareOp(Operation):
     def reverse(self):
         self.reversed = not self.reversed
 
-class ConstOp(Operation):
+# Specific non-block-terminating operations.
+
+AbsOp = UnaryOp
+AndOp = BinaryOp
+
+class AddOp(BinaryOp):
+    dwarfname = "plus"
+
+class PlusUConst(NonTerminalOp):
+    dwarfname = "plus_uconst"
+    operands = ("value",)
+
+    def __init__(self, template):
+        assert template.value != 0
+        NonTerminalOp.__init__(self, template.ast)
+        self.value = template.value
+
+class CallOp(NoOperandsOp):
+    dwarfname = "call"
+
+class CastOp(NonTerminalOp):
+    operands = ("slot", "type")
+
+    @property
+    def slot(self):
+        return self.ast.slot
+
+    @property
+    def type(self):
+        return self.ast.typename.type
+
+class ConstOp(NonTerminalOp):
+    operands = ("type", "value")
+
     @property
     def type(self):
         return self.ast.operand.type
@@ -241,8 +221,9 @@ class ConstOp(Operation):
     def value(self):
         return self.ast.operand.value
 
-class DerefOp(Operation):
+class DerefOp(NonTerminalOp):
     arity, verb = 1, "dereference to"
+    operands = ("type",)
 
     @property
     def type(self):
@@ -250,36 +231,40 @@ class DerefOp(Operation):
 
 DivOp = BinaryOp
 
-class DropOp(ClassComparableOp, NameFromSourceMixin):
+class DropOp(NoOperandsOp):
     pass
 
-class DupOp(ClassComparableOp, NameFromSourceMixin):
+class DupOp(NoOperandsOp):
     pass
 
 ModOp = BinaryOp
 MulOp = BinaryOp
 
-class NameOp(Operation):
-    @property
-    def name(self):
-        return self.ast.name.value
+class NameOp(NonTerminalOp):
+    operands = ("slot", "name")
 
     @property
     def slot(self):
         return self.ast.slot.value
 
+    @property
+    def name(self):
+        return self.ast.name.value
+
 NegOp = UnaryOp
 
-class NoOp(Operation):
+class NoOp(NoOperandsOp):
     pass
 
 NotOp = UnaryOp
 OrOp = BinaryOp
 
-class OverOp(ClassComparableOp, NameFromSourceMixin):
+class OverOp(NoOperandsOp):
     pass
 
-class PickOp(Operation):
+class PickOp(NonTerminalOp):
+    operands = ("operand",)
+
     @property
     def operand(self):
         return self.ast.operand
@@ -291,10 +276,10 @@ ShraOp = BinaryOp
 class SubOp(BinaryOp):
     dwarfname = "minus"
 
-class SwapOp(ClassComparableOp, NameFromSourceMixin):
+class SwapOp(NoOperandsOp):
     pass
 
-class RotOp(ClassComparableOp, NameFromSourceMixin):
+class RotOp(NoOperandsOp):
     pass
 
 XorOp = BinaryOp
