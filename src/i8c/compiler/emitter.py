@@ -372,21 +372,20 @@ class Emitter(NoOutputOpSkipper):
                 self.emit_label(label)
             op.accept(self)
 
-    def emit_simple_op(self, op):
+    # Generic visitors that handle groups of operations.
+
+    def visit_nooperandsop(self, op):
         self.emit_op(op.dwarfname, op.fileline)
 
-    def emit_branch_op(self, op):
+    def visit_terminalop(self, op):
+        assert op.is_branch or op.is_goto
         target = self.labels[self.jumps[op]]
         source = self.new_label()
-        self.emit_simple_op(op)
+        self.emit_op(op.dwarfname, op.fileline)
         self.emit_2byte(target - source)
         self.emit_label(source)
 
-    visit_addop = emit_simple_op
-    visit_binaryop = emit_simple_op
-    visit_branchop = emit_branch_op
-    visit_callop = emit_simple_op
-    visit_compareop = emit_simple_op
+    # Visitors for operations that need specific handling.
 
     def visit_constop(self, op):
         value = op.value
@@ -475,11 +474,6 @@ class Emitter(NoOutputOpSkipper):
         self.emit_op("shra")
         self.emit_comment("End of sign extension.")
 
-    visit_dropop = emit_simple_op
-    visit_dupop = emit_simple_op
-    visit_gotoop = emit_branch_op
-    visit_overop = emit_simple_op
-
     def visit_pickop(self, op):
         if op.slot == 0:
             self.emit_op("dup", op.fileline)
@@ -492,8 +486,3 @@ class Emitter(NoOutputOpSkipper):
     def visit_plusuconst(self, op):
         self.emit_op("plus_uconst", op.fileline)
         self.emit_uleb128(op.value)
-
-    visit_rotop = emit_simple_op
-    visit_subop = emit_simple_op
-    visit_swapop = emit_simple_op
-    visit_unaryop = emit_simple_op
