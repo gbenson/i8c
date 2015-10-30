@@ -63,3 +63,9 @@ Bug fixes
 * I8C's branch-elimination optimizer incorrectly regarded some
   operations as equivalent.  This caused code to be incorrectly
   optimized away in some cases.
+
+Enhancements
+~~~~~~~~~~~~
+
+* I8C's branch-elimination optimizer now recognizes that "dup" and
+  "over" are equivalents of "pick 0" and "pick 1" respectively.

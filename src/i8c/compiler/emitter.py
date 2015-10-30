@@ -475,12 +475,8 @@ class Emitter(NoOutputOpSkipper):
         self.emit_comment("End of sign extension.")
 
     def visit_pickop(self, op):
-        if op.slot == 0:
-            self.emit_op("dup", op.fileline)
-        elif op.slot == 1:
-            self.emit_op("over", op.fileline)
-        else:
-            self.emit_op("pick", op.fileline)
+        self.emit_op(op.dwarfname, op.fileline)
+        if op.slot > 1:
             self.emit_byte(op.slot)
 
     def visit_plusuconst(self, op):

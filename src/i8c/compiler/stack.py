@@ -428,9 +428,6 @@ class StackWalker(object):
     def visit_dropop(self, op):
         self.stack.pop()
 
-    def visit_dupop(self, op):
-        self.stack.push(self.stack[0])
-
     def visit_gotoop(self, op):
         self.__leave_block()
 
@@ -443,9 +440,6 @@ class StackWalker(object):
                              "declaration shadows slot %s" % (
                                  ", ".join(map(str, indexes))))
         self.stack.name_slot(op.slot, op.name)
-
-    def visit_overop(self, op):
-        self.stack.push(self.stack[1])
 
     def visit_pickop(self, op):
         self.__pick_op = op

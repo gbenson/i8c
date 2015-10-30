@@ -138,9 +138,16 @@ class Constant(LeafNode):
 class Integer(Constant):
     def consume(self, tokens):
         Constant.consume(self, tokens)
-        if not isinstance(self.tokens[0], lexer.NUMBER):
+        self.value = getattr(self.tokens[0], "value", None)
+        if self.value is None:
             raise ParserError(tokens)
-        self.value = self.tokens[0].value
+
+    def __eq__(self, other):
+        return not (self != other)
+
+    def __ne__(self, other):
+        return (not isinstance(other, Integer)
+                or self.value != other.value)
 
 class BuiltinConstant(Constant):
     def consume(self, tokens):
@@ -374,9 +381,18 @@ class Operation(TreeNode):
         if self.tokens:
             raise ParserError(tokens)
         self.tokens = tokens
+        tokens = tokens[1:]
+
+        # Handle "pick" equivalents
+        token = self.tokens[0]
+        pickslot = {"dup": 0, "over": 1}.get(token.text, None)
+        if pickslot is not None:
+            token = lexer.SyntheticToken(token, str(pickslot))
+            token.value = pickslot
+            tokens.append(token)
 
         # Split the argument list
-        tokens, args = tokens[1:], []
+        args = []
         while tokens:
             if isinstance(tokens[0], lexer.COMMA):
                 # Comma immediately after operator,
@@ -567,10 +583,8 @@ class Operations(TreeNode):
                "goto": GotoOp,
                "load": LoadOp,
                "name": NameOp,
-               "pick": PickOp,
                "return": ReturnOp}
-    for op in ("abs", "drop", "dup", "neg",
-               "not", "over", "rot", "swap"):
+    for op in ("abs", "drop", "neg", "not", "rot", "swap"):
         CLASSES[op] = SimpleOp
     for op in ("add", "and", "div", "call", "mod", "mul",
                "or", "shl", "shr", "shra", "sub", "xor"):
@@ -578,6 +592,8 @@ class Operations(TreeNode):
     for op in ("lt", "le", "eq", "ne", "ge", "gt"):
         CLASSES[op] = CompareOp
         CLASSES["b" + op] = CondBranchOp
+    for op in ("dup", "over", "pick"):
+        CLASSES[op] = PickOp
     del op
 
     # Do not add an "addr" instruction for DW_OP_addr.

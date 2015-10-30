@@ -266,6 +266,10 @@ class PickOp(NonTerminalOp):
     operands = ("operand",)
 
     @property
+    def dwarfname(self):
+        return {0: "dup", 1: "over"}.get(self.slot, "pick")
+
+    @property
     def operand(self):
         return self.ast.operand
 
