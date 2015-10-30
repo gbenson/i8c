@@ -24,6 +24,7 @@ from __future__ import unicode_literals
 from .. import constants
 from ..compat import fwrite, str
 from . import logger
+from . import visitors
 from .types import PTRTYPE
 
 debug_print = logger.debug_printer_for(__name__)
@@ -327,7 +328,7 @@ class Emitter(NoOutputOpSkipper):
             for index, op in ops:
                 op.accept(skipper)
             return False
-        except AttributeError:
+        except visitors.VisitError:
             return True
 
     def emit_code(self, function):

@@ -21,13 +21,28 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+class VisitError(NotImplementedError):
+    def __init__(self, visitor, visitee):
+        NotImplementedError.__init__(
+            self,
+            "%s has no visitor suitable for %s" % (
+                    visitor.__class__.__name__,
+                    visitee.__class__.__name__))
+
 class Visitable(object):
-    @property
-    def classname(self):
-        result = self.__class__.__name__
-        if result.startswith("Synthetic"):
-            result = result[len("Synthetic"):] + "Op"
-        return result
+    @classmethod
+    def get_visitfunc(cls, visitor):
+        func = getattr(visitor, "visit_" + cls.__name__.lower(), None)
+        if func is None:
+            for cls in cls.__bases__:
+                if cls is not Visitable and issubclass(cls, Visitable):
+                    func = cls.get_visitfunc(visitor)
+                    if func is not None:
+                        break
+        return func
 
     def accept(self, visitor):
-        getattr(visitor, "visit_" + self.classname.lower())(self)
+        func = self.get_visitfunc(visitor)
+        if func is None:
+            raise VisitError(visitor, self)
+        return func(self)
