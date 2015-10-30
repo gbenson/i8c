@@ -224,11 +224,13 @@ class BlockOptimizer(Optimizer):
             return
 
         # Does the nobranch case immediately jump somewhere?
-        if not block.nobranch_exit.first_op.is_jump:
+        tmp = block.nobranch_exit.first_op
+        if not (tmp.is_goto or tmp.is_return):
             return
 
         # Does the branch case NOT immediately jump somewhere?
-        if block.branched_exit.first_op.is_jump:
+        tmp = block.branched_exit.first_op
+        if tmp.is_goto or tmp.is_return:
             return
 
         self.debug_print_hit(block.ops[-2])
