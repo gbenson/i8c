@@ -69,7 +69,7 @@ class Operation(visitors.Visitable):
         return isinstance(self, NoOp)
 
     def __str__(self):
-        return '%s("%s")' % (self.classname, self.source)
+        return '%s("%s")' % (self.__class__.__name__, self.source)
 
     def is_equivalent_to(self, other):
         if self.dwarfname != other.dwarfname:

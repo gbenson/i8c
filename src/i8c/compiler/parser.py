@@ -77,7 +77,7 @@ class TreeNode(visitors.Visitable):
 
     def __one_child_error(self, what, classinfo):
         msg = "%s has %s %s" % (
-            self.classname,
+            self.__class__.__name__,
             what,
             classinfo.__name__)
         raise ParsedError(self, msg.lower())
@@ -88,7 +88,7 @@ class TreeNode(visitors.Visitable):
         return "\n".join(lines)
 
     def __dump(self, lines, prefix):
-        line = prefix + self.classname
+        line = prefix + self.__class__.__name__
         if isinstance(self, LeafNode):
             line += ': '
             line += " ".join((token.text for token in self.tokens))
