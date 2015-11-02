@@ -87,16 +87,19 @@ class FuncType(BaseType):
     is_computable = False
     is_function = True
 
-    def __init__(self, functype):
-        functype.paramtypes.accept(self)
-        functype.returntypes.accept(self)
+    def __init__(self, src, from_function=False):
+        if from_function:
+            src.parameters.accept(self)
+        else:
+            src.paramtypes.accept(self)
+        src.returntypes.accept(self)
         ptypes = ", ".join((type.name for type in self.paramtypes))
         rtypes = ", ".join((type.name for type in self.returntypes))
         name = "func"
         if rtypes:
             name += " " + rtypes
         name += " (%s)" % ptypes
-        Type.__init__(self, functype, name)
+        Type.__init__(self, src, name)
 
     @property
     def encoding(self):
@@ -112,6 +115,12 @@ class FuncType(BaseType):
         return (not isinstance(other, FuncType)
                 or self.paramtypes != other.paramtypes
                 or self.returntypes != other.returntypes)
+
+    def visit_parameters(self, parameters):
+        self.__list = self.paramtypes = []
+        for node in parameters.children:
+            node.typename.accept(self)
+        del self.__list
 
     def visit_paramtypes(self, paramtypes):
         self.__list = self.paramtypes = []
@@ -269,6 +278,7 @@ class TypeAnnotator(object):
 
         for node in function.children:
             node.accept(self)
+        function.type = FuncType(function, True)
 
         if debug_print.is_enabled:
             debug_print("%s\n\n" % function)
@@ -315,6 +325,9 @@ class TypeAnnotator(object):
     def visit_label(self, label):
         pass
 
+    def visit_operation(self, op):
+        pass
+
     # Visitors for operations that require annotation
 
     def visit_castop(self, op):
@@ -336,8 +349,3 @@ class TypeAnnotator(object):
 
     def visit_boolean(self, constant):
         constant.type = BOOLTYPE
-
-    # Generic visitors for operations that don't require annotation
-
-    def visit_operation(self, op):
-        pass
