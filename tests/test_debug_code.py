@@ -57,7 +57,7 @@ External
       BasicType: int [int]
     ParamTypes
       BasicType: int [int]
-  ShortName: factorial"""
+  ShortName: factorial [factorial]"""
 
 class TestDebugCode(TestCase):
     """Test various bits of debugging code."""

@@ -101,6 +101,10 @@ class TreeNode(visitors.Visitable):
             if basetype is not self.type:
                 line += " = %s" % basetype.name
             line += "]"
+        if (isinstance(self, (FullName, ShortName))
+            and hasattr(self, "value")):
+            # Dump what the name annotator added
+            line += " [%s]" % self.value
         lines.append(line)
         for child in self.children:
             child.__dump(lines, prefix + "  ")

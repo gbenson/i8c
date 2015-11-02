@@ -22,6 +22,9 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from . import NameAnnotatorError
+from . import logger
+
+debug_print = logger.debug_printer_for(__name__)
 
 class Name(object):
     def __init__(self, provider, name):
@@ -75,6 +78,9 @@ class NameAnnotator(object):
         for node in function.entry_stack:
             node.accept(self)
         function.operations.accept(self)
+
+        if debug_print.is_enabled:
+            debug_print("%s\n\n" % function)
 
     def visit_parameters(self, parameters):
         for node in parameters.children:
