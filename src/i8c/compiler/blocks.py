@@ -22,8 +22,11 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from . import BlockCreatorError
+from . import logger
 from . import visitors
 from .operations import *
+
+debug_print = logger.debug_printer_for(__name__)
 
 class BasicBlock(visitors.Visitable):
     def __init__(self, index):
@@ -94,10 +97,9 @@ class BasicBlock(visitors.Visitable):
                                "undefined label ‘%s’" % e.args[0])
 
     def __str__(self):
-        result = "%s (%s)\n" % (self.name, self.fileline)
-        result += "\n\t".join(map(str, self.ops))
+        result = "%s (%s)" % (self.name, self.fileline)
         if hasattr(self, "exits"):
-            result += "\n    "
+            result += ", "
             if len(self.exits) == 0:
                 result += "no exits"
             elif len(self.exits) == 1:
@@ -105,6 +107,9 @@ class BasicBlock(visitors.Visitable):
             else:
                 result += "exits = %s" % ", ".join(
                     ("#%d" % block.index for block in self.exits))
+        result += ":"
+        for op in self.ops:
+            result += "\n  %s" % op
         return result
 
 class BlockCreator(object):
@@ -137,6 +142,10 @@ class BlockCreator(object):
                 exit_block.entries[block] = True
         for block in blocks:
             block.entries = list(block.entries.keys())
+
+        if debug_print.is_enabled:
+            for block in blocks:
+                debug_print(str(block) + "\n\n")
 
         function.entry_block = blocks[0]
         function.entry_block.entries.append(None)
