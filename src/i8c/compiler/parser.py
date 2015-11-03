@@ -464,6 +464,24 @@ class JumpOp(OneArgOp):
     def target(self):
         return self.one_child(Target)
 
+class NameCastOp(TwoArgOp):
+    has_own_handler = True
+
+    def add_children(self, slot, arg2):
+        if isinstance(slot[0], lexer.NUMBER):
+            slotclass = StackSlot
+        else:
+            slotclass = ShortName
+        self.slot = self.add_child(slotclass)
+        self.slot.consume(slot)
+        self.add_child_2(arg2)
+
+    @property
+    def named_operands(self):
+        """Operands that need processing by the name annotator.
+        """
+        return self.some_children(ShortName)
+
 class Target(Identifier):
     pass
 
@@ -488,30 +506,14 @@ class CondBranchOp(JumpOp):
 
 # Classes for operators that require specific individual parsing
 
-class CastOp(TwoArgOp):
-    has_own_handler = True
-
-    def add_children(self, slot, type):
+class CastOp(NameCastOp):
+    def add_child_2(self, type):
         raise_unless_len(type, EXACTLY, 1)
-        if isinstance(slot[0], lexer.NUMBER):
-            self.add_child(StackSlot).consume(slot)
-        else:
-            self.add_child(ShortName).consume(slot)
         self.add_child(BasicType).pop_consume(type)
-
-    @property
-    def slot(self):
-        return self.one_child((StackSlot, ShortName))
 
     @property
     def typename(self):
         return self.one_child(BasicType)
-
-    @property
-    def named_operands(self):
-        """Operands that need processing by the name annotator.
-        """
-        return self.some_children(ShortName)
 
 class DerefOp(OneArgOp):
     has_own_handler = True
@@ -555,20 +557,10 @@ class LoadOp(OneArgOp):
         """
         return self.some_children(Constant)
 
-class NameOp(TwoArgOp):
-    has_own_handler = True
-
-    def add_children(self, slot, name):
-        self.add_child(StackSlot).consume(slot)
-        self.add_child(ShortName).consume(name)
-
-    @property
-    def slot(self):
-        return self.one_child(StackSlot)
-
-    @property
-    def name(self):
-        return self.one_child(ShortName)
+class NameOp(NameCastOp):
+    def add_child_2(self, newname):
+        self.newname = self.add_child(ShortName)
+        self.newname.consume(newname)
 
 class PickOp(OneArgOp):
     has_own_handler = True

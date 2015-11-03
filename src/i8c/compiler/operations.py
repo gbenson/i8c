@@ -241,15 +241,15 @@ ModOp = BinaryOp
 MulOp = BinaryOp
 
 class NameOp(NonTerminalOp):
-    operands = ("slot", "name")
+    operands = ("slot", "newname")
 
     @property
     def slot(self):
-        return self.ast.slot.value
+        return self.ast.slot
 
     @property
-    def name(self):
-        return self.ast.name.value
+    def newname(self):
+        return self.ast.newname.value
 
 NegOp = UnaryOp
 

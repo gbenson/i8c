@@ -432,14 +432,20 @@ class StackWalker(object):
         self.__leave_block()
 
     def visit_nameop(self, op):
-        indexes = self.stack.indexes_for(op.name)
+        self.__pick_op = op
+        op.slot.accept(self)
+        del self.__pick_op
+
+        indexes = self.stack.indexes_for(op.newname)
         if indexes:
-            if indexes[0] == op.slot:
+            if indexes[0] == self.__pick_index:
                 return # first result already has this name
             raise StackError(op, self.stack,
                              "declaration shadows slot %s" % (
                                  ", ".join(map(str, indexes))))
-        self.stack.name_slot(op.slot, op.name)
+
+        self.stack.name_slot(self.__pick_index, op.newname)
+        del self.__pick_index
 
     def visit_pickop(self, op):
         self.__pick_op = op

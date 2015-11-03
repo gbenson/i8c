@@ -105,16 +105,13 @@ class NameAnnotator(object):
 
     # Visitors for operations that require annotation
 
-    def visit_castop(self, op):
-        for node in op.named_operands:
-            node.accept(self)
-
     def visit_loadop(self, op):
         for node in op.named_operands:
             node.accept(self)
 
-    def visit_nameop(self, op):
-        op.name.accept(self)
+    def visit_namecastop(self, op):
+        for node in op.named_operands:
+            node.accept(self)
 
     def visit_fullname(self, name):
         name.value = Name(name.provider, name.shortname)

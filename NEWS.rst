@@ -11,7 +11,7 @@ Source language changes
   be separated by commas.  Existing code using the "name" and "cast"
   operators must be updated.
 
-* Many operators now have an optional "folded load" first argument.
+* Many operators now have an optional ''folded load'' first argument.
   A folded load is exactly equivalent to a load immediately before
   the statement with the folded load, so, for example, this code::
 
@@ -44,6 +44,9 @@ Source language changes
       swap.
 
     * Others: cast, goto, load, name, return.
+
+* The "name" operator now accepts slot names as its first argument.
+  This can be used to add new names to already-named slots by name.
 
 Note format changes
 ~~~~~~~~~~~~~~~~~~~
