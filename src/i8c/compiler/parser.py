@@ -486,7 +486,10 @@ class Target(Identifier):
     pass
 
 class StackSlot(Integer):
-    pass
+    def consume(self, tokens):
+        Integer.consume(self, tokens)
+        if self.value < 0:
+            raise ParserError(tokens)
 
 # Classes which represent groups of operators in the parse tree
 
