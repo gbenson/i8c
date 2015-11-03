@@ -11,7 +11,7 @@ Source language changes
   be separated by commas.  Existing code using the "name" and "cast"
   operators must be updated.
 
-* Many operators now have an optional “folded load” first argument.
+* Many operators now have an optional "folded load" first argument.
   A folded load is exactly equivalent to a load immediately before
   the statement with the folded load, so, for example, this code::
 
@@ -44,6 +44,19 @@ Source language changes
       swap.
 
     * Others: cast, goto, load, name, return.
+
+Note format changes
+~~~~~~~~~~~~~~~~~~~
+
+* The "max_stack" field from the info chunk and the byteorder mark
+  from the code chunk have been moved into a new "code info" chunk
+  with a type_id of 6.
+
+* The remainder of what was the info chunk has been moved into a new
+  "signature" chunk with a type_id of 5.
+
+* The code chunk now contains only bytecode.  Its version has been
+  incremented to 2 to indicate this.
 
 Bug fixes
 ~~~~~~~~~
