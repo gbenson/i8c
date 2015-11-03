@@ -22,21 +22,24 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from tests import TestCase
-from i8c.compiler import ParserError, StackError
+from i8c.compiler import ParserError, RedefinedIdentError
 
 SOURCE = """\
 define test::load_slot
    argument int an_argument
    extern ptr a_symbol
    extern func () a_function
-   extern func () other_provider::a_function
+   extern func () other_provider::function_2
+   load a_symbol
+   load a_function
+   load other_provider::function_2
 """
 
 SOURCE_NAMES_SLOTS = (("an_argument", 3),
                       ("a_symbol", 2),
                       ("a_function", 1),
                       ("test::a_function", 1),
-                      ("other_provider::a_function", 0))
+                      ("other_provider::function_2", 0))
 
 SOURCE_WITH_NAME = SOURCE + """\
    load 23
@@ -47,7 +50,7 @@ SWN_NAMES_SLOTS = (("an_argument", 4),
                    ("a_symbol", 3),
                    ("a_function", 2),
                    ("test::a_function", 2),
-                   ("other_provider::a_function", 1),
+                   ("other_provider::function_2", 1),
                    ("a_name", 0))
 
 class TestLoadSlot(TestCase):
@@ -62,7 +65,7 @@ class TestLoadSlot(TestCase):
             source = SOURCE + "load " + name
             tree, output = self.compile(source)
             ops = output.ops
-            self.assertEqual(len(ops), 1)
+            self.assertEqual(len(ops), 4)
             op = ops[-1]
             if expect_slot == 0:
                 self.assertEqual(op.name, "dup")
@@ -77,7 +80,7 @@ class TestLoadSlot(TestCase):
         for name, expect_slot in SWN_NAMES_SLOTS:
             tree, output = self.compile(SOURCE_WITH_NAME + "load " + name)
             ops = output.ops
-            self.assertEqual(len(ops), 2)
+            self.assertEqual(len(ops), 5)
             op = ops[-1]
             if expect_slot == 0:
                 self.assertEqual(op.name, "dup")
@@ -97,7 +100,7 @@ class TestLoadSlot(TestCase):
                     + ["load %s" % name for name in names])
                 tree, output = self.compile(source)
                 ops = output.ops
-                self.assertEqual(len(ops), 2)
+                self.assertEqual(len(ops), 5)
 
                 # The first load can pick from anywhere
                 op = ops[-2]
@@ -121,7 +124,7 @@ class TestLoadSlot(TestCase):
                 continue
             assert expect_slot != 1
             source = SOURCE_WITH_NAME + "name 1, %s" % name
-            self.assertRaises(StackError, self.compile, source)
+            self.assertRaises(RedefinedIdentError, self.compile, source)
 
     def test_existing_name(self):
         """Check that giving a slot its existing name is ok."""
@@ -133,7 +136,7 @@ class TestLoadSlot(TestCase):
                  "load %s" % name])
             tree, output = self.compile(source)
             ops = output.ops
-            self.assertEqual(len(ops), 2)
+            self.assertEqual(len(ops), 5)
             op = ops[-1]
             if expect_slot == 0:
                 self.assertEqual(op.name, "dup")

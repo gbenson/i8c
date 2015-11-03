@@ -25,22 +25,26 @@ from ..compat import integer
 from . import ParsedError
 from . import logger
 from . import names
+from . import RedefinedIdentError
 from . import StackError
 from . import StackMergeError
 from . import StackTypeError
+from . import UndefinedIdentError
 from .types import Type, INTTYPE, PTRTYPE, BOOLTYPE
 import copy
 
 debug_print = logger.debug_printer_for(__name__)
 
 class Stack(object):
-    def __init__(self, funcname):
-        assert isinstance(funcname, names.Name)
-        assert funcname.provider is not None
-        self.funcname = funcname
+    def __init__(self, externals):
+        self.externals = externals
         self.slots = []
         self.is_mutable = True
         self.max_depth = 0
+
+    @property
+    def default_provider(self):
+        return self.externals.default_provider
 
     @property
     def depth(self):
@@ -62,34 +66,66 @@ class Stack(object):
         self.underflow_check(0)
         return self.slots.pop(0)
 
-    def name_slot(self, index, name):
+    def name_slot(self, name_or_index, newname):
         assert self.is_mutable
-        assert name is None or isinstance(name, names.Name)
-        self.underflow_check(index)
+        index = self.__get_name_cast_index(name_or_index)
+
+        slots = self.__slots_matching(newname)
+        if slots:
+            if index in slots:
+                return # slot already has this name
+            self.__raise_redef_error(newname, self[slots[0]])
+        external = self.externals.lookup(newname)
+        if external is not None:
+            self.__raise_redef_error(newname, external)
+
         elem = copy.copy(self.slots[index])
         elem.names = copy.copy(elem.names)
-        elem.names.append(name)
+        elem.names.append(newname)
         self.slots[index] = elem
 
-    def cast_slot(self, index, type):
+    def __raise_redef_error(self, newname, prev):
+        assert newname.is_shortname
+        for prev in prev.names:
+            if prev.name == newname.name:
+                break
+        else:
+            raise AssertionError
+        raise RedefinedIdentError(newname, "name", newname.name, prev)
+
+    def cast_slot(self, name_or_index, type):
         assert self.is_mutable
         assert isinstance(type, Type)
-        self.underflow_check(index)
+        index = self.__get_name_cast_index(name_or_index)
+
         elem = copy.copy(self.slots[index])
         elem.type = type
         self.slots[index] = elem
 
-    def indexes_for(self, name):
-        assert isinstance(name, names.Name)
-        ourprovider = self.funcname.provider
-        # Set search to either
-        #   shortname, ourprovider::shortname
-        # or
-        #   otherprovider::shortname
-        if name.is_fullname and name.provider == ourprovider:
-            search = [name.without_provider(ourprovider), name]
-        elif name.is_shortname:
-            search = [name, name.with_provider(ourprovider)]
+    def __get_name_cast_index(self, name_or_index):
+        if isinstance(name_or_index, integer):
+            self.underflow_check(name_or_index)
+            return name_or_index
+        else:
+            assert isinstance(name_or_index, names.Name)
+            slots = self.__slots_matching(name_or_index)
+            if len(slots) != 1:
+                raise UndefinedIdentError(
+                    name_or_index, "name", str(name_or_index))
+            return slots[0]
+
+    def get_by_name(self, name):
+        slots = self.__slots_matching(name)
+        if len(slots) == 1:
+            return slots[0]
+        external = self.externals.lookup(name)
+        if external is None:
+            raise UndefinedIdentError(name, "name", str(name))
+        return external
+
+    def __slots_matching(self, name):
+        if name.is_shortname:
+            search = [name, name.with_provider(self.default_provider)]
         else:
             search = [name]
         results = []
@@ -105,10 +141,9 @@ class Stack(object):
         return results
 
     def __names_match(self, list1, list2):
-        for name1 in list1:
-            for name2 in list2:
-                if name1 == name2:
-                    return True
+        for name in list1:
+            if name in list2:
+                return True
         return False
 
     def make_immutable(self):
@@ -126,6 +161,7 @@ class Stack(object):
         return result
 
     def underflow_check(self, depth):
+        assert depth >= 0
         if self.depth <= depth:
             raise StackError(self.current_op, None, "stack underflow")
 
@@ -152,7 +188,7 @@ class Stack(object):
         if previous.depth != self.depth:
             raise StackMergeError(ops, (previous, self))
 
-        merged = Stack(self.funcname)
+        merged = Stack(self.externals)
         for slot in range(self.depth):
             selem = self[slot]
             pelem = previous[slot]
@@ -195,7 +231,7 @@ class Stack(object):
         merged.max_depth = max(previous.max_depth, self.max_depth)
         return merged
 
-class Element:
+class Element(object):
     def __init__(self, thetype, name=None, value=None):
         assert thetype is not None
         assert isinstance(thetype, Type)
@@ -235,9 +271,8 @@ class StackWalker(object):
 
     def visit_function(self, function):
         # Build the entry stack
-        self.entry_stack = Stack(function.name.value)
-        for node in function.entry_stack:
-            node.accept(self)
+        self.entry_stack = Stack(function.externals)
+        function.parameters.accept(self)
         self.entry_stack.make_immutable()
         # Build the return types
         self.returntypes = []
@@ -256,25 +291,6 @@ class StackWalker(object):
     def visit_parameter(self, param):
         type = param.typename.type
         name = param.name.value
-        self.entry_stack.push(Element(type, name))
-
-    def visit_externals(self, externals):
-        for node in externals.children:
-            node.accept(self)
-
-    def visit_external(self, external):
-        type = external.typename.type
-        name = external.name.value
-        if not type.is_function:
-            if not type.basetype is PTRTYPE:
-                raise ParsedError(
-                    external.typename,
-                    op, "%s: invalid type for ‘extern’" % type.name)
-            if not name.is_shortname:
-                raise ParsedError(
-                    external.name,
-                    "%s: invalid name for ‘extern %s’" % (
-                        name, type.name))
         self.entry_stack.push(Element(type, name))
 
     # Build the return types
@@ -388,11 +404,7 @@ class StackWalker(object):
             self.stack.push(Element(ftype.returntypes[rindex]))
 
     def visit_castop(self, op):
-        self.__pick_op = op
-        op.slot.accept(self)
-        del self.__pick_op
-        self.stack.cast_slot(self.__pick_index, op.type)
-        del self.__pick_index
+        self.stack.cast_slot(op.slot, op.type)
 
     def visit_compareop(self, op):
         # Check the types before mutating the stack
@@ -431,43 +443,26 @@ class StackWalker(object):
     def visit_gotoop(self, op):
         self.__leave_block()
 
+    def visit_loadop(self, op):
+        item = self.stack.get_by_name(op.name)
+        if isinstance(item, integer):
+            if not op.is_resolved:
+                op.pickslot = item
+            else:
+                assert item == op.pickslot
+            item = self.stack[item]
+        else:
+            if not op.is_resolved:
+                op.external = item
+            else:
+                assert item == op.external
+        self.stack.push(item)
+
     def visit_nameop(self, op):
-        self.__pick_op = op
-        op.slot.accept(self)
-        del self.__pick_op
-
-        indexes = self.stack.indexes_for(op.newname)
-        if indexes:
-            if indexes[0] == self.__pick_index:
-                return # first result already has this name
-            raise StackError(op, self.stack,
-                             "declaration shadows slot %s" % (
-                                 ", ".join(map(str, indexes))))
-
-        self.stack.name_slot(self.__pick_index, op.newname)
-        del self.__pick_index
+        self.stack.name_slot(op.slot, op.newname)
 
     def visit_pickop(self, op):
-        self.__pick_op = op
-        op.operand.accept(self)
-        del self.__pick_op
-        op.slot = self.__pick_index
-        del self.__pick_index
-        self.stack.push(self.stack[op.slot])
-
-    def __pick_by_slot(self, slot):
-        self.__pick_index = slot
-
-    def __pick_by_name(self, name):
-        indexes = self.stack.indexes_for(name)
-        if not indexes:
-            raise StackError(self.__pick_op, self.stack,
-                             "no slot matches ‘%s’" % name)
-        elif len(indexes) != 1:
-            raise StackError(self.__pick_op, self.stack,
-                             "multiple slots match ‘%s’" % name)
-        else:
-            self.__pick_index = indexes[0]
+        self.stack.push(self.stack[op.pickslot])
 
     def visit_subop(self, op):
         # Check the types before mutating the stack
@@ -517,14 +512,3 @@ class StackWalker(object):
         b = self.stack.pop()
         self.stack.push(a)
         self.stack.push(b)
-
-    # Visitors for visit_pickop
-
-    def visit_fullname(self, name):
-        self.__pick_by_name(name.value)
-
-    def visit_shortname(self, name):
-        self.__pick_by_name(name.value)
-
-    def visit_stackslot(self, slot):
-        self.__pick_by_slot(slot.value)

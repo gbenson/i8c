@@ -159,8 +159,10 @@ class BytecodeFunction(Function):
             if byteorder != constants.I8_BYTE_ORDER_MARK:
                 raise UnhandledNoteError(self.code)
             self.bytecode = chunk + bomsize
+            self.deprecated_auto_push_externals = True
         else:
             self.bytecode = chunk
+            self.deprecated_auto_push_externals = False
 
         pc, limit = 0, len(self.bytecode)
         while pc < limit:
@@ -205,8 +207,9 @@ class BytecodeFunction(Function):
     def execute(self, ctx, caller_stack):
         stack = ctx.new_stack()
         caller_stack.pop_multi_onto(self.ptypes, stack)
-        for external in self.externals:
-            stack.push_typed(*external.resolve(ctx))
+        if self.deprecated_auto_push_externals:
+            for external in self.externals:
+                stack.push_typed(*external.resolve(ctx))
         pc, return_pc = 0, len(self.bytecode)
         while pc >= 0 and pc < return_pc:
             op = self.ops.get(pc, None)

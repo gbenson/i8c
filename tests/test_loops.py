@@ -22,7 +22,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from tests import TestCase
-from i8c.compiler import StackError, StackMergeError
+from i8c.compiler import UndefinedIdentError, StackMergeError
 
 # A basic iterative factorial function.
 SOURCE_BASIC = """\
@@ -158,7 +158,7 @@ TESTS = (
     (SOURCE_BASIC, None),
     (SOURCE_BAD_DEPTH, StackMergeError),
     (SOURCE_BAD_TYPE, StackMergeError),
-    (SOURCE_LOST_NAME, StackError),
+    (SOURCE_LOST_NAME, UndefinedIdentError),
     (SOURCE_GOT_NAME, None))
 
 FACTORIALS = (

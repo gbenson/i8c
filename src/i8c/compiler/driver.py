@@ -25,6 +25,7 @@ from .. import cmdline
 from ..compat import fprint
 from . import blocks
 from . import emitter
+from . import externals
 from . import I8CError
 from . import lexer
 from . import loggers
@@ -227,6 +228,7 @@ def compile(readline, write):
     tree = parser.build_tree(lexer.generate_tokens(readline))
     tree.accept(types.TypeAnnotator())
     tree.accept(names.NameAnnotator())
+    tree.accept(externals.TableCreator())
     tree.accept(blocks.BlockCreator())
     tree.accept(stack.StackWalker())
     tree.accept(optimizer.BlockOptimizer())

@@ -32,6 +32,10 @@ define test::i8cfail_0001 returns int, ptr
     extern func int () func2
     extern ptr sym1
 
+    load func1
+    load func2
+    load sym1
+
     deref ptr
     load NULL
     bne label2
@@ -62,6 +66,8 @@ class TestI8CFail0001(TestCase):
         self.assertEqual(len([op for op in ops if op == "call"]), 2)
         # Fragile test: check that the stream is as we expect.
         # This may need fixing up to cope with future compiler changes.
-        self.assertEqual(["deref", "bra", "swap", "drop",
+        self.assertEqual(["load_external", "load_external",
+                          "load_external",
+                          "deref", "bra", "swap", "drop",
                           "lit0", "rot", "call", "ne",
                           "skip", "drop", "call"], ops)

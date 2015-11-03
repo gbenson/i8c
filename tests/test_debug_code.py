@@ -30,9 +30,7 @@ import sys
 SOURCE = """\
 define test::factorial returns int
     argument int x
-    extern func int (int) factorial
 
-    swap
     dup
     load 1
     bgt not_done_yet
@@ -44,21 +42,14 @@ not_done_yet:
     load 1
     sub
 label: // ensure we hit the 1-exit case in blocks.Block.__str_
-    swap
-    rot
-    swap
+    load factorial
     call
     mul
 """
 
-EXTERN0_NODE = """\
-External
-  FuncType [func int (int)]
-    ReturnTypes
-      BasicType: int [int]
-    ParamTypes
-      BasicType: int [int]
-  ShortName: factorial [factorial]"""
+LAST_LOAD_NODE = """\
+LoadOp
+  Integer: 1 [int]"""
 
 class TestDebugCode(TestCase):
     """Test various bits of debugging code."""
@@ -81,12 +72,11 @@ class TestDebugCode(TestCase):
     def test_str_methods(self):
         """Check various __str__ methods."""
         tree, output = self.compile(SOURCE)
-        func = list(tree.functions)[0]
         # lexer.Token.__str__
-        node = tree.one_child(parser.Function)
-        node = node.one_child(parser.Operations)
-        token = node.children[0].tokens[0]
-        self.assertEqual(str(token), "<testcase>:5: 'swap'")
+        func = tree.one_child(parser.Function)
+        ops = func.one_child(parser.Operations)
+        token = ops.children[0].tokens[0]
+        self.assertEqual(str(token), "<testcase>:4: 'dup'")
         # parser.TreeNode.__str__ with an annotated type
-        node = func.externals.children[0]
-        self.assertEqual(str(node), EXTERN0_NODE)
+        load = list(ops.some_children(parser.LoadOp))[0]
+        self.assertEqual(str(load), LAST_LOAD_NODE)

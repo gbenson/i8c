@@ -32,6 +32,7 @@ BADTYPES1 = ("int", "func (int)", "func int (ptr)",
 SOURCE1 = """\
 define test::return_func_test returns %s
     extern func int (int) factorial
+    load factorial
 """
 
 ALIASTYPE = "factorial_ft"

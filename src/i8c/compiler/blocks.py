@@ -250,6 +250,9 @@ class BlockCreator(object):
     def visit_derefop(self, op):
         self.add_op(DerefOp(op))
 
+    def visit_dupop(self, op):
+        self.add_op(PickOp(op, 0))
+
     def visit_gotoop(self, op):
         self.add_op(GotoOp(op))
 
@@ -257,13 +260,16 @@ class BlockCreator(object):
         if hasattr(op.operand, "type"):
             self.add_op(ConstOp(op))
         else:
-            self.add_op(PickOp(op))
+            self.add_op(LoadOp(op))
 
     def visit_nameop(self, op):
         self.add_op(NameOp(op))
 
+    def visit_overop(self, op):
+        self.add_op(PickOp(op, 1))
+
     def visit_pickop(self, op):
-        self.add_op(PickOp(op))
+        self.add_op(PickOp(op, op.operand.value))
 
     def visit_returnop(self, op):
         self.add_op(ReturnOp(op))

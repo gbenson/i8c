@@ -101,24 +101,28 @@ class StringTable(object):
             emitter.emit('.string "%s"' % text)
 
 class ExternTable(object):
-    def __init__(self, strings, default_provider):
+    def __init__(self, strings):
         self.strings = strings
-        self.default_provider = default_provider
+        self.indexes = {}
         self.entries = []
 
-    def visit_external(self, external):
-        basetype = external.typename.type.basetype
-        fullname = external.name.value
-        if basetype is PTRTYPE:
-            self.entries.append(RelAddr(fullname))
+    def index_of(self, external):
+        key = str(external.name)
+        index = self.indexes.get(key, None)
+        if index is not None:
+            return index
+        index = len(self.entries)
+        type = external.basetype
+        if type is PTRTYPE:
+            self.entries.append(RelAddr(external.name.name))
         else:
-            assert basetype.is_function
-            provider = fullname.provider or self.default_provider
             self.entries.append(FuncRef(*map(self.strings.new, (
-                provider,
-                fullname.name,
-                "".join((t.encoding for t in basetype.paramtypes)),
-                "".join((t.encoding for t in basetype.returntypes))))))
+                external.name.provider,
+                external.name.name,
+                "".join((t.encoding for t in type.paramtypes)),
+                "".join((t.encoding for t in type.returntypes))))))
+        self.indexes[key] = index
+        return index
 
     def emit(self, emitter):
         for entry, index in zip(self.entries, range(len(self.entries))):
@@ -126,7 +130,7 @@ class ExternTable(object):
 
 class RelAddr(object):
     def __init__(self, name):
-        self.name = str(name)
+        self.name = name
 
     def emit(self, emitter, prefix):
         emitter.emit_byte("I8_TYPE_RELADDR", prefix + "type")
@@ -280,23 +284,28 @@ class Emitter(NoOutputOpSkipper):
 
     def __visit_function(self, function):
         strings = StringTable()
-        self.externs = ExternTable(strings, function.name.provider)
+        self.externs = ExternTable(strings)
 
-        # Populate the string and extern tables
+        # Create strings for the signature chunk.
         self.provider = strings.new(function.name.provider)
         self.name = strings.new(function.name.shortname)
         self.paramtypes = strings.new()
+        function.parameters.accept(self)
         self.returntypes = strings.new()
-        for node in function.entry_stack:
-            node.accept(self)
         function.returntypes.accept(self)
-        strings.layout_table(self.new_label)
 
-        # Emit the chunks
-        self.emit_chunk("signature", 1, Emitter.emit_signature)
+        # Emit the code chunks if required, laying out
+        # the externals table and creating its strings
+        # as a side-effect.
         if self.has_code(function):
             self.emit_chunk("codeinfo", 1, Emitter.emit_codeinfo, function)
             self.emit_chunk("bytecode", 2, Emitter.emit_bytecode, function)
+
+        # Lay out the string table.
+        strings.layout_table(self.new_label)
+
+        # Emit the remaining chunks.
+        self.emit_chunk("signature", 1, Emitter.emit_signature)
         if self.externs.entries:
             self.emit_chunk("externals", 1, self.externs.emit)
         self.emit_chunk("strings", 1, strings.emit)
@@ -337,12 +346,6 @@ class Emitter(NoOutputOpSkipper):
     # Populate the string and extern tables
 
     def visit_parameters(self, parameters):
-        self.__visit_parameters(parameters)
-
-    def visit_externals(self, externals):
-        self.__visit_parameters(externals)
-
-    def __visit_parameters(self, parameters):
         for node in parameters.children:
             node.accept(self)
 
@@ -352,9 +355,6 @@ class Emitter(NoOutputOpSkipper):
     def visit_returntypes(self, returntypes):
         for node in returntypes.children:
             self.returntypes.append(node.type.encoding)
-
-    def visit_external(self, external):
-        external.accept(self.externs)
 
     # Emit the bytecode
 
@@ -471,10 +471,14 @@ class Emitter(NoOutputOpSkipper):
         self.emit_op("shra")
         self.emit_comment("End of sign extension.")
 
-    def visit_pickop(self, op):
+    def visit_loadop(self, op):
         self.emit_op(op.dwarfname, op.fileline)
-        if op.slot > 1:
-            self.emit_byte(op.slot)
+        if op.is_pick:
+            if op.pickslot > 1:
+                self.emit_byte(op.pickslot)
+        else:
+            assert op.is_loadext
+            self.emit_uleb128(self.externs.index_of(op.external))
 
     def visit_plusuconst(self, op):
         self.emit_op("plus_uconst", op.fileline)

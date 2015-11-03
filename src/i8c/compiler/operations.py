@@ -21,6 +21,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from ..compat import integer
 from . import parser
 from . import visitors
 
@@ -204,7 +205,7 @@ class CastOp(NonTerminalOp):
 
     @property
     def slot(self):
-        return self.ast.slot
+        return self.ast.slot.value
 
     @property
     def type(self):
@@ -234,6 +235,75 @@ DivOp = BinaryOp
 class DropOp(NoOperandsOp):
     pass
 
+class LoadOp(NonTerminalOp):
+    def __init__(self, ast):
+        NonTerminalOp.__init__(self, ast)
+        self.__operand = None
+
+    @property
+    def is_resolved(self):
+        return self.__operand is not None
+
+    # XXX
+
+    @property
+    def is_pick(self):
+        assert self.is_resolved
+        return isinstance(self.__operand, integer)
+
+    @property
+    def is_loadext(self):
+        return not self.is_pick
+
+    # Accessors for "pickslot" and "external"
+
+    @property
+    def pickslot(self):
+        assert self.is_pick
+        return self.__operand
+
+    @pickslot.setter
+    def pickslot(self, value):
+        assert not self.is_resolved
+        self.__operand = value
+        assert self.is_pick
+
+    @property
+    def external(self):
+        assert self.is_loadext
+        return self.__operand
+
+    @external.setter
+    def external(self, value):
+        assert not self.is_resolved
+        self.__operand = value
+        assert self.is_loadext
+
+    # XXX
+
+    @property
+    def operands(self):
+        if self.is_pick:
+            operand = "pickslot"
+        else:
+            assert self.is_loadext
+            operand = "external"
+        return (operand,)
+
+    @property
+    def dwarfname(self):
+        if self.is_pick:
+            return {0: "dup", 1: "over"}.get(self.pickslot, "pick")
+        else:
+            assert self.is_loadext
+            return "load_external"
+
+    # The thing we are trying to load
+
+    @property
+    def name(self):
+        return self.ast.name.value
+
 ModOp = BinaryOp
 MulOp = BinaryOp
 
@@ -242,7 +312,7 @@ class NameOp(NonTerminalOp):
 
     @property
     def slot(self):
-        return self.ast.slot
+        return self.ast.slot.value
 
     @property
     def newname(self):
@@ -256,16 +326,10 @@ class NoOp(NoOperandsOp):
 NotOp = UnaryOp
 OrOp = BinaryOp
 
-class PickOp(NonTerminalOp):
-    operands = ("operand",)
-
-    @property
-    def dwarfname(self):
-        return {0: "dup", 1: "over"}.get(self.slot, "pick")
-
-    @property
-    def operand(self):
-        return self.ast.operand
+class PickOp(LoadOp):
+    def __init__(self, ast, slot):
+        LoadOp.__init__(self, ast)
+        self.pickslot = slot
 
 ShlOp = BinaryOp
 ShrOp = BinaryOp # Welcome to Shropshire

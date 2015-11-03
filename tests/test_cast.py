@@ -22,7 +22,9 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from tests import TestCase
-from i8c.compiler import ParserError, StackError
+from i8c.compiler import ParserError
+from i8c.compiler import StackError
+from i8c.compiler import UndefinedIdentError
 
 SOURCE = """\
 typedef func ptr (int) derived_func_t
@@ -60,6 +62,8 @@ class TestCast(TestCase):
                     error = None
                 elif type == "func ptr (int)":
                     error = ParserError
+                elif slot == "no_such_slot":
+                    error = UndefinedIdentError
                 else:
                     error = StackError
 

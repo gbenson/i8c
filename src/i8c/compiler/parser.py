@@ -142,16 +142,9 @@ class Constant(LeafNode):
 class Integer(Constant):
     def consume(self, tokens):
         Constant.consume(self, tokens)
-        self.value = getattr(self.tokens[0], "value", None)
-        if self.value is None:
+        if not isinstance(self.tokens[0], lexer.NUMBER):
             raise ParserError(tokens)
-
-    def __eq__(self, other):
-        return not (self != other)
-
-    def __ne__(self, other):
-        return (not isinstance(other, Integer)
-                or self.value != other.value)
+        self.value = self.tokens[0].value
 
 class BuiltinConstant(Constant):
     def consume(self, tokens):
@@ -286,10 +279,6 @@ class Function(TreeNode):
     def name(self):
         return self.one_child(FullName)
 
-    @property
-    def entry_stack(self):
-        return self.some_children((Parameters, Externals))
-
 TopLevel.CLASSES = {"define": Function, "typedef": Typedef}
 
 class FullName(TreeNode):
@@ -385,18 +374,9 @@ class Operation(TreeNode):
         if self.tokens:
             raise ParserError(tokens)
         self.tokens = tokens
-        tokens = tokens[1:]
-
-        # Handle "pick" equivalents
-        token = self.tokens[0]
-        pickslot = {"dup": 0, "over": 1}.get(token.text, None)
-        if pickslot is not None:
-            token = lexer.SyntheticToken(token, str(pickslot))
-            token.value = pickslot
-            tokens.append(token)
 
         # Split the argument list
-        args = []
+        tokens, args = tokens[1:], []
         while tokens:
             if isinstance(tokens[0], lexer.COMMA):
                 # Comma immediately after operator,
@@ -526,6 +506,9 @@ class DerefOp(OneArgOp):
         raise_unless_len(type, EXACTLY, 1)
         self.add_child(BasicType).pop_consume(type)
 
+class DupOp(NoArgOp):
+    has_own_handler = True
+
 class GotoOp(JumpOp):
     has_own_handler = True
 
@@ -549,6 +532,10 @@ class LoadOp(OneArgOp):
         self.add_child(klass).consume(arg)
 
     @property
+    def name(self):
+        return self.one_child((ShortName, FullName))
+
+    @property
     def named_operands(self):
         """Operands that need processing by the name annotator.
         """
@@ -565,6 +552,9 @@ class NameOp(NameCastOp):
         self.newname = self.add_child(ShortName)
         self.newname.consume(newname)
 
+class OverOp(NoArgOp):
+    has_own_handler = True
+
 class PickOp(OneArgOp):
     has_own_handler = True
 
@@ -579,9 +569,12 @@ class ReturnOp(NoArgOp):
 class Operations(TreeNode):
     CLASSES = {"cast": CastOp,
                "deref": DerefOp,
+               "dup": DupOp,
                "goto": GotoOp,
                "load": LoadOp,
                "name": NameOp,
+               "over": OverOp,
+               "pick": PickOp,
                "return": ReturnOp}
     for op in ("abs", "drop", "neg", "not", "rot", "swap"):
         CLASSES[op] = SimpleOp
@@ -591,8 +584,6 @@ class Operations(TreeNode):
     for op in ("lt", "le", "eq", "ne", "ge", "gt"):
         CLASSES[op] = CompareOp
         CLASSES["b" + op] = CondBranchOp
-    for op in ("dup", "over", "pick"):
-        CLASSES[op] = PickOp
     del op
 
     # Do not add an "addr" instruction for DW_OP_addr.

@@ -26,7 +26,7 @@ from i8c.compiler import ReservedIdentError
 
 SOURCE = """\
 define %s::test_reserved_provider returns ptr
-    extern ptr __some_symbol
+    argument ptr __some_symbol
 """
 
 class TestReservedProvider(TestCase):

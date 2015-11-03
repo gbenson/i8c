@@ -50,7 +50,6 @@ label:
 
 CALL_SOURCE = """\
 define test::fold_load_test
-    extern func () fold_load_test
     %s
 """
 
@@ -80,7 +79,7 @@ class TestFoldLoad(TestCase):
     def __do_test(self, source, ops, load_arg, extra=None):
         for op in ops:
             expect_ops = [op in ("call", "deref")
-                          and "dup" or "lit%s" % load_arg,
+                          and "load_external" or "lit%s" % load_arg,
                           {"add": "plus",
                            "sub": "minus"}.get(op, op)]
             if expect_ops[1] == "plus":

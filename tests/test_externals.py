@@ -27,7 +27,8 @@ SOURCE1 = """\
 define test::externals_test returns int
     extern ptr a_symbol
     extern func int, int (ptr) a_function
-    call
+    load a_symbol
+    call a_function
 """
 
 SOURCE2 = """\
@@ -37,7 +38,8 @@ typedef func int, int (ptr) fun_alias_f
 define test::externals_test returns int
     extern ptr_alias_t a_symbol
     extern fun_alias_f a_function
-    call
+    load a_symbol
+    call a_function
 """
 
 class TestExternals(TestCase):
@@ -45,4 +47,6 @@ class TestExternals(TestCase):
         """Check that externals work."""
         for source in SOURCE1, SOURCE2:
             tree, output = self.compile(source)
-            self.assertEqual(["call"], output.opnames)
+            self.assertEqual(
+                ["load_external", "load_external", "call"],
+                output.opnames)

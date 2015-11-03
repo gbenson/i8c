@@ -48,6 +48,12 @@ Source language changes
 * The "name" operator now accepts slot names as its first argument.
   This can be used to add new names to already-named slots by name.
 
+* Externals are no longer pushed onto the stack at function entry.
+  Existing code can be made to work by adding load statements at the
+  start of the function, though it's usually possible to eliminate
+  some stack manipulation code by rewriting functions with loads where
+  they're needed.
+
 Note format changes
 ~~~~~~~~~~~~~~~~~~~
 
@@ -58,8 +64,9 @@ Note format changes
 * The remainder of what was the info chunk has been moved into a new
   "signature" chunk with a type_id of 5.
 
-* The code chunk now contains only bytecode.  Its version has been
-  incremented to 2 to indicate this.
+* The code chunk now contains only bytecode, and externals are no
+  longer pushed onto the stack at function entry.  The bytecode
+  chunk's version has been incremented to 2 to indicate this.
 
 Bug fixes
 ~~~~~~~~~
