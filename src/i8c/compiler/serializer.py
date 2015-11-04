@@ -176,6 +176,7 @@ class Serializer(object):
         self.ops = OperationStream(function)
         self.visited = {}
         function.entry_block.accept(self)
+        del function.entry_block
         self.ops.close()
         debug_print("%s:\n" % function.name.value)
         debug_print("%s\n\n" % self.ops)
