@@ -111,14 +111,3 @@ class TestCase(BaseTestCase):
     def disable_loggers(self):
         for logger in compiler.loggers.values():
             logger.disable()
-
-    def collect_blocks(self, function):
-        result = {}
-        self.__collect_blocks(result, function.entry_block)
-        return result
-
-    def __collect_blocks(self, result, block):
-        if block.index not in result:
-            result[block.index] = block
-            for block in block.exits:
-                self.__collect_blocks(result, block)
