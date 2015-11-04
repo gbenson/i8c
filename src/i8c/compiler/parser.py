@@ -268,19 +268,19 @@ class Function(TreeNode):
             self.returntypes.pop_consume(tokens)
             self.parameters = self.add_child(Parameters)
             self.externals = self.add_child(Externals)
-            self.operations = self.add_child(Operations)
+            self.ops = self.add_child(Operations)
             return
 
         if tokens[0].text == "argument":
-            if self.externals.children or self.operations.children:
+            if self.externals.children or self.ops.children:
                 raise ParserError(tokens)
             self.parameters.consume(tokens)
         elif tokens[0].text == "extern":
-            if self.operations.children:
+            if self.ops.children:
                 raise ParserError(tokens)
             self.externals.consume(tokens)
         else:
-            self.operations.consume(tokens)
+            self.ops.consume(tokens)
 
     @property
     def name(self):

@@ -23,6 +23,7 @@ from __future__ import unicode_literals
 
 from tests import TestCase
 from i8c.compiler import loggers
+from i8c.compiler import parser
 import io
 import sys
 
@@ -82,7 +83,9 @@ class TestDebugCode(TestCase):
         tree, output = self.compile(SOURCE)
         func = list(tree.functions)[0]
         # lexer.Token.__str__
-        token = func.operations.tokens[0]
+        node = tree.one_child(parser.Function)
+        node = node.one_child(parser.Operations)
+        token = node.children[0].tokens[0]
         self.assertEqual(str(token), "<testcase>:5: 'swap'")
         # parser.TreeNode.__str__ with an annotated type
         node = func.externals.children[0]

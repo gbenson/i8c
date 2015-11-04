@@ -77,7 +77,7 @@ class NameAnnotator(object):
         self.check_provider(function.name)
         for node in function.entry_stack:
             node.accept(self)
-        function.operations.accept(self)
+        function.ops.accept(self)
 
         if debug_print.is_enabled:
             debug_print("%s\n\n" % function)

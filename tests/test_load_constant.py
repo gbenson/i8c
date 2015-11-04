@@ -44,7 +44,9 @@ class TestLoadConstantInput(TestCase):
         """
         tree, output = self.compile(INPUT_TEST)
         constants = []
-        for op in tree.one_child(parser.Function).operations.children:
+        node = tree.one_child(parser.Function)
+        node = node.one_child(parser.Operations)
+        for op in node.children:
             self.assertIsInstance(op, parser.LoadOp)
             for node in op.children:
                 self.assertIsInstance(node, parser.Constant)

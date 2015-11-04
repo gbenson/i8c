@@ -123,7 +123,7 @@ class BlockCreator(object):
         self.__block = None
         self.pc = 0
 
-        function.operations.accept(self)
+        function.ops.accept(self)
         self.ensure_has_blocks(function)
         self.ensure_all_blocks_terminated()
 
