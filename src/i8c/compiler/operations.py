@@ -234,9 +234,6 @@ DivOp = BinaryOp
 class DropOp(NoOperandsOp):
     pass
 
-class DupOp(NoOperandsOp):
-    pass
-
 ModOp = BinaryOp
 MulOp = BinaryOp
 
@@ -258,9 +255,6 @@ class NoOp(NoOperandsOp):
 
 NotOp = UnaryOp
 OrOp = BinaryOp
-
-class OverOp(NoOperandsOp):
-    pass
 
 class PickOp(NonTerminalOp):
     operands = ("operand",)
