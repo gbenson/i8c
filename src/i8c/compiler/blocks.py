@@ -124,6 +124,7 @@ class BlockCreator(object):
         self.pc = 0
 
         function.ops.accept(self)
+        del function.ops
         self.ensure_has_blocks(function)
         self.ensure_all_blocks_terminated()
 
