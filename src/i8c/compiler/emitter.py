@@ -319,10 +319,9 @@ class Emitter(NoOutputOpSkipper):
 
     @staticmethod
     def has_code(function):
-        ops = sorted(function.ops.ops.items())
         skipper = NoOutputOpSkipper()
         try:
-            for index, op in ops:
+            for index, op in function.ops.stream:
                 op.accept(skipper)
             return False
         except visitors.VisitError:
@@ -359,13 +358,12 @@ class Emitter(NoOutputOpSkipper):
 
     # Emit the bytecode
 
-    def visit_operationstream(self, stream):
-        self.jumps = stream.jumps
+    def visit_operationstream(self, ops):
+        self.jumps = ops.jumps
         self.labels = {}
-        for op in stream.labels.keys():
+        for op in ops.labels.keys():
             self.labels[op] = self.new_label()
-        ops = sorted(stream.ops.items())
-        for index, op in ops:
+        for index, op in ops.stream:
             label = self.labels.get(op, None)
             if label is not None:
                 self.emit_label(label)

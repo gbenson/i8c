@@ -45,12 +45,18 @@ class OperationStream(visitors.Visitable):
         self.labels = {}
         self.__eof_block = StopBlock(function)
 
-    def items(self):
-        return self.ops.items()
-
     @property
     def is_closed(self):
         return self.__eof_block is None
+
+    @property
+    def items(self):
+        assert self.is_closed
+        return self.ops.items
+
+    @property
+    def stream(self):
+        return sorted(self.items())
 
     # Methods used to build the stream
 
@@ -142,8 +148,7 @@ class OperationStream(visitors.Visitable):
             del self.labels[target]
 
     def __reindex(self):
-        assert self.is_closed
-        ops = sorted(self.ops.items())
+        ops = self.stream
         self.ops = {}
         for index, op in ops:
             self.ops[len(self.ops)] = op
@@ -173,14 +178,14 @@ class Serializer(object):
             node.accept(self)
 
     def visit_function(self, function):
-        self.ops = OperationStream(function)
+        self.stream = OperationStream(function)
         self.visited = {}
         function.entry_block.accept(self)
         del function.entry_block
-        self.ops.close()
+        self.stream.close()
         debug_print("%s:\n" % function.name.value)
-        debug_print("%s\n\n" % self.ops)
-        function.ops = self.ops
+        debug_print("%s\n\n" % self.stream)
+        function.ops = self.stream
 
     def visit_basicblock(self, block):
         if self.visited.get(block, False):
@@ -188,22 +193,22 @@ class Serializer(object):
         self.visited[block] = True
 
         for op in block.ops:
-            self.ops.append(op)
+            self.stream.append(op)
 
         if block.is_branch_terminated:
-            self.ops.jump_from_last_to(block.branched_exit)
+            self.stream.jump_from_last_to(block.branched_exit)
 
-            self.ops.append(operations.SyntheticGoto(self.ops.last_op))
-            self.ops.jump_from_last_to(block.nobranch_exit)
+            self.stream.append(operations.SyntheticGoto(self.stream.last_op))
+            self.stream.jump_from_last_to(block.nobranch_exit)
 
             block.nobranch_exit.accept(self)
             block.branched_exit.accept(self)
         elif block.is_goto_terminated:
-            self.ops.jump_from_last_to(block.goto_exit)
+            self.stream.jump_from_last_to(block.goto_exit)
 
             block.goto_exit.accept(self)
         else:
             assert block.is_return_terminated
             assert not block.exits
 
-            self.ops.jump_from_last_to_EOF()
+            self.stream.jump_from_last_to_EOF()
