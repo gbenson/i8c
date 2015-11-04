@@ -255,7 +255,7 @@ class Emitter(NoOutputOpSkipper):
             node.accept(self)
 
     def visit_function(self, function):
-        debug_print("\n%s:\n" % function.name.value)
+        debug_print("\n%s:\n%s\n" % (function.name.value, function.ops))
         # This method handles laying out the structure of the note
         # as per http://www.netbsd.org/docs/kernel/elf-notes.html.
         # The Infinity-specific part is in the "desc" field and is
@@ -360,7 +360,6 @@ class Emitter(NoOutputOpSkipper):
     # Emit the bytecode
 
     def visit_operationstream(self, stream):
-        debug_print("%s\n" % stream)
         self.jumps = stream.jumps
         self.labels = {}
         for op in stream.labels.keys():
