@@ -22,7 +22,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from tests import TestCase
-from i8c.compiler import NameAnnotatorError
+from i8c.compiler import ReservedIdentError
 
 SOURCE = """\
 define %s::test_reserved_provider returns ptr
@@ -38,7 +38,7 @@ class TestReservedProvider(TestCase):
                          "i8core", "i8", "hello"):
             source = SOURCE % provider
             if provider.startswith("i8"):
-                self.assertRaises(NameAnnotatorError, self.compile, source)
+                self.assertRaises(ReservedIdentError, self.compile, source)
             else:
                 tree, output = self.compile(source)
                 self.assertEqual([], output.opnames)

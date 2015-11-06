@@ -52,9 +52,16 @@ class ParsedError(LexedError):
     """An error occurred while processing the AST.
     """
 
-class NameAnnotatorError(ParsedError):
-    """An error occurred annotating the AST with name information.
+class IdentError(ParsedError):
+    """An error occurred while processing an identifier.
     """
+
+class ReservedIdentError(IdentError):
+    """An attempt was made to define an identifier with a reserved name.
+    """
+    def __init__(self, cause, what, name):
+        IdentError.__init__(
+            self, cause, "%s ‘%s’ is reserved" % (what, name))
 
 class TypeAnnotatorError(ParsedError):
     """An error occurred annotating the AST with type information.

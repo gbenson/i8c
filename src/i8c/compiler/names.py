@@ -21,8 +21,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from . import NameAnnotatorError
 from . import logger
+from . import ReservedIdentError
 
 debug_print = logger.debug_printer_for(__name__)
 
@@ -122,8 +122,7 @@ class NameAnnotator(object):
     def check_provider(self, name):
         provider = name.value.provider
         if provider.startswith("i8"):
-            raise NameAnnotatorError(
-                name, "provider ‘%s’ is reserved" % provider)
+            raise ReservedIdentError(name, "provider", provider)
 
     # Generic visitor for operations that don't require annotation
 
