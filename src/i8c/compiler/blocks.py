@@ -112,6 +112,15 @@ class BasicBlock(visitors.Visitable):
             result += "\n  %s" % op
         return result
 
+class Label(object):
+    def __init__(self, ast, pc):
+        self.ast = ast
+        self.pc = pc
+
+class SyntheticLabel(Label):
+    def __init__(self, pc):
+        Label.__init__(self, None, pc)
+
 class BlockCreator(object):
     def visit_toplevel(self, toplevel):
         for node in toplevel.functions:
@@ -129,8 +138,8 @@ class BlockCreator(object):
         self.ensure_all_blocks_terminated()
 
         labels = {}
-        for name, pc in self.labels.items():
-            labels[name] = self.blocks[pc]
+        for name, label in self.labels.items():
+            labels[name] = self.blocks[label.pc]
         del self.labels
 
         blocks = sorted(self.blocks.items())
@@ -157,7 +166,7 @@ class BlockCreator(object):
         # labels as they are all strings.
         label = len(self.labels)
         assert label not in self.labels
-        self.labels[label] = target
+        self.labels[label] = SyntheticLabel(target)
         return label
 
     def ensure_has_blocks(self, function):
@@ -213,7 +222,7 @@ class BlockCreator(object):
         name = label.name
         if name in self.labels:
             raise BlockCreatorError(label, "duplicate label ‘%s’" % name)
-        self.labels[name] = self.pc
+        self.labels[name] = Label(label, self.pc)
         self.drop_current_block()
         self.add_op(NoOp(label))
 

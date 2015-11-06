@@ -30,8 +30,18 @@ debug_print = logger.debug_printer_for(__name__)
 class Type(object):
     """Base class for all types.
     """
-    def __init__(self, name):
+    def __init__(self, ast, name):
+        self.ast = ast
         self.name = name
+
+    @property
+    def is_builtin(self):
+        return self.ast is None
+
+    @property
+    def fileline(self):
+        assert not self.is_builtin
+        return self.ast.fileline
 
     def lowest_common_ancestor(self, other):
         last = None
@@ -66,7 +76,7 @@ class CoreType(BaseType):
 
     def __init__(self, name, encoding, is_computable):
         assert not CoreType.class_init_complete
-        BaseType.__init__(self, name)
+        BaseType.__init__(self, None, name)
         self.encoding = encoding
         self.is_computable = is_computable
 
@@ -85,7 +95,7 @@ class FuncType(BaseType):
         if rtypes:
             name += " " + rtypes
         name += " (%s)" % ptypes
-        Type.__init__(self, name)
+        Type.__init__(self, functype, name)
 
     @property
     def encoding(self):
@@ -123,9 +133,9 @@ class FuncType(BaseType):
 class AliasType(Type):
     """A type that is an alias for some other type.
     """
-    def __init__(self, name, parent):
+    def __init__(self, ast, name, parent):
         assert parent is not None
-        Type.__init__(self, name)
+        Type.__init__(self, ast, name)
         self.parent = parent
 
     @property
@@ -156,7 +166,7 @@ class SizedType(AliasType):
     def __init__(self, size_bytes, is_signed):
         assert not SizedType.class_init_complete
         name = "%s%d" % (is_signed and "s" or "u", size_bytes << 3)
-        AliasType.__init__(self, name, INTTYPE)
+        AliasType.__init__(self, None, name, INTTYPE)
         self.size_bytes = size_bytes
         self.is_signed = is_signed
 
@@ -173,7 +183,7 @@ def __create_builtin_types():
         code = getattr(constants, "I8_TYPE_" + name[:3].upper())
         add_builtin_type(CoreType(name, code, name != "opaque"))
     CoreType.class_init_complete = True
-    add_builtin_type(AliasType("bool", INTTYPE))
+    add_builtin_type(AliasType(None, "bool", INTTYPE))
     for is_signed in range(2):
         for shift in range(4):
             size = 1 << shift
@@ -192,10 +202,10 @@ class TypeAnnotator(object):
             node.accept(self)
         assert self.in_toplevel
 
-    def add_type(self, type, node=None):
+    def add_type(self, type):
         if type.name in self.types:
             raise TypeAnnotatorError(
-                node, "type ‘%s’ already exists" % type.name)
+                type.ast, "type ‘%s’ already exists" % type.name)
         self.types[type.name] = type
 
     def get_type(self, basictype):
@@ -231,8 +241,9 @@ class TypeAnnotator(object):
 
     def add_basictype(self, basictype):
         assert self.newtype is not None
-        parent = self.get_type(basictype)
-        self.add_type(AliasType(self.newtype.name, parent), self.newtype)
+        self.add_type(AliasType(self.newtype,
+                                self.newtype.name,
+                                self.get_type(basictype)))
 
     def __annotate_functype(self, functype):
         saved = self.in_toplevel
@@ -246,8 +257,9 @@ class TypeAnnotator(object):
     def add_functype(self, functype):
         assert self.newtype is not None
         self.__annotate_functype(functype)
-        parent = FuncType(functype)
-        self.add_type(AliasType(self.newtype.name, parent), self.newtype)
+        self.add_type(AliasType(self.newtype,
+                                self.newtype.name,
+                                FuncType(functype)))
 
     # Add "type" fields where necessary in function definitions
 
