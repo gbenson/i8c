@@ -22,8 +22,9 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from .. import constants
-from . import TypeAnnotatorError
 from . import logger
+from . import RedefinedIdentError
+from . import UndefinedIdentError
 
 debug_print = logger.debug_printer_for(__name__)
 
@@ -203,17 +204,15 @@ class TypeAnnotator(object):
         assert self.in_toplevel
 
     def add_type(self, type):
-        if type.name in self.types:
-            raise TypeAnnotatorError(
-                type.ast, "type ‘%s’ already exists" % type.name)
+        prev = self.types.get(type.name, None)
+        if prev is not None:
+            raise RedefinedIdentError(type, "type", type.name, prev)
         self.types[type.name] = type
 
-    def get_type(self, basictype):
-        name = basictype.name
-        result = self.types.get(name, None)
+    def get_type(self, type):
+        result = self.types.get(type.name, None)
         if result is None:
-            raise TypeAnnotatorError(
-                basictype, "undefined type ‘%s’" % name)
+            raise UndefinedIdentError(type, "type", type.name)
         return result
 
     def visit_basictype(self, basictype):

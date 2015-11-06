@@ -21,8 +21,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from . import BlockCreatorError
 from . import logger
+from . import RedefinedIdentError
+from . import UndefinedIdentError
 from . import visitors
 from .operations import *
 
@@ -93,8 +94,7 @@ class BasicBlock(visitors.Visitable):
             self.exits = [labels[label]
                           for label in self.last_op.exit_labels]
         except KeyError as e:
-            raise BlockCreatorError(self.last_op.ast,
-                               "undefined label ‘%s’" % e.args[0])
+            raise UndefinedIdentError(self.last_op, "label", e.args[0])
 
     def __str__(self):
         result = "%s (%s)" % (self.name, self.fileline)
@@ -113,9 +113,15 @@ class BasicBlock(visitors.Visitable):
         return result
 
 class Label(object):
+    is_builtin = False
+
     def __init__(self, ast, pc):
         self.ast = ast
         self.pc = pc
+
+    @property
+    def fileline(self):
+        return self.ast.fileline
 
 class SyntheticLabel(Label):
     def __init__(self, pc):
@@ -219,10 +225,10 @@ class BlockCreator(object):
             child.accept(self)
 
     def visit_label(self, label):
-        name = label.name
-        if name in self.labels:
-            raise BlockCreatorError(label, "duplicate label ‘%s’" % name)
-        self.labels[name] = Label(label, self.pc)
+        prev = self.labels.get(label.name, None)
+        if prev is not None:
+            raise RedefinedIdentError(label, "label", label.name, prev)
+        self.labels[label.name] = Label(label, self.pc)
         self.drop_current_block()
         self.add_op(NoOp(label))
 

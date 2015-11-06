@@ -56,16 +56,31 @@ class IdentError(ParsedError):
     """An error occurred while processing an identifier.
     """
 
+class UndefinedIdentError(IdentError):
+    """The specified identifier was not defined.
+    """
+    def __init__(self, cause, what, name):
+        IdentError.__init__(
+            self, cause, "%s ‘%s’ is undefined" % (what, name))
+
+class RedefinedIdentError(IdentError):
+    """An attempt was made to redefine an identifier.
+    """
+    def __init__(self, cause, what, name, prev):
+        if prev.is_builtin:
+            msg = "definition of ‘%s’ shadows builtin %s" % (name, what)
+        else:
+            msg = ("definition of ‘%s’ shadows previous\n"
+                   "%s: error: %s ‘%s’ was previously defined here") % (
+                name, prev.fileline, what, name)
+        IdentError.__init__(self, cause, msg)
+
 class ReservedIdentError(IdentError):
     """An attempt was made to define an identifier with a reserved name.
     """
     def __init__(self, cause, what, name):
         IdentError.__init__(
             self, cause, "%s ‘%s’ is reserved" % (what, name))
-
-class TypeAnnotatorError(ParsedError):
-    """An error occurred annotating the AST with type information.
-    """
 
 class BlockCreatorError(ParsedError):
     """An error occurred creating basic blocks from the AST.
