@@ -213,7 +213,7 @@ class BytecodeFunction(Function):
             if op is None:
                 raise BadJumpError(stack.op)
             stack.op = op
-            pc_adjust = op.execute(ctx, stack)
+            pc_adjust = op.execute(ctx, self.externals, stack)
             pc += op.size
             if pc_adjust is not None:
                 pc += pc_adjust

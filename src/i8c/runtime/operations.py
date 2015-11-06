@@ -91,6 +91,7 @@ class Operation(object):
         constants.DW_OP_piece: ["uleb128"],
         constants.DW_OP_deref_size: ["u1"],
         constants.DW_OP_xderef_size: ["u1"],
+        constants.I8_OP_load_external: ["uleb128"],
     }
 
     OPTABLE = {
@@ -194,7 +195,7 @@ class Operation(object):
                             " ".join([self.NAMES[self.opcode]]
                                      + list(map(str, self.operands))))
 
-    def execute(self, ctx, stack):
+    def execute(self, ctx, externals, stack):
         self.__trace(ctx, stack)
         if (self.opcode >= constants.DW_OP_lit0
               and self.opcode <= constants.DW_OP_lit31):
@@ -208,9 +209,9 @@ class Operation(object):
             impl = getattr(self, "exec_" + self.name, None)
         if impl is None:
             raise NotImplementedError(self.name)
-        return impl(ctx, stack)
+        return impl(ctx, externals, stack)
 
-    def __exec_optable(self, ctx, stack):
+    def __exec_optable(self, ctx, externals, stack):
         func, num_args, is_signed = self.OPTABLE[self.opcode]
         pop = is_signed and stack.pop_signed or stack.pop_unsigned
         if num_args == 2:
@@ -218,30 +219,30 @@ class Operation(object):
         else:
             assert num_args == 1
             impl = self.__exec_unary
-        return impl(ctx, stack, func, pop)
+        return impl(ctx, externals, stack, func, pop)
 
-    def __exec_unary(self, ctx, stack, func, pop):
+    def __exec_unary(self, ctx, externals, stack, func, pop):
         stack.push_intptr(func(pop()))
 
-    def __exec_binary(self, ctx, stack, func, pop):
+    def __exec_binary(self, ctx, externals, stack, func, pop):
         b = pop()
         a = pop()
         stack.push_intptr(func(a, b))
 
-    def __exec_constX(self, ctx, stack):
+    def __exec_constX(self, ctx, externals, stack):
         stack.push_intptr(self.operand)
 
-    def exec_bra(self, ctx, stack):
+    def exec_bra(self, ctx, externals, stack):
         if stack.pop_unsigned() != 0:
             return self.operand
 
-    def exec_deref(self, ctx, stack):
-        self.__exec_deref(ctx, stack, ctx.wordsize // 8)
+    def exec_deref(self, ctx, externals, stack):
+        self.__exec_deref(ctx, externals, stack, ctx.wordsize // 8)
 
-    def exec_deref_size(self, ctx, stack):
-        self.__exec_deref(ctx, stack, self.operand)
+    def exec_deref_size(self, ctx, externals, stack):
+        self.__exec_deref(ctx, externals, stack, self.operand)
 
-    def __exec_deref(self, ctx, stack, size):
+    def __exec_deref(self, ctx, externals, stack, size):
         sizecode = self.FIXEDSIZE.get("u%d" % size, None)
         if sizecode is None:
             raise UnhandledNoteError(self)
@@ -251,31 +252,35 @@ class Operation(object):
         result = ctx.env.read_memory(fmt, stack.pop_unsigned())
         stack.push_intptr(struct.unpack(fmt, result)[0])
 
-    def exec_drop(self, ctx, stack):
+    def exec_drop(self, ctx, externals, stack):
         stack.pop_boxed()
 
-    def exec_dup(self, ctx, stack):
+    def exec_dup(self, ctx, externals, stack):
         stack.push_boxed(stack.slots[0])
 
-    def exec_call(self, ctx, stack):
+    def exec_call(self, ctx, externals, stack):
         callee = stack.pop_function()
         ctx.trace_call(callee, stack)
         callee.execute(ctx, stack)
 
-    def __exec_litN(self, ctx, stack):
+    def __exec_litN(self, ctx, externals, stack):
         stack.push_intptr(self.opcode - constants.DW_OP_lit0)
 
-    def exec_over(self, ctx, stack):
+    def exec_load_external(self, ctx, externals, stack):
+        external = externals[self.operand]
+        stack.push_typed(*external.resolve(ctx))
+
+    def exec_over(self, ctx, externals, stack):
         stack.push_boxed(stack.slots[1])
 
-    def exec_pick(self, ctx, stack):
+    def exec_pick(self, ctx, externals, stack):
         stack.push_boxed(stack.slots[self.operand])
 
-    def exec_plus_uconst(self, ctx, stack):
+    def exec_plus_uconst(self, ctx, externals, stack):
         a = stack.pop_unsigned()
         stack.push_intptr(a + self.operand)
 
-    def exec_rot(self, ctx, stack):
+    def exec_rot(self, ctx, externals, stack):
         a = stack.pop_boxed()
         b = stack.pop_boxed()
         c = stack.pop_boxed()
@@ -283,10 +288,10 @@ class Operation(object):
         stack.push_boxed(c)
         stack.push_boxed(b)
 
-    def exec_skip(self, ctx, stack):
+    def exec_skip(self, ctx, externals, stack):
         return self.operand
 
-    def exec_swap(self, ctx, stack):
+    def exec_swap(self, ctx, externals, stack):
         a = stack.pop_boxed()
         b = stack.pop_boxed()
         stack.push_boxed(a)
