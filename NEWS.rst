@@ -54,6 +54,10 @@ Source language changes
   some stack manipulation code by rewriting functions with loads where
   they're needed.
 
+* Functions no longer need "extern func" statements to reference
+  themself or other functions defined in the same file.  Such
+  "extern func" statements will now cause the compiler to error.
+
 Note format changes
 ~~~~~~~~~~~~~~~~~~~
 

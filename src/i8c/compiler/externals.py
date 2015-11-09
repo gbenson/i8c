@@ -25,6 +25,7 @@ from . import names
 from . import stack
 from . import types
 from . import visitors
+import copy
 
 class External(stack.Element):
     def __init__(self, name, type):
@@ -40,8 +41,7 @@ class External(stack.Element):
         return self.names[0]
 
 class ExternTable(visitors.Visitable):
-    def __init__(self, default_provider):
-        self.default_provider = default_provider
+    def __init__(self):
         self.entries = {}
 
     def add(self, name, type):
@@ -60,14 +60,23 @@ class ExternTable(visitors.Visitable):
         assert isinstance(name, names.Name)
         return self.entries.get(str(name), None)
 
-class TableCreator(object):
+class PerFileTableCreator(object):
     def visit_toplevel(self, toplevel):
+        toplevel.table = self.table = ExternTable()
         for node in toplevel.functions:
             node.accept(self)
 
     def visit_function(self, function):
-        self.table = ExternTable(function.name.provider)
         self.table.add(function.name.value, function.type)
+
+class PerFuncTableCreator(object):
+    def visit_toplevel(self, toplevel):
+        for node in toplevel.functions:
+            self.table = copy.copy(toplevel.table)
+            node.accept(self)
+
+    def visit_function(self, function):
+        self.table.default_provider = function.name.provider
         function.externals.accept(self)
         function.externals = self.table
 
