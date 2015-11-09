@@ -60,16 +60,23 @@ class ExternTable(visitors.Visitable):
         assert isinstance(name, names.Name)
         return self.entries.get(str(name), None)
 
-class PerFileTableCreator(object):
+class TableCreator(object):
+    def visit_external(self, external):
+        self.table.add(external.name.value, external.typename.type)
+
+class PerFileTableCreator(TableCreator):
     def visit_toplevel(self, toplevel):
         toplevel.table = self.table = ExternTable()
-        for node in toplevel.functions:
+        for node in toplevel.children:
             node.accept(self)
 
     def visit_function(self, function):
         self.table.add(function.name.value, function.type)
 
-class PerFuncTableCreator(object):
+    def visit_typedef(self, typedef):
+        pass
+
+class PerFuncTableCreator(TableCreator):
     def visit_toplevel(self, toplevel):
         for node in toplevel.functions:
             self.table = copy.copy(toplevel.table)
@@ -83,6 +90,3 @@ class PerFuncTableCreator(object):
     def visit_externals(self, externals):
         for node in externals.children:
             node.accept(self)
-
-    def visit_external(self, external):
-        self.table.add(external.name.value, external.typename.type)

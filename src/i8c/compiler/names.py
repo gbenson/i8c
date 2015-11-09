@@ -76,11 +76,14 @@ class Name(object):
 
 class NameAnnotator(object):
     def visit_toplevel(self, toplevel):
-        for node in toplevel.functions:
+        for node in toplevel.children:
+            self.function_provider = None
             node.accept(self)
 
+    def visit_typedef(self, typedef):
+        pass
+
     def visit_function(self, function):
-        self.function_provider = None
         for node in function.children:
             node.accept(self)
 

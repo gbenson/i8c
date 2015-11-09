@@ -96,3 +96,6 @@ Enhancements
 
 * I8C's branch-elimination optimizer now recognizes that "dup" and
   "over" are equivalents of "pick 0" and "pick 1" respectively.
+
+* "extern" statements are now allowed outside of function definitions,
+  where they will be inherited by all functions in the same file.

@@ -163,7 +163,10 @@ class TopLevel(TreeNode):
     def consume(self, tokens):
         klass = self.CLASSES.get(tokens[0].text, None)
         if klass is not None:
-            self.add_child(klass)
+            if (klass is not TopLevelExternal
+                  or not self.children
+                  or not isinstance(self.latest_child, Function)):
+                self.add_child(klass)
         elif not self.children:
             raise ParserError(tokens)
         self.latest_child.consume(tokens)
@@ -279,8 +282,6 @@ class Function(TreeNode):
     def name(self):
         return self.one_child(FullName)
 
-TopLevel.CLASSES = {"define": Function, "typedef": Typedef}
-
 class FullName(TreeNode):
     def consume(self, tokens):
         raise_unless_len(tokens, EXACTLY, 3)
@@ -312,11 +313,11 @@ class ShortName(Identifier):
     pass
 
 class TypeAndName(TreeNode):
-    def consume(self, tokens, allow_fullname):
+    def consume(self, tokens):
         self.add_child(Type.class_for(tokens)).pop_consume(tokens)
-        if allow_fullname and len(tokens) == 3:
+        if self.allow_fullname and len(tokens) == 3:
             klass = FullName
-        elif len(tokens) == 1:
+        elif self.allow_shortname and len(tokens) == 1:
             klass = ShortName
         else:
             raise ParserError(self.tokens)
@@ -337,26 +338,40 @@ class Parameters(TreeNode):
         self.add_child(Parameter).consume(tokens)
 
 class Parameter(TypeAndName):
+    allow_fullname = False
+    allow_shortname = True
+
     def consume(self, tokens):
         if self.tokens:
             raise ParserError(tokens)
-        raise_unless_len(tokens, ATLEAST, 3)
         self.tokens = tokens
-        TypeAndName.consume(self, tokens[1:], False)
+        TypeAndName.consume(self, tokens[1:])
 
 class Externals(TreeNode):
     def consume(self, tokens):
         if not self.tokens:
             self.tokens = tokens
-        self.add_child(External).consume(tokens)
+        self.add_child(NestedExternal).consume(tokens)
 
 class External(TypeAndName):
+    allow_fullname = True
+
     def consume(self, tokens):
         if self.tokens:
             raise ParserError(tokens)
-        raise_unless_len(tokens, ATLEAST, 3)
         self.tokens = tokens
-        TypeAndName.consume(self, tokens[1:], True)
+        TypeAndName.consume(self, tokens[1:])
+
+class TopLevelExternal(External):
+    allow_shortname = False
+
+class NestedExternal(External):
+    allow_shortname = True
+
+TopLevel.CLASSES = {
+    "define": Function,
+    "extern": TopLevelExternal,
+    "typedef": Typedef}
 
 # XXX
 

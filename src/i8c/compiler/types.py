@@ -208,9 +208,11 @@ class TypeAnnotator(object):
             if name.endswith("TYPE"):
                 self.add_type(type)
         self.in_toplevel = True
+        self.newtype = None
         for node in toplevel.children:
             node.accept(self)
         assert self.in_toplevel
+        assert self.newtype is None
 
     def add_type(self, type):
         prev = self.types.get(type.name, None)
@@ -225,13 +227,13 @@ class TypeAnnotator(object):
         return result
 
     def visit_basictype(self, basictype):
-        if self.in_toplevel:
+        if self.in_toplevel and self.newtype is not None:
             self.add_basictype(basictype)
         else:
             self.annotate_basictype(basictype)
 
     def visit_functype(self, functype):
-        if self.in_toplevel:
+        if self.in_toplevel and self.newtype is not None:
             self.add_functype(functype)
         else:
             self.annotate_functype(functype)
@@ -239,7 +241,7 @@ class TypeAnnotator(object):
     # Process "define type" statements
 
     def visit_typedef(self, typedef):
-        self.newtype = None
+        assert self.newtype is None
         for node in typedef.children:
             node.accept(self)
 
@@ -252,6 +254,7 @@ class TypeAnnotator(object):
         self.add_type(AliasType(self.newtype,
                                 self.newtype.name,
                                 self.get_type(basictype)))
+        self.newtype = None
 
     def __annotate_functype(self, functype):
         saved = self.in_toplevel
@@ -268,6 +271,7 @@ class TypeAnnotator(object):
         self.add_type(AliasType(self.newtype,
                                 self.newtype.name,
                                 FuncType(functype)))
+        self.newtype = None
 
     # Add "type" fields where necessary in function definitions
 
@@ -309,6 +313,7 @@ class TypeAnnotator(object):
             node.accept(self)
 
     def visit_external(self, external):
+        assert self.newtype is None
         external.typename.accept(self)
 
     def annotate_basictype(self, basictype):
