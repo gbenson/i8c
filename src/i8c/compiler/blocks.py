@@ -25,6 +25,7 @@ from . import logger
 from . import RedefinedIdentError
 from . import UndefinedIdentError
 from . import visitors
+from . import warn
 from .operations import *
 
 debug_print = logger.debug_printer_for(__name__)
@@ -165,6 +166,10 @@ class BlockCreator(object):
 
         function.entry_block = blocks[0]
         function.entry_block.entries.append(None)
+
+        for block in blocks:
+            if not block.entries:
+                warn("code is unreachable", block)
 
     def new_synthetic_label(self, target):
         # Create a synthetic label.  Using an integer
