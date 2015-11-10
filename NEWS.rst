@@ -55,8 +55,8 @@ Source language changes
   they're needed.
 
 * Functions no longer need "extern func" statements to reference
-  themself or other functions defined in the same file.  Such
-  "extern func" statements will now cause the compiler to error.
+  either themselves or other functions defined in the same file.
+  Unnecessary "extern func" statements now result in a warning.
 
 Note format changes
 ~~~~~~~~~~~~~~~~~~~

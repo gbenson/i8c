@@ -26,6 +26,7 @@ from . import names
 from . import stack
 from . import types
 from . import visitors
+from . import warn
 import copy
 
 class External(stack.Element):
@@ -67,6 +68,13 @@ class ExternTable(visitors.Visitable):
             prev = prev.without_provider()
         prev = self.__lookup(prev)
         if prev is not None:
+            if (isinstance(entry, External)
+                  and isinstance(prev, External)
+                  and entry.type.encoding == prev.type.encoding):
+                warn("unnecessary definition of ‘%s’" % entry.name,
+                     entry.name)
+                warn("‘%s’ was first defined here" % prev.name, prev.name)
+                return
             raise RedefinedIdentError(entry.name, "name", key, prev.name)
 
         self.entries[key] = entry

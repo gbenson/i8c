@@ -21,7 +21,16 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from i8c import I8Error
+from .. import I8Error
+from ..compat import fprint
+import sys
+
+def warn(msg, cause=None):
+    if cause is None:
+        prefix = "i8c"
+    else:
+        prefix = cause.fileline
+    fprint(sys.stderr, "%s: warning: %s" % (prefix, msg))
 
 class I8CError(I8Error):
     """Base class for all compiler errors.
