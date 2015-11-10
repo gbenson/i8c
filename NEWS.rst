@@ -99,3 +99,5 @@ Enhancements
 
 * "extern" statements are now allowed outside of function definitions,
   where they will be inherited by all functions in the same file.
+
+* Warnings are now issued for unreachable code.
