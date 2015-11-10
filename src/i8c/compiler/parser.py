@@ -268,7 +268,7 @@ class Function(TreeNode):
             return
 
         if tokens[0].text == "argument":
-            if self.externals.children or self.ops.children:
+            if self.ops.children:
                 raise ParserError(tokens)
             self.parameters.consume(tokens)
         elif tokens[0].text == "extern":
