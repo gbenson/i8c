@@ -154,13 +154,6 @@ check:
     drop
 """
 
-TESTS = (
-    (SOURCE_BASIC, None),
-    (SOURCE_BAD_DEPTH, StackMergeError),
-    (SOURCE_BAD_TYPE, StackMergeError),
-    (SOURCE_LOST_NAME, UndefinedIdentError),
-    (SOURCE_GOT_NAME, None))
-
 FACTORIALS = (
     (0, 1),
     (1, 1),
@@ -177,14 +170,32 @@ FACTORIALS = (
     (12, 479001600))
 
 class TestLoops(TestCase):
-    def test_loops(self):
-        """Test that loops work."""
-        for source, exception in TESTS:
-            if exception is not None:
-                self.assertRaises(exception, self.compile, source)
-                continue
+    def test_basic(self):
+        """Check that loops work."""
+        self.__test(SOURCE_BASIC)
+
+    def test_bad_depth(self):
+        """Check that merges with incorrect depth are caught."""
+        self.__test(SOURCE_BAD_DEPTH, StackMergeError)
+
+    def test_bad_type(self):
+        """Check that merges with incorrect types are caught."""
+        self.__test(SOURCE_BAD_TYPE, StackMergeError)
+
+    def test_lost_name(self):
+        """Check that merges with lost names are caught."""
+        self.__test(SOURCE_LOST_NAME, UndefinedIdentError)
+
+    def test_got_name(self):
+        """Check that lost names can be restored."""
+        self.__test(SOURCE_GOT_NAME)
+
+    def __test(self, source, exception=None):
+        if exception is None:
             tree, output = self.compile(source)
             sig = output.note.signature
             self.assertEqual(sig, "test::factorial(i)i")
             for input, expect in FACTORIALS:
                 self.assertEqual(output.call(sig, input), [expect])
+        else:
+            self.assertRaises(exception, self.compile, source)
