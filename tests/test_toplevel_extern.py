@@ -24,41 +24,83 @@ from __future__ import unicode_literals
 from tests import TestCase
 from i8c.compiler import ParserError
 
-SOURCE = """\
-define test::test_toplevel_extern returns int
+FUNCSRC = """\
+define test::test_toplevel_extern_func returns int
     argument ptr p
     call a_function
 """
 
-SOURCE1 = """\
+FUNCSRC1 = """\
 extern func int, int (ptr) %s
-""" + SOURCE
+""" + FUNCSRC
 
-SOURCE2 = """\
+FUNCSRC2 = """\
 typedef func int, int (ptr) functype
 extern functype %s
-""" + SOURCE
+""" + FUNCSRC
 
-class TestTopLevelExtern(TestCase):
+class TestTopLevelExtFunc(TestCase):
     def test_basic(self):
-        """Check that basic toplevel externals work."""
-        self.__test_good(SOURCE1)
+        """Check that basic toplevel external functions work."""
+        self.__test_good(FUNCSRC1)
 
     def test_typedef(self):
-        """Check that typedef toplevel externals work."""
-        self.__test_good(SOURCE2)
+        """Check that typedef toplevel external functions work."""
+        self.__test_good(FUNCSRC2)
 
     def __test_good(self, source):
         tree, output = self.compile(source % "test::a_function")
         self.assertEqual(["load_external", "call"], output.opnames)
 
     def test_basic_no_prov(self):
-        """Check basic toplevel externals without providers fail."""
-        self.__test_no_prov(SOURCE1)
+        """Check basic toplevel external functions without providers fail."""
+        self.__test_no_prov(FUNCSRC1)
 
     def test_typedef_no_prov(self):
-        """Check typedef toplevel externals without providers fail."""
-        self.__test_no_prov(SOURCE2)
+        """Check typedef toplevel external functions without providers fail."""
+        self.__test_no_prov(FUNCSRC2)
 
     def __test_no_prov(self, source):
         self.assertRaises(ParserError, self.compile, source % "a_function")
+
+
+SYMSRC = """\
+define test::test_toplevel_extern_sym returns ptr
+    load a_symbol
+"""
+
+SYMSRC1 = """\
+extern ptr %s
+""" + SYMSRC
+
+SYMSRC2 = """\
+typedef ptr symtype
+extern symtype %s
+""" + SYMSRC
+
+class TestTopLevelExtSym(TestCase):
+    def test_basic(self):
+        """Check that basic toplevel symbols work."""
+        self.__test_good(SYMSRC1)
+
+    def test_typedef(self):
+        """Check that typedef toplevel symbols work."""
+        self.__test_good(SYMSRC2)
+
+    def __test_good(self, source):
+        tree, output = self.compile(source % "a_symbol")
+        self.assertEqual(["load_external"], output.opnames)
+
+    def test_basic_with_prov(self):
+        """Check basic toplevel symbols with providers fail."""
+        self.__test_with_prov(SYMSRC1)
+
+    def test_typedef_with_prov(self):
+        """Check typedef toplevel symbols with providers fail."""
+        self.__test_with_prov(SYMSRC2)
+
+    def __test_with_prov(self, source):
+        self.assertRaises(ParserError, self.compile,
+                          source % "test::a_symbol")
+
+

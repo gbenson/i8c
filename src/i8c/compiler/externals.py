@@ -21,6 +21,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from . import RedefinedIdentError
 from . import names
 from . import stack
 from . import types
@@ -40,29 +41,56 @@ class External(stack.Element):
     def name(self):
         return self.names[0]
 
+class PlaceHolder(object):
+    def __init__(self, name):
+        self.name = name
+
 class ExternTable(visitors.Visitable):
     def __init__(self):
+        self.default_provider = None
         self.entries = {}
 
-    def add(self, name, type):
-        key = str(name)
-        assert not key in self.entries
-        self.entries[key] = External(name, type)
+    def add(self, node, type):
+        """Add an entry to the table."""
+        self.__add(node, External, type)
+
+    def block(self, node):
+        """Reserve a name in the table."""
+        self.__add(node, PlaceHolder)
+
+    def __add(self, node, klass, *args):
+        entry = klass(node.name.value, *args)
+        key = str(entry.name)
+
+        prev = entry.name
+        if prev.is_fullname and prev.provider == self.default_provider:
+            prev = prev.without_provider()
+        prev = self.__lookup(prev)
+        if prev is not None:
+            raise RedefinedIdentError(entry.name, "name", key, prev.name)
+
+        self.entries[key] = entry
 
     def lookup(self, name):
         result = self.__lookup(name)
-        if result is None and name.is_shortname:
-            fullname = name.with_provider(self.default_provider)
-            result = self.__lookup(fullname)
+        if isinstance(result, PlaceHolder):
+            result = None
         return result
 
     def __lookup(self, name):
+        result = self.__lookup_one(name)
+        if result is None and name.is_shortname:
+            fullname = name.with_provider(self.default_provider)
+            result = self.__lookup_one(fullname)
+        return result
+
+    def __lookup_one(self, name):
         assert isinstance(name, names.Name)
         return self.entries.get(str(name), None)
 
 class TableCreator(object):
     def visit_external(self, external):
-        self.table.add(external.name.value, external.typename.type)
+        self.table.add(external, external.typename.type)
 
 class PerFileTableCreator(TableCreator):
     def visit_toplevel(self, toplevel):
@@ -71,7 +99,7 @@ class PerFileTableCreator(TableCreator):
             node.accept(self)
 
     def visit_function(self, function):
-        self.table.add(function.name.value, function.type)
+        self.table.add(function, function.type)
 
     def visit_typedef(self, typedef):
         pass
@@ -80,13 +108,31 @@ class PerFuncTableCreator(TableCreator):
     def visit_toplevel(self, toplevel):
         for node in toplevel.functions:
             self.table = copy.copy(toplevel.table)
+            self.table.entries = copy.copy(self.table.entries)
             node.accept(self)
 
     def visit_function(self, function):
-        self.table.default_provider = function.name.provider
-        function.externals.accept(self)
+        for node in function.children:
+            node.accept(self)
         function.externals = self.table
+
+    def visit_fullname(self, name):
+        self.table.default_provider = name.provider
+
+    def visit_parameters(self, parameters):
+        for node in parameters.children:
+            node.accept(self)
+
+    def visit_parameter(self, parameter):
+        self.table.block(parameter)
+
+    def visit_returntypes(self, returntypes):
+        pass
 
     def visit_externals(self, externals):
         for node in externals.children:
             node.accept(self)
+
+    def visit_operations(self, ops):
+        pass
+

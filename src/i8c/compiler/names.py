@@ -22,7 +22,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from . import logger
-from . import RedefinedIdentError
+from . import ParserError
 from . import ReservedIdentError
 
 debug_print = logger.debug_printer_for(__name__)
@@ -77,13 +77,20 @@ class Name(object):
 class NameAnnotator(object):
     def visit_toplevel(self, toplevel):
         for node in toplevel.children:
-            self.function_provider = None
+            self.function = None
             node.accept(self)
 
     def visit_typedef(self, typedef):
         pass
 
     def visit_function(self, function):
+        if function.provider.startswith("i8"):
+            raise ReservedIdentError(
+                function, "provider", function.provider)
+        self.function = function
+
+        self.allow_shortname = False
+        self.allow_fullname = True
         for node in function.children:
             node.accept(self)
 
@@ -91,7 +98,9 @@ class NameAnnotator(object):
             debug_print("%s\n\n" % function)
 
     def visit_parameters(self, parameters):
-        self.default_provider = None
+        self.allow_shortname = True
+        self.allow_fullname = False
+
         for node in parameters.children:
             node.accept(self)
 
@@ -104,17 +113,21 @@ class NameAnnotator(object):
 
     def visit_external(self, external):
         if external.typename.type.is_function:
-            self.default_provider = self.function_provider
+            self.allow_shortname = False
+            self.allow_fullname = True
         else:
-            self.default_provider = None
+            self.allow_shortname = True
+            self.allow_fullname = False
+
         external.name.accept(self)
 
     def visit_returntypes(self, returntypes):
         pass
 
     def visit_operations(self, ops):
-        self.defined_names = None
-        self.default_provider = None
+        self.allow_shortname = True
+        self.allow_fullname = True
+
         for node in ops.children:
             node.accept(self)
 
@@ -124,8 +137,6 @@ class NameAnnotator(object):
     def visit_operation(self, op):
         pass
 
-    # Visitors for operations that require annotation
-
     def visit_loadop(self, op):
         for node in op.named_operands:
             node.accept(self)
@@ -134,38 +145,18 @@ class NameAnnotator(object):
         for node in op.named_operands:
             node.accept(self)
 
+    # Visitors for names
+
     def visit_fullname(self, node):
-        name = Name(node, node.provider, node.shortname)
-
-        if self.function_provider is None:
-            provider = name.provider
-            if provider.startswith("i8"):
-                raise ReservedIdentError(node, "provider", provider)
-            self.function_provider = provider
-            self.defined_names = {}
-
-        self.ensure_unique(name)
-        node.value = name
+        if not self.allow_fullname:
+            raise ParserError(node.tokens[1:])
+        node.value = Name(node, node.provider, node.shortname)
 
     def visit_shortname(self, node):
-        name = Name(node, self.default_provider, node.name)
-        self.ensure_unique(name)
-        node.value = name
-
-    # Ensure that short names in the preamble are unique
-
-    def ensure_unique(self, name):
-        if self.defined_names is None:
-            return
-        self.__ensure_unique(name)
-        if (name.provider == self.function_provider
-            or (name.is_fullname
-                and name.name in self.defined_names)):
-            self.__ensure_unique(name.without_provider())
-
-    def __ensure_unique(self, name):
-        key = str(name)
-        prev = self.defined_names.get(key, None)
-        if prev is not None:
-            raise RedefinedIdentError(name, "name", key, prev)
-        self.defined_names[key] = name
+        if self.allow_shortname:
+            provider = None
+        elif self.allow_fullname and self.function is not None:
+            provider = self.function.provider
+        else:
+            raise ParserError(node.tokens)
+        node.value = Name(node, provider, node.name)
