@@ -71,6 +71,9 @@ Source language changes
   either themselves or other functions defined in the same file.
   Unnecessary "extern func" statements now result in a warning.
 
+* "extern" statements are now allowed outside of function definitions,
+  where they will be inherited by all functions in the same file.
+
 Note format changes
 ~~~~~~~~~~~~~~~~~~~
 
@@ -109,8 +112,5 @@ Enhancements
 
 * I8C's branch-elimination optimizer now recognizes that "dup" and
   "over" are equivalents of "pick 0" and "pick 1" respectively.
-
-* "extern" statements are now allowed outside of function definitions,
-  where they will be inherited by all functions in the same file.
 
 * Warnings are now issued for unreachable code.
