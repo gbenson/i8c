@@ -45,6 +45,19 @@ Source language changes
 
     * Others: cast, goto, load, name, return.
 
+  The "deref" operator additionally accepts "offset(base)" syntax for
+  its optional folded load argument.  This is exactly equivalent to
+  two loads and an add, so, for example, this code::
+
+    load base
+    load offset
+    add
+    deref ptr
+
+  may now be written as::
+
+    deref offset(base), ptr
+
 * The "name" operator now accepts slot names as its first argument.
   This can be used to add new names to already-named slots by name.
 

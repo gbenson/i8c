@@ -502,6 +502,9 @@ class CondBranchOp(JumpOp):
 
 # Classes for operators that require specific individual parsing
 
+class AddOp(SimpleFoldLoadOp):
+    name = "add"
+
 class CastOp(NameCastOp):
     def add_child_2(self, type):
         raise_unless_len(type, EXACTLY, 1)
@@ -514,6 +517,19 @@ class CastOp(NameCastOp):
 class DerefOp(OneArgOp):
     has_own_handler = True
     may_fold_load = True
+
+    def add_folded_load(self, tokens):
+        if (len(tokens) == 4
+              and isinstance(tokens[1], lexer.OPAREN)
+              and isinstance(tokens[3], lexer.CPAREN)):
+            # Handle "offset(base)" syntax
+            OneArgOp.add_folded_load(self, [tokens[2]])
+            OneArgOp.add_folded_load(self, [tokens[0]])
+            token = lexer.SyntheticToken(tokens[0], "synthetic add")
+            self.add_child(AddOp).consume([token])
+        else:
+            # Regular folded load
+            OneArgOp.add_folded_load(self, tokens)
 
     def add_children(self, type):
         raise_unless_len(type, EXACTLY, 1)
@@ -543,6 +559,10 @@ class LoadOp(OneArgOp):
         else:
             raise ParserError(arg)
         self.add_child(klass).consume(arg)
+
+    @property
+    def is_offset_base(self):
+        return len(list(self.folded_children)) == 2
 
     @property
     def name(self):
@@ -580,7 +600,8 @@ class ReturnOp(NoArgOp):
 # XXX
 
 class Operations(TreeNode):
-    CLASSES = {"cast": CastOp,
+    CLASSES = {"add": AddOp,
+               "cast": CastOp,
                "deref": DerefOp,
                "dup": DupOp,
                "goto": GotoOp,
@@ -591,8 +612,8 @@ class Operations(TreeNode):
                "return": ReturnOp}
     for op in ("abs", "drop", "neg", "not", "rot", "swap"):
         CLASSES[op] = SimpleOp
-    for op in ("add", "and", "div", "call", "mod", "mul",
-               "or", "shl", "shr", "shra", "sub", "xor"):
+    for op in ("and", "div", "call", "mod", "mul", "or",
+               "shl", "shr", "shra", "sub", "xor"):
         CLASSES[op] = SimpleFoldLoadOp
     for op in ("lt", "le", "eq", "ne", "ge", "gt"):
         CLASSES[op] = CompareOp
