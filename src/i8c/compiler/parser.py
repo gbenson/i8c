@@ -409,10 +409,7 @@ class Operation(TreeNode):
 
         # Handle any folded loads
         if self.may_fold_load and len(args) == self.num_args + 1:
-            tokens = args.pop(0)
-            tokens.insert(0, lexer.SyntheticToken(tokens[0],
-                                                  "synthetic load"))
-            self.add_child(LoadOp).consume(tokens)
+            self.add_folded_load(args.pop(0))
 
         # Process the arguments
         if len(args) > self.num_args:
@@ -421,6 +418,10 @@ class Operation(TreeNode):
             raise ParserError(self.tokens[-1:])
         else:
             self.add_children(*args)
+
+    def add_folded_load(self, tokens):
+        token = lexer.SyntheticToken(tokens[0], "synthetic load")
+        self.add_child(LoadOp).consume([token] + tokens)
 
     @property
     def folded_children(self):
