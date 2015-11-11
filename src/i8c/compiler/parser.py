@@ -503,6 +503,7 @@ class CondBranchOp(JumpOp):
 # Classes for operators that require specific individual parsing
 
 class AddOp(SimpleFoldLoadOp):
+    has_own_handler = True
     name = "add"
 
 class CastOp(NameCastOp):
