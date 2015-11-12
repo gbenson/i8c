@@ -114,3 +114,5 @@ Enhancements
   "over" are equivalents of "pick 0" and "pick 1" respectively.
 
 * Warnings are now issued for unreachable code.
+
+* There is the start of an Emacs major mode in "contrib/i8-mode.el".
