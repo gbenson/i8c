@@ -1,10 +1,11 @@
-;;; i8-mode.el --- Emacs major mode for editing I8
+;;; i8-mode.el --- Emacs major mode for editing I8; -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2015 Red Hat, Inc.
 
 ;; Maintainer: infinity@sourceware.org
 ;; Author: Gary Benson <gbenson@redhat.com>
 ;; Keywords: languages i8 infinity modes
+;; Version: 1.0
 
 ;; This file is part of the Infinity Note Compiler.
 
@@ -26,6 +27,8 @@
 ;; * "<" and ">" should be string quotes too.
 ;; * only the first and last types in "returns" get highlighted.
 ;; * multi-line comments don't line up without manual adjustment.
+
+;;; Code:
 
 (defvar i8-mode-syntax-table
   (let ((table (make-syntax-table)))
@@ -108,3 +111,5 @@
   "Major mode for editing I8"
   :syntax-table i8-mode-syntax-table
   (setq-local font-lock-defaults '(i8-font-lock-keywords)))
+
+;;; i8-mode.el ends here
