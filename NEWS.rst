@@ -88,6 +88,12 @@ Note format changes
   longer pushed onto the stack at function entry.  The bytecode
   chunk's version has been incremented to 2 to indicate this.
 
+Bytecode changes
+~~~~~~~~~~~~~~~~
+
+* The wide new operation I8_OP_load_external was added to allow
+  functions to access externals.
+
 Bug fixes
 ~~~~~~~~~
 
