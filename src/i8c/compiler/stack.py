@@ -332,8 +332,7 @@ class StackWalker(object):
 
     def visit_basicblock(self, block):
         self.stack = block.entry_stack.mutable_copy()
-        debug_print("%s (%s):\n\n%s\n" % (
-            block.name, block.fileline, self.stack))
+        debug_print("%s:\n\n%s\n" % (block.name, self.stack))
         for op in block.ops:
             debug_print("\n %s\n\n" % op)
             self.stack.current_op = op

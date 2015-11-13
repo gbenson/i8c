@@ -33,9 +33,14 @@ debug_print = logger.debug_printer_for(__name__)
 class BlockLabel(NonTerminalOp):
     """Placeholder used only during block creation."""
 
+    @property
+    def name(self):
+        return self.ast.name
+
 class BasicBlock(visitors.Visitable):
     def __init__(self, index):
         self.index = index
+        self.label = None
         self.entries = {}
         self.ops = []
 
@@ -45,7 +50,10 @@ class BasicBlock(visitors.Visitable):
 
     @property
     def name(self):
-        return "Block #%d" % self.index
+        return "Block #%d (%s)" % (self.index,
+                                   (self.label is not None
+                                    and '"%s"' % self.label
+                                    or self.fileline))
 
     @property
     def first_op(self):
@@ -91,6 +99,9 @@ class BasicBlock(visitors.Visitable):
 
     def append(self, op):
         assert not self.is_terminated
+        if isinstance(op, BlockLabel):
+            assert self.label is None
+            self.label = op.name
         self.ops.append(op)
 
     def set_exits(self, labels):
@@ -101,7 +112,7 @@ class BasicBlock(visitors.Visitable):
             raise UndefinedIdentError(self.last_op, "label", e.args[0])
 
     def __str__(self):
-        result = "%s (%s)" % (self.name, self.fileline)
+        result = self.name
         if hasattr(self, "exits"):
             result += ", "
             if len(self.exits) == 0:
