@@ -130,6 +130,35 @@ class BasicBlock(visitors.Visitable):
             result += "\n  %s" % op
         return result
 
+    def is_equivalent_to(self, other):
+        assert not self is other
+
+        # Quickly reject mismatches
+        if other.exits != self.exits:
+            return False
+        if len(other.ops) != len(self.ops):
+            return False
+        if other.entry_stack.depth != self.entry_stack.depth:
+            return False
+
+        # Check the operations
+        for op1, op2 in zip(other.ops, self.ops):
+            if not op1.is_equivalent_to(op2):
+                return False
+
+        # Check the entry stacks
+        for index in range(self.entry_stack.depth):
+            bt1 = other.entry_stack[index].basetype
+            bt2 = self.entry_stack[index].basetype
+            if bt1 != bt2:
+                return False
+
+        return True
+
+    def replace_exit(self, old, new):
+        self.exits = [block == old and new or block
+                      for block in self.exits]
+
 class Label(object):
     is_builtin = False
 

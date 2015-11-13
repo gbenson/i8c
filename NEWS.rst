@@ -125,3 +125,5 @@ Enhancements
 * Warnings are now issued for unreachable code.
 
 * There is the start of an Emacs major mode in "contrib/i8-mode.el".
+
+* I8C's optimizer now combines equivalent basic blocks.

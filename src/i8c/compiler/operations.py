@@ -69,6 +69,8 @@ class Operation(visitors.Visitable):
         return '%s("%s")' % (self.__class__.__name__, self.source)
 
     def is_equivalent_to(self, other):
+        if self.is_return and other.is_return:
+            return True
         if self.dwarfname != other.dwarfname:
             return False
         assert self.operands == other.operands

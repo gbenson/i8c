@@ -57,6 +57,30 @@ class BlockOptimizer(Optimizer):
     def visit_function(self, function):
         self.visited = {}
         function.entry_block.accept(self)
+        self.try_combine_blocks(self.visited.keys())
+
+    def try_combine_blocks(self, blocks):
+        blocks = sorted((block.index, block) for block in blocks)
+        blocks = [block for index, block in blocks]
+        while self.__try_combine_blocks(blocks):
+            pass
+
+    def __try_combine_blocks(self, blocks):
+        for i in range(len(blocks)):
+            block_1 = blocks[i]
+            for j in range(i + 1, len(blocks)):
+                block_2 = blocks[j]
+                if block_2.is_equivalent_to(block_1):
+                    self.debug_print(
+                        ("Blocks #%d and #%d are equivalent, "
+                         + "removing #%d\n") % (block_1.index,
+                                                block_2.index,
+                                                block_2.index))
+                    for block in blocks:
+                        block.replace_exit(block_2, block_1)
+                    blocks.remove(block_2)
+                    return True
+        return False
 
     def visit_basicblock(self, block):
         if self.visited.get(block, False):
