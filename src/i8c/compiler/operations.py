@@ -65,10 +65,6 @@ class Operation(visitors.Visitable):
     def is_add(self):
         return isinstance(self, AddOp)
 
-    @property
-    def is_noop(self):
-        return isinstance(self, NoOp)
-
     def __str__(self):
         return '%s("%s")' % (self.__class__.__name__, self.source)
 
@@ -319,10 +315,6 @@ class NameOp(NonTerminalOp):
         return self.ast.newname.value
 
 NegOp = UnaryOp
-
-class NoOp(NoOperandsOp):
-    pass
-
 NotOp = UnaryOp
 OrOp = BinaryOp
 

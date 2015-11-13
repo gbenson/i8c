@@ -30,6 +30,9 @@ from .operations import *
 
 debug_print = logger.debug_printer_for(__name__)
 
+class BlockLabel(NonTerminalOp):
+    """Placeholder used only during block creation."""
+
 class BasicBlock(visitors.Visitable):
     def __init__(self, index):
         self.index = index
@@ -204,7 +207,7 @@ class BlockCreator(object):
                 else:
                     label = self.new_synthetic_label(next_pc)
                 op.fallthrough = label
-            if block.first_op.is_noop:
+            if isinstance(block.first_op, BlockLabel):
                 block.ops.pop(0)
 
     @property
@@ -235,7 +238,7 @@ class BlockCreator(object):
             raise RedefinedIdentError(label, "label", label.name, prev)
         self.labels[label.name] = Label(label, self.pc)
         self.drop_current_block()
-        self.add_op(NoOp(label))
+        self.add_op(BlockLabel(label))
 
     # Operations
 
