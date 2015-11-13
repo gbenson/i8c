@@ -32,8 +32,6 @@ import inspect
 # bytecode in cases where this does not conflict with the primary goal
 # of reducing instruction count.
 
-debug_print = logger.debug_printer_for(__name__)
-
 class Optimizer(object):
     """Base class for all optimizers.
     """
@@ -43,16 +41,18 @@ class Optimizer(object):
             node.accept(self)
 
     def debug_print_hit(self, location):
-        if debug_print.is_enabled:
+        if self.debug_print.is_enabled:
             optimization = inspect.stack()[1][0].f_code.co_name
             for prefix in ("__", "try_"):
                 if optimization.startswith(prefix):
                     optimization = optimization[len(prefix):]
-            debug_print("%s: %s\n" % (location.fileline, optimization))
+            self.debug_print("%s: %s\n" % (location.fileline, optimization))
 
 class BlockOptimizer(Optimizer):
     """Optimizations performed before serialization.
     """
+
+    debug_print = logger.debug_printer_for("blockopt")
 
     def visit_function(self, function):
         self.visited = {}
@@ -293,8 +293,10 @@ class StreamOptimizer(Optimizer):
     """Optimizations performed after serialization.
     """
 
+    debug_print = logger.debug_printer_for("streamopt")
+
     def debug_print_stream(self, stream):
-        debug_print("%s\n" % stream)
+        self.debug_print("%s\n" % stream)
 
     def visit_function(self, function):
         function.ops.accept(self)
