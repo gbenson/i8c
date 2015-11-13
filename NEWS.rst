@@ -94,6 +94,9 @@ Bytecode changes
 * The wide new operation I8_OP_load_external was added to allow
   functions to access externals.
 
+* Dereferencing to integer values is now handled with the new wide
+  operation I8_OP_deref_int.
+
 Bug fixes
 ~~~~~~~~~
 

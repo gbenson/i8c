@@ -228,3 +228,4 @@ DW_OP_PGI_omp_thread_num = 0xf8
 # Infinity wide operations
 I8_OP_call = 0x100
 I8_OP_load_external = 0x101
+I8_OP_deref_int = 0x102

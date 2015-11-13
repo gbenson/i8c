@@ -92,6 +92,7 @@ class Operation(object):
         constants.DW_OP_deref_size: ["u1"],
         constants.DW_OP_xderef_size: ["u1"],
         constants.I8_OP_load_external: ["uleb128"],
+        constants.I8_OP_deref_int: ["s1"],
     }
 
     OPTABLE = {
