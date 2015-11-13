@@ -97,7 +97,7 @@
     (,(rx (group (1+ (or word ?_))) ":" (not (any ":")))
      (1 font-lock-constant-face))
     ;; Branch targets.
-    (,(rx (or "beq" "bge" "bgt" "ble" "blt" "bne")
+    (,(rx (or "beq" "bge" "bgt" "ble" "blt" "bne" "goto")
     	  (1+ space)
     	  (0+ (group (1+ not-newline) ","))
     	  (0+ space)
