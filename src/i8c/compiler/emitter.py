@@ -24,6 +24,7 @@ from __future__ import unicode_literals
 from .. import constants
 from ..compat import fwrite, str
 from . import logger
+from . import types
 from . import visitors
 from .types import PTRTYPE
 
@@ -434,42 +435,22 @@ class Emitter(NoOutputOpSkipper):
                 self.emit_sleb128(value)
 
     def visit_derefop(self, op):
-        sizedtype = op.type.sizedtype
-        if sizedtype is None:
+        basetype = op.type.basetype
+        if basetype is types.PTRTYPE:
             self.emit_op("deref", op.fileline)
             return
 
-        self.emit_op("deref_size", op.fileline)
-        self.emit_byte(sizedtype.size_bytes)
-        if not sizedtype.is_signed:
-            return
+        sizedtype = op.type.sizedtype
+        if sizedtype is None:
+            assert basetype is types.INTTYPE
+            operand = 0
+        elif sizedtype.is_signed:
+            operand = -sizedtype.size_bytes
+        else:
+            operand = sizedtype.size_bytes
 
-        # Sign extension.
-        # i.e. value = ((value << SHIFT) >>> SHIFT)
-        # This code works for 32- and 64-bit machines.
-        if sizedtype.size_bytes == 8:
-            return
-        self.emit_op("const1u", "sign extension for %s" % sizedtype.name)
-        self.emit_byte(32)
-        self.emit_op("dup")
-        self.emit_op("dup")
-        self.emit_op("shl")
-        self.emit_op("swap")
-        self.emit_op("shr")
-        # stack[0]: 32 (on 64-bit machines) or 0 (on 32-bit)
-        # stack[1]: unextended value
-        shift_for_32bit = (4 - sizedtype.size_bytes) * 8
-        if shift_for_32bit > 0:
-            self.emit_op("plus_uconst")
-            self.emit_uleb128(shift_for_32bit)
-        # stack[0]: required shift for sign extension
-        # stack[1]: unextended value
-        self.emit_op("dup")
-        self.emit_op("rot")
-        self.emit_op("shl")
-        self.emit_op("swap")
-        self.emit_op("shra")
-        self.emit_comment("End of sign extension.")
+        self.emit_op("deref_int", op.fileline)
+        self.emit_byte(operand)
 
     def visit_loadop(self, op):
         self.emit_op(op.dwarfname, op.fileline)

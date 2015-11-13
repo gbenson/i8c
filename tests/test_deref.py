@@ -47,8 +47,6 @@ class TestDeref(TestCase):
             for rettype in self.TYPES:
                 rettype_is_func = rettype.startswith("func")
                 rettype_is_ok = not (rettype_is_func or rettype == "opaque")
-                rettype_is_sized = rettype[0] in "su"
-                expect_sign_extension = rettype in ("s8", "s16", "s32")
 
                 source = SOURCE % (argtype, rettype)
 
@@ -65,17 +63,20 @@ class TestDeref(TestCase):
                     self.assertRaises(exception, self.compile, source)
                     continue
 
-                if not rettype_is_sized:
-                    expect_ops = ["deref"]
-                else:
-                    expect_ops = ["deref_size"]
-
-                if expect_sign_extension:
-                    expect_ops.extend(("const1u", "dup", "dup",
-                                       "shl", "swap", "shr"))
-                    if rettype != "s32":
-                        expect_ops.append("plus_uconst")
-                    expect_ops.extend(("dup", "rot", "shl", "swap", "shra"))
-
                 tree, output = self.compile(source)
-                self.assertEqual(expect_ops, output.opnames)
+                ops = output.ops
+                self.assertEqual(len(ops), 1)
+                op = ops[0]
+
+                if rettype in ("ptr", "ptr_alias"):
+                    self.assertEqual("deref", op.name)
+                    continue
+
+                self.assertEqual("deref_int", op.name)
+                if rettype[0] in "su":
+                    sizecode = int(rettype[1:]) // 8
+                    if rettype[0] == "s":
+                        sizecode *= -1
+                else:
+                    sizecode = 0
+                self.assertEqual(op.operand, sizecode)
