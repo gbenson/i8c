@@ -63,6 +63,8 @@ class BlockOptimizer(Optimizer):
             return
         self.visited[block] = True
         self.try_all_optimizations(block)
+        if self.debug_print.is_enabled:
+            self.debug_print(str(block) + "\n\n")
         for block in block.exits:
             block.accept(self)
 

@@ -123,6 +123,9 @@ class BasicBlock(visitors.Visitable):
                 result += "exits = %s" % ", ".join(
                     ("#%d" % block.index for block in self.exits))
         result += ":"
+        entry_stack = getattr(self, "entry_stack", None)
+        if entry_stack is not None:
+            result += "\n%s\n  ---" % entry_stack
         for op in self.ops:
             result += "\n  %s" % op
         return result
