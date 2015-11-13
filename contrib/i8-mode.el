@@ -32,11 +32,11 @@
 
 (defvar i8-mode-syntax-table
   (let ((table (make-syntax-table)))
-    ;; C++-style comments
+    ;; C++-style comments.
     (modify-syntax-entry ?/  ". 124" table)
     (modify-syntax-entry ?*  ". 23b" table)
     (modify-syntax-entry ?\n ">"     table)
-    ;; Symbol constituents
+    ;; Symbol constituents.
     (modify-syntax-entry ?_  "_"     table)
     table)
   "Syntax table for i8-mode buffers.")
@@ -44,64 +44,72 @@
 (defconst i8-font-lock-keywords
   `(,(rx symbol-start
          (or
-	  ;; File-level keywords
-	  "define" "extern" "typedef"
-	  ;; Function-level keywords
-	  "argument" "returns"
-	  ;; Operators
+	  ;; Keywords.
+	  "argument" "define" "extern" "returns" "typedef"
+	  ;; Operators.
 	  "abs" "add" "and" "beq" "bge" "bgt" "ble" "blt" "bne" "call"
 	  "cast" "deref" "div" "drop" "dup" "eq" "ge" "goto" "gt" "le"
 	  "load" "lt" "mod" "mul" "name" "ne" "neg" "not" "or" "over"
 	  "pick" "return" "rot" "shl" "shr" "shra" "sub" "swap" "xor")
          symbol-end)
-    ;; Function names
-    (,(rx "define"
-	  (1+ space)
-	  (group (1+ (or word ?_)))
+    ;; Function names.
+    (,(rx (group (1+ (or word ?_)))
 	  "::"
 	  (group (1+ (or word ?_))))
      (1 font-lock-function-name-face)
      (2 font-lock-function-name-face))
-    ;; Types
-    (,(rx "returns" (1+ space) (group (1+ (or word ?_))))
-     (1 font-lock-type-face))
-    (,(rx "returns"
-	  (1+ space)
-	  (1+ not-newline)
-	  ","
-	  (0+ space)
-	  (group (1+ (or word ?_))))
-     (1 font-lock-type-face))
-    (,(rx (or "argument" "extern" "typedef")
-	  (1+ space)
-	  (group (1+ not-newline))
-	  (1+ space)
-	  (group (1+ (or word ?_))))
-     (1 font-lock-type-face)
-     (2 font-lock-variable-name-face))
-    (,(rx (or "argument" "extern" "typedef")
-	  (1+ space)
-	  (group (1+ not-newline))
-	  "::"
-	  (group (1+ (or word ?_))))
-     (2 font-lock-variable-name-face))
-    (,(rx "deref"
+    ;; Short function names in "call" statements.
+    (,(rx "call"
 	  (1+ space)
 	  (0+ (group (1+ not-newline) ","))
 	  (0+ space)
 	  (group (1+ (or word ?_))))
+     (2 font-lock-function-name-face))
+    ;; Types in "returns" statements.
+    ;; XXX only the first and last types get highlighted :(
+    (,(rx "returns" (1+ space) (group (1+ (or word ?_))))
+     (1 font-lock-type-face))
+    (,(rx "returns"
+    	  (1+ space)
+    	  (1+ not-newline)
+    	  ","
+    	  (0+ space)
+    	  (group (1+ (or word ?_))))
+     (1 font-lock-type-face))
+    ;; Names and types in "argument", "extern" and "typedef"
+    ;; statements.  Note that "extern func" with "::" gets
+    ;; handled by the generic function name matcher above.
+    (,(rx (or "argument" "extern" "typedef")
+    	  (1+ space)
+    	  (group (1+ not-newline))
+    	  (1+ space)
+    	  (group (1+ (or word ?_))))
+     (1 font-lock-type-face)
+     (2 font-lock-variable-name-face))
+    ;; Types in "deref" statements.
+    (,(rx "deref"
+    	  (1+ space)
+    	  (0+ (group (1+ not-newline) ","))
+    	  (0+ space)
+    	  (group (1+ (or word ?_))))
      (2 font-lock-type-face))
-    ;; Labels
+    ;; Labels.
     (,(rx (group (1+ (or word ?_))) ":" (not (any ":")))
      (1 font-lock-constant-face))
-    ;; Preprocessor shizzle
+    ;; Branch targets.
+    (,(rx (or "beq" "bge" "bgt" "ble" "blt" "bne")
+    	  (1+ space)
+    	  (0+ (group (1+ not-newline) ","))
+    	  (0+ space)
+    	  (group (1+ (or word ?_))))
+     (2 font-lock-constant-face))
+    ;; Preprocessor statements.
     (,(rx line-start
-	  (group
-	   "#"
-	   (0+ space)
-	   (1+ (or word ?_))))
-     (1 font-lock-preprocessor-face))
-    )
+    	  (group
+    	   "#"
+    	   (0+ space)
+    	   (1+ (or word ?_))))
+     (1 font-lock-preprocessor-face)))
   "Font lock keywords for i8-mode buffers.")
 
 ;;;###autoload (add-to-list 'auto-mode-alist '("\\.i8\\'" . i8-mode))
