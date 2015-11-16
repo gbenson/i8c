@@ -35,6 +35,7 @@ class Context(object):
         self.functions = {}
         self.env = None
         self.wordsize = None
+        self.byteorder = None
         self.tracelevel = 0
         self.__last_traced = None
 
@@ -75,8 +76,14 @@ class Context(object):
 
     def import_notes(self, filename):
         ef = elffile.open(filename)
-        if self.wordsize is None or self.wordsize < ef.wordsize:
+        if self.wordsize is None:
             self.wordsize = ef.wordsize
+        else:
+            assert ef.wordsize == self.wordsize
+        if self.byteorder is None:
+            self.byteorder = ef.byteorder
+        else:
+            assert ef.byteorder == self.byteorder
         for note in ef.infinity_notes:
             self.register_function(functions.BytecodeFunction(note))
 
