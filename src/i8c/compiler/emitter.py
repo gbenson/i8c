@@ -134,7 +134,7 @@ class RelAddr(object):
         self.name = name
 
     def emit(self, emitter, prefix):
-        emitter.emit_byte("I8_TYPE_RELADDR", prefix + "type")
+        emitter.emit_byte("I8_EXT_RELADDR", prefix + "type")
         emitter.emit_uleb128(self.name, prefix + "relative address")
 
 class FuncRef(object):
@@ -145,7 +145,7 @@ class FuncRef(object):
         self.returns = returns
 
     def emit(self, emitter, prefix):
-        emitter.emit_byte("I8_TYPE_RAWFUNC", prefix + "type")
+        emitter.emit_byte("I8_EXT_FUNCTION", prefix + "type")
         emitter.emit_uleb128(self.provider.offset, prefix + "provider offset")
         emitter.emit_uleb128(self.name.offset, prefix + "name offset")
         emitter.emit_uleb128(self.params.offset, prefix + "ptypes offset")

@@ -182,8 +182,8 @@ class BytecodeFunction(Function):
         unterminated = chunk
         while len(unterminated):
             offset, type = leb128.read_uleb128(unterminated, 0)
-            klass = {constants.I8_TYPE_RAWFUNC: UnresolvedFunction,
-                     constants.I8_TYPE_RELADDR: UnrelocatedAddress}.get(
+            klass = {constants.I8_EXT_FUNCTION: UnresolvedFunction,
+                     constants.I8_EXT_RELADDR: UnrelocatedAddress}.get(
                 chr(type), None)
             if klass is None:
                 raise UnhandledNoteError(unterminated)

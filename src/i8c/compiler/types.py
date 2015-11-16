@@ -190,7 +190,7 @@ def __create_builtin_types():
     def add_builtin_type(type):
         globals()[type.name.upper() + "TYPE"] = type
     for name in ("int", "ptr", "opaque"):
-        code = getattr(constants, "I8_TYPE_" + name[:3].upper())
+        code = getattr(constants, "I8_TYPE_" + name.upper())
         add_builtin_type(CoreType(name, code, name != "opaque"))
     CoreType.class_init_complete = True
     add_builtin_type(AliasType(None, "bool", INTTYPE))

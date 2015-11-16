@@ -58,7 +58,7 @@ class PointerType(IntPtrType):
     code = constants.I8_TYPE_PTR
 
 class OpaqueType(BasicType):
-    code = constants.I8_TYPE_OPA
+    code = constants.I8_TYPE_OPAQUE
     name = "opaque"
 
 class FunctionType(Type):

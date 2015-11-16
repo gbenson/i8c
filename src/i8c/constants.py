@@ -35,11 +35,11 @@ I8_BYTE_ORDER_MARK = (ord("i") << 8) | ord("8")
 
 I8_TYPE_INT = "i"
 I8_TYPE_PTR = "p"
-I8_TYPE_OPA = "o"
+I8_TYPE_OPAQUE = "o"
 I8_TYPE_FUNC = "F"
 
-I8_TYPE_RELADDR = "x"
-I8_TYPE_RAWFUNC = "f"
+I8_EXT_RELADDR = "x"
+I8_EXT_FUNCTION = "f"
 
 DW_OP_addr = 0x03
 DW_OP_deref = 0x06
