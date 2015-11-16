@@ -38,8 +38,9 @@ I8_TYPE_PTR = "p"
 I8_TYPE_OPAQUE = "o"
 I8_TYPE_FUNC = "F"
 
-I8_EXT_RELADDR = "x"
+I8_EXT_RELADDR = "x" # XXX deprecated
 I8_EXT_FUNCTION = "f"
+I8_EXT_SYMBOL = "s"
 
 DW_OP_addr = 0x03
 DW_OP_deref = 0x06

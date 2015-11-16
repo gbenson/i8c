@@ -183,6 +183,7 @@ class BytecodeFunction(Function):
         while len(unterminated):
             offset, type = leb128.read_uleb128(unterminated, 0)
             klass = {constants.I8_EXT_FUNCTION: UnresolvedFunction,
+                     constants.I8_EXT_SYMBOL: UnresolvedSymbol,
                      constants.I8_EXT_RELADDR: UnrelocatedAddress}.get(
                 chr(type), None)
             if klass is None:
@@ -200,6 +201,7 @@ class BytecodeFunction(Function):
 
     @property
     def external_pointers(self):
+        # XXX deprecated
         return [ext.value
                 for ext in self.externals
                 if isinstance(ext, UnrelocatedAddress)]
@@ -246,9 +248,19 @@ class UnresolvedFunction(Function):
         return self.type, ctx.get_function(self)
 
 class UnrelocatedAddress(object):
+    # XXX deprecated
     def __init__(self, referrer, unterminated):
         offset, self.value = leb128.read_uleb128(unterminated, 0)
         self.src = unterminated[:offset]
 
     def resolve(self, ctx):
         return types.PointerType, self.value
+
+class UnresolvedSymbol(object):
+    def __init__(self, referrer, unterminated):
+        offset, name_o = leb128.read_uleb128(unterminated, 0)
+        self.src = unterminated[:offset]
+        self.name = referrer.get_string(name_o).text
+
+    def resolve(self, ctx):
+        return types.PointerType, ctx.env.lookup_symbol(self.name)

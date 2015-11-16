@@ -137,3 +137,6 @@ Enhancements
 
 * I8X can now accept functions and opaque values in function argument
   lists supplied by testcases.
+
+* I8X now has a system which testcases may use to lay out test address
+  spaces to check memory accesses using "deref" et al.

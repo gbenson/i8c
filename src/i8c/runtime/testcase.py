@@ -25,18 +25,36 @@ from __future__ import unicode_literals
 
 from ..compat import strtoint_c
 from . import I8XError, HeaderFileError, TestFileError
+from . import memory
 import copy
 import inspect
 import os
 import platform
+import struct
 try:
     import unittest2 as unittest
 except ImportError: # pragma: no cover
     import unittest
 
 class BaseTestCase(unittest.TestCase):
+    def run(self, *args, **kwargs):
+        self.memory = memory.Memory(self)
+        self.addCleanup(delattr, self, "memory")
+        self.__symbols = {}
+        return unittest.TestCase.run(self, *args, **kwargs)
+
+    def register_symbol(self, name, value):
+        """Hook method for registering a symbol."""
+        assert not name in self.__symbols
+        self.__symbols[name] = value
+
+    def lookup_symbol(self, name):
+        """Hook method for resolving a symbol name to an address."""
+        return self.__symbols[name]
+
     def read_memory(self, fmt, addr):
-        self.fail("unexpected read_memory")
+        """Hook method for reading bytes from memory."""
+        return self.memory.read(addr, struct.calcsize(fmt))
 
 class TestCase(BaseTestCase):
     include_path = []
@@ -84,3 +102,11 @@ class TestCase(BaseTestCase):
             return BaseTestCase.run(self, *args, **kwargs)
         finally:
             self.i8ctx.env = saved_env
+
+    @property
+    def wordsize(self):
+        return self.i8ctx.wordsize
+
+    @property
+    def byteorder(self):
+        return self.i8ctx.byteorder
