@@ -306,7 +306,7 @@ class Emitter(NoOutputOpSkipper):
         strings.layout_table(self.new_label)
 
         # Emit the remaining chunks.
-        self.emit_chunk("signature", 1, Emitter.emit_signature)
+        self.emit_chunk("signature", 2, Emitter.emit_signature)
         if self.externs.entries:
             self.emit_chunk("externals", 1, self.externs.emit)
         self.emit_chunk("strings", 1, strings.emit)

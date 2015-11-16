@@ -79,10 +79,12 @@ Note format changes
 
 * The "max_stack" field from the info chunk and the byteorder mark
   from the code chunk have been moved into a new "code info" chunk
-  with a type_id of 6.
+  with a type_id of 5.
 
-* The remainder of what was the info chunk has been moved into a new
-  "signature" chunk with a type_id of 5.
+* The info chunk now contains only the function's signature.  It has
+  been renamed as the signature chunk and its version has been
+  incremented to 2 to indicate that the fifth field (if present) is
+  not "max_stack".
 
 * The code chunk now contains only bytecode, and externals are no
   longer pushed onto the stack at function entry.  The bytecode

@@ -124,11 +124,11 @@ class BytecodeFunction(Function):
         return unterminated[:limit]
 
     def __unpack_signature(self):
-        chunk = self.one_chunk(constants.I8_CHUNK_SIGNATURE, 1, False)
+        chunk = self.one_chunk(constants.I8_CHUNK_SIGNATURE, 2, False)
         if chunk is None:
-            # XXX support for I8_CHUNK_INFO chunks is DEPRECATED
+            # XXX support for v1 chunks (aka I8_CHUNK_INFO) is DEPRECATED
             # XXX change "False" to "True" above when this is removed
-            chunk = self.one_chunk(constants.I8_CHUNK_INFO, 1, True)
+            chunk = self.one_chunk(constants.I8_CHUNK_SIGNATURE, 1, True)
 
         offset, provider_o = leb128.read_uleb128(chunk, 0)
         offset, name_o = leb128.read_uleb128(chunk, offset)
