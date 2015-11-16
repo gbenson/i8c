@@ -115,7 +115,8 @@ class ExternTable(object):
         index = len(self.entries)
         type = external.basetype
         if type is PTRTYPE:
-            self.entries.append(RelAddr(external.name.name))
+            self.entries.append(
+                SymRef(self.strings.new(external.name.name)))
         else:
             self.entries.append(FuncRef(*map(self.strings.new, (
                 external.name.provider,
@@ -129,13 +130,13 @@ class ExternTable(object):
         for entry, index in zip(self.entries, range(len(self.entries))):
             entry.emit(emitter, "extern %d " % index)
 
-class RelAddr(object):
+class SymRef(object):
     def __init__(self, name):
         self.name = name
 
     def emit(self, emitter, prefix):
-        emitter.emit_byte("I8_EXT_RELADDR", prefix + "type")
-        emitter.emit_uleb128(self.name, prefix + "relative address")
+        emitter.emit_byte("I8_EXT_SYMBOL", prefix + "type")
+        emitter.emit_uleb128(self.name.offset, prefix + "name")
 
 class FuncRef(object):
     def __init__(self, provider, name, params, returns):

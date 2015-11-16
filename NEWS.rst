@@ -90,6 +90,11 @@ Note format changes
   longer pushed onto the stack at function entry.  The bytecode
   chunk's version has been incremented to 2 to indicate this.
 
+* "extern ptr" statements now result in symbol reference externals
+  table entries.  These have an identifying byte of 's' and contain
+  an uleb128 offset into the string table defining the name of the
+  referenced symbol.
+
 Bytecode changes
 ~~~~~~~~~~~~~~~~
 
