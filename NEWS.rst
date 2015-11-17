@@ -131,3 +131,6 @@ Enhancements
 * There is the start of an Emacs major mode in "contrib/i8-mode.el".
 
 * I8C's optimizer now combines equivalent basic blocks.
+
+* I8X can now accept opaque values in function argument lists supplied
+  by testcases.

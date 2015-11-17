@@ -115,6 +115,13 @@ class Stack(object):
         assert type is None or boxed.type == type
         return boxed
 
+    def __box_OPAQUE(self, type, value):
+        return Opaque(value)
+
+    def __unbox_OPAQUE(self, type, boxed):
+        assert isinstance(boxed, Opaque)
+        return boxed.value
+
     # Tracing
 
     def trace(self, tracelevel):
@@ -127,3 +134,10 @@ class Stack(object):
                     item += " (0x%x)" % value
             fprint(sys.stdout, "    stack[%d] = %s" % (index, item))
         fprint(sys.stdout)
+
+class Opaque(object):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return "OPAQUE [0x%x]" % id(self)
