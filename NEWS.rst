@@ -132,5 +132,5 @@ Enhancements
 
 * I8C's optimizer now combines equivalent basic blocks.
 
-* I8X can now accept opaque values in function argument lists supplied
-  by testcases.
+* I8X can now accept functions and opaque values in function argument
+  lists supplied by testcases.

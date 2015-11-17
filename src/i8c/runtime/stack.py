@@ -106,7 +106,13 @@ class Stack(object):
         return boxed.value
 
     def __box_FUNCTION(self, type, value):
-        assert isinstance(value, functions.Function)
+        if not isinstance(value, functions.Function):
+            assert callable(value)
+            # Wrap anonymous functions provided by the testcase in
+            # argument lists.  This is persistent (unboxing won't
+            # remove it) so what you pop in this case is not exactly
+            # what you pushed.
+            value = functions.BuiltinFunction(AnonFuncRef(type), value)
         assert value.type == type
         return value
 
@@ -134,6 +140,13 @@ class Stack(object):
                     item += " (0x%x)" % value
             fprint(sys.stdout, "    stack[%d] = %s" % (index, item))
         fprint(sys.stdout)
+
+class AnonFuncRef(object):
+    def __init__(self, type):
+        self.provider = "i8x"
+        self.name = "anonymous_function_%x" % id(self)
+        self.ptypes = type.ptypes
+        self.rtypes = type.rtypes
 
 class Opaque(object):
     def __init__(self, value):
