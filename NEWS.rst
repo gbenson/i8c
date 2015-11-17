@@ -118,6 +118,8 @@ Bug fixes
   operations as equivalent.  This caused code to be incorrectly
   optimized away in some cases.
 
+* I8X was pushing function arguments in reversed order in some cases.
+
 Enhancements
 ~~~~~~~~~~~~
 

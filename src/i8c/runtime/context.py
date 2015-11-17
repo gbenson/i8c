@@ -86,7 +86,7 @@ class Context(object):
     def call(self, signature, *args):
         function = self.get_function(signature)
         stack = self.new_stack()
-        stack.push_multi(function.ptypes, args)
+        stack.push_multi(reversed(function.ptypes), reversed(args))
         function.execute(self, stack)
         return stack.pop_multi(function.rtypes)
 

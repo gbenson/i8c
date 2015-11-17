@@ -206,7 +206,7 @@ class BytecodeFunction(Function):
 
     def execute(self, ctx, caller_stack):
         stack = ctx.new_stack()
-        caller_stack.pop_multi_onto(self.ptypes, stack)
+        caller_stack.pop_multi_onto(reversed(self.ptypes), stack)
         if self.deprecated_auto_push_externals:
             for external in self.externals:
                 stack.push_typed(*external.resolve(ctx))

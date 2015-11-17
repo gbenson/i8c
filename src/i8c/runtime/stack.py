@@ -41,9 +41,11 @@ class Stack(object):
 
     def pop_multi_onto(self, types, other):
         """Transfer values from one stack to another."""
+        types = list(types)
         other.push_multi(types, self.pop_multi(types))
 
     def push_multi(self, types, values):
+        types, values = map(list, (types, values))
         assert len(types) == len(values)
         typedvalues = list(zip(types, values))
         typedvalues.reverse()
