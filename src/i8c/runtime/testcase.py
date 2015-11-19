@@ -96,12 +96,12 @@ class TestCase(BaseTestCase):
                 raise HeaderFileError(filename, linenumber)
 
     def run(self, *args, **kwargs):
-        saved_env = self.i8ctx.env
+        self.addCleanup(self.__restore_env, self.i8ctx.env)
         self.i8ctx.env = self
-        try:
-            return BaseTestCase.run(self, *args, **kwargs)
-        finally:
-            self.i8ctx.env = saved_env
+        return BaseTestCase.run(self, *args, **kwargs)
+
+    def __restore_env(self, saved_env):
+        self.i8ctx.env = saved_env
 
     @property
     def wordsize(self):
