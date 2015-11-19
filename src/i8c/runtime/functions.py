@@ -67,7 +67,7 @@ class BuiltinFunction(Function):
         self.impl = impl
 
     def execute(self, ctx, stack):
-        args = stack.pop_multi(self.ptypes)
+        args = stack.pop_multi(reversed(self.ptypes))
         args.reverse()
         result = self.impl(*args)
         if len(self.rtypes) == 0:
