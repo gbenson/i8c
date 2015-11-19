@@ -238,13 +238,22 @@ class Operation(object):
             return self.operand
 
     def exec_deref(self, ctx, externals, stack):
-        self.__exec_deref(ctx, externals, stack, ctx.wordsize // 8)
+        self.__exec_deref(ctx, externals, stack, 0)
 
     def exec_deref_size(self, ctx, externals, stack):
         self.__exec_deref(ctx, externals, stack, self.operand)
 
+    def exec_deref_int(self, ctx, externals, stack):
+        self.__exec_deref(ctx, externals, stack, self.operand)
+
     def __exec_deref(self, ctx, externals, stack, size):
-        sizecode = self.FIXEDSIZE.get("u%d" % size, None)
+        if size == 0:
+            size = ctx.wordsize // 8
+        is_signed = size < 0
+        if is_signed:
+            size *= -1
+        sizecode = "%s%d" % (is_signed and "s" or "u", size)
+        sizecode = self.FIXEDSIZE.get(sizecode, None)
         if sizecode is None:
             raise UnhandledNoteError(self)
         check, fmt = sizecode
