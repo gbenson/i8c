@@ -110,12 +110,12 @@ class Operation(object):
         constants.DW_OP_shr: (operator.rshift, 2, False),
         constants.DW_OP_shra: (operator.rshift, 2, True),
         constants.DW_OP_xor: (operator.xor, 2, False),
-        constants.DW_OP_eq: (operator.eq, 2, False),
-        constants.DW_OP_ge: (operator.ge, 2, False),
-        constants.DW_OP_gt: (operator.gt, 2, False),
-        constants.DW_OP_le: (operator.le, 2, False),
-        constants.DW_OP_lt: (operator.lt, 2, False),
-        constants.DW_OP_ne: (operator.ne, 2, False),
+        constants.DW_OP_eq: (operator.eq, 2, True),
+        constants.DW_OP_ge: (operator.ge, 2, True),
+        constants.DW_OP_gt: (operator.gt, 2, True),
+        constants.DW_OP_le: (operator.le, 2, True),
+        constants.DW_OP_lt: (operator.lt, 2, True),
+        constants.DW_OP_ne: (operator.ne, 2, True),
     }
 
     FIXEDSIZE = {}

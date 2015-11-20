@@ -120,6 +120,9 @@ Bug fixes
 
 * I8X was pushing function arguments in reversed order in some cases.
 
+* I8X incorrectly interpreted operands of comparison operators as
+  unsigned values.
+
 Enhancements
 ~~~~~~~~~~~~
 
