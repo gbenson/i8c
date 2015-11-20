@@ -24,6 +24,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from .. import constants
+from . import BadDerefError
 from . import UnhandledNoteError
 from . import leb128
 import operator
@@ -259,7 +260,10 @@ class Operation(object):
         check, fmt = sizecode
         assert check == size
         fmt = self.byteorder + fmt
-        result = ctx.env.read_memory(fmt, stack.pop_unsigned())
+        try:
+            result = ctx.env.read_memory(fmt, stack.pop_unsigned())
+        except KeyError as e:
+            raise BadDerefError(self, ctx.env.memory, e.args[0])
         stack.push_intptr(struct.unpack(fmt, result)[0])
 
     def exec_drop(self, ctx, externals, stack):

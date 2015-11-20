@@ -54,6 +54,7 @@ class Builder(object):
                 block.location = addr
                 addr += block.length
                 addr += 1 # empty space to catch overflows
+                addr += (16 - addr % 16) # align for printing
             # Store the data.
             for block in self.blocks:
                 block.write_into(self.mem)
@@ -179,9 +180,8 @@ class Memory(object):
         try:
             return self.cells[location]
         except KeyError:
-            print("getbyte(%d)" % location)
-            for cell in sorted(self.cells.items()):
-                print("%d: %d" % cell)
+            # XXX this should be an exception
+            print("getbyte(%x):\n%s" % (location, self))
             raise
 
     def putbyte(self, location, value):
@@ -195,3 +195,29 @@ class Memory(object):
     def write(self, location, bytes):
         for byte, offset in zip(bytes, range(len(bytes))):
             self.putbyte(location + offset, byte)
+
+    def __str__(self):
+        tmp = {}
+        for location, content in sorted(self.cells.items()):
+            col = location % 16
+            row = location - col
+            if not row in tmp:
+                tmp[row] = [None] * 16
+            tmp[row][col] = content
+        lines = []
+        locfmt = "  %%0%dx: " % (self.env.wordsize // 4)
+        lastloc = None
+        for location, cells in sorted(tmp.items()):
+            if lastloc not in (None, location - 16):
+                lines.append("   ...")
+            line = [locfmt % location]
+            for cell in cells:
+                if cell is None:
+                    cell = "--"
+                else:
+                    cell = "%02x" % cell
+                line.append(cell)
+            line.insert(9, "")
+            lines.append(" ".join(line))
+            lastloc = location
+        return "\n".join(lines)

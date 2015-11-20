@@ -106,3 +106,10 @@ class BadJumpError(ExecutionError):
     """
     def __init__(self, op):
         ExecutionError.__init__(self, op, "bad jump")
+
+class BadDerefError(ExecutionError):
+    """Something dereferenced an invalid location.
+    """
+    def __init__(self, op, mem, loc):
+        ExecutionError.__init__(
+            self, op, "0x%08x: invalid location:\n%s" % (loc, mem))
