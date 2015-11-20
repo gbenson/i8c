@@ -53,6 +53,7 @@ class Builder(object):
             for block in self.blocks:
                 block.location = addr
                 addr += block.length
+                addr += 1 # empty space to catch overflows
             # Store the data.
             for block in self.blocks:
                 block.write_into(self.mem)
