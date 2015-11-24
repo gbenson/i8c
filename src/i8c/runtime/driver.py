@@ -143,3 +143,23 @@ def main(args):
                                      verbosity=2).run(tests)
     if not result.wasSuccessful():
         return 1
+
+    report = []
+    ops_hit = opcount = maxlen = 0
+    for sig, funclist in sorted(ctx.functions.items()):
+        for function in funclist:
+            hit, count = function.coverage
+            ops_hit += hit
+            opcount += count
+            maxlen = max(len(sig), maxlen)
+            report.append((sig, hit, count))
+
+    if ops_hit != opcount:
+        if hasattr(result, "separator2"):
+            print(result.separator2)
+        print("Coverage:")
+        print()
+
+        rowfmt = "%%-%ds %%3.0f%%%%" % maxlen
+        for sig, hit, count in report:
+            print(rowfmt % (sig, 100 * hit / count))

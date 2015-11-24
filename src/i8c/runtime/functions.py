@@ -228,6 +228,15 @@ class BytecodeFunction(Function):
         ctx.trace_return((self.signature, pc), stack)
         stack.pop_multi_onto(self.rtypes, caller_stack)
 
+    @property
+    def coverage(self):
+        ops_hit = opcount = 0
+        for op in self.ops.values():
+            if op.hitcount > 0:
+                ops_hit += 1
+            opcount += 1
+        return ops_hit, opcount
+
 class UnresolvedFunction(Function):
     def __init__(self, referrer, unterminated):
         offset, provider_o = leb128.read_uleb128(unterminated, 0)

@@ -156,6 +156,8 @@ class Operation(object):
         # Store our location and encoded form for tracing
         self.location = (function, pc)
         self.encoded = self.src.text
+        # Counter for coverage checks
+        self.hitcount = 0
 
     @property
     def size(self):
@@ -199,6 +201,7 @@ class Operation(object):
 
     def execute(self, ctx, externals, stack):
         self.__trace(ctx, stack)
+        self.hitcount += 1
         if (self.opcode >= constants.DW_OP_lit0
               and self.opcode <= constants.DW_OP_lit31):
             impl = self.__exec_litN
