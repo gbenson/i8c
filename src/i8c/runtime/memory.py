@@ -64,9 +64,6 @@ class Builder(object):
         # Avoid circular references.
         for block in self.blocks:
             del block.fields
-        # Propagate exceptions.
-        if type is not None:
-            raise
 
 class Block(object):
     def __init__(self, offset, fields):
