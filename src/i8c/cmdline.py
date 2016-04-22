@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2015 Red Hat, Inc.
+# Copyright (C) 2015-16 Red Hat, Inc.
 # This file is part of the Infinity Note Execution Environment.
 #
 # The Infinity Note Execution Environment is free software; you can
@@ -30,7 +30,7 @@ def version_message_for(program, license):
     license_url = "<%s>" % license_url
     return """\
 %s %s
-Copyright (C) 2015 Red Hat, Inc.
+Copyright (C) 2015-16 Red Hat, Inc.
 License %s\n  %s
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.""" % (

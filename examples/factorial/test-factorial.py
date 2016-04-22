@@ -1,4 +1,4 @@
-# Copyright (C) 2015 Red Hat, Inc.
+# Copyright (C) 2015-16 Red Hat, Inc.
 # This file is part of the Infinity Note Compiler.
 #
 # The Infinity Note Compiler is free software: you can redistribute it

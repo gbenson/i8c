@@ -1,6 +1,6 @@
 ;;; i8-mode.el --- Emacs major mode for editing I8; -*- lexical-binding:t -*-
 
-;; Copyright (C) 2015 Red Hat, Inc.
+;; Copyright (C) 2015-16 Red Hat, Inc.
 
 ;; Maintainer: infinity@sourceware.org
 ;; Author: Gary Benson <gbenson@redhat.com>
