@@ -23,6 +23,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from ..compat import join_bytes
 import struct
 
 class Builder(object):
@@ -186,8 +187,8 @@ class Memory(object):
         self.cells[location] = value
 
     def read(self, location, size):
-        return bytes(self.getbyte(location + offset)
-                     for offset in range(size))
+        return join_bytes(self.getbyte(location + offset)
+                          for offset in range(size))
 
     def write(self, location, bytes):
         for byte, offset in zip(bytes, range(len(bytes))):

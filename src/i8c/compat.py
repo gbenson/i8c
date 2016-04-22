@@ -29,10 +29,13 @@ if sys.version_info < (3,):
     str = unicode
     integer = (int, long,)
     next = lambda i: i.next()
+    join_bytes = lambda seq: "".join(c.decode("iso-8859-1")
+                                     for c in seq).encode("iso-8859-1")
 else:
     str = str
     integer = (int,)
     next = next
+    join_bytes = bytes
 
 def fprint(file, text=""):
     fwrite(file, text + "\n")

@@ -57,6 +57,9 @@ class TestOutput(runtime.Context):
         testcase.assertGreaterEqual(len(self.notes), 1)
         # Setup for note execution
         self.env = testcase
+        self.memory = testcase.memory
+        self.memory.env = self
+        self.register_symbol = testcase.register_symbol
 
     def __set_fileprefix(self, testcase, index):
         test_id = testcase.id().split(".")
