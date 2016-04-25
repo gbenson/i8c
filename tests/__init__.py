@@ -23,6 +23,7 @@ from __future__ import unicode_literals
 
 from i8c import compiler
 from i8c import runtime
+from i8c import version
 from i8c.runtime.testcase import BaseTestCase
 import io
 import os
@@ -75,6 +76,34 @@ class TestOutput(runtime.Context):
         dir = os.path.dirname(self.fileprefix)
         if not os.path.exists(dir):
             os.makedirs(dir)
+
+    # See contrib/libi8x-testnote-export.py
+    if os.environ.get("LIBI8X_TESTNOTE_EXPORT", "0") == "1":
+        def __split_note_filename(self, filename):
+            prefix = os.path.splitext(filename)[0]
+            assert prefix == self.fileprefix
+            prefix, testfunc = os.path.split(prefix)
+            prefix, pyfile = os.path.split(prefix)
+            assert os.path.basename(prefix) == "output"
+            return prefix, pyfile, testfunc
+
+        def import_note(self, note):
+            # First actually import the note
+            runtime.Context.import_note(self, note)
+            # Now decide where we'll save it
+            prefix, pyfile, testfunc \
+                = self.__split_note_filename(note.filename)
+            self.export_count = getattr(self, "export_count", 0) + 1
+            dir = os.path.join(
+                prefix, "for-libi8x", "i8c", version(),
+                pyfile, testfunc,
+                {b"<": "el", b">": "be"}[self.byteorder])
+            filename = os.path.join(dir, "%04d" % self.export_count)
+            # Now save it
+            if not os.path.exists(dir):
+                os.makedirs(dir)
+            with open(filename, "wb") as fp:
+                fp.write(note.bytes)
 
     @property
     def note(self):

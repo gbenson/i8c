@@ -85,7 +85,10 @@ class Context(object):
         else:
             assert ef.byteorder == self.byteorder
         for note in ef.infinity_notes:
-            self.register_function(functions.BytecodeFunction(note))
+            self.import_note(note)
+
+    def import_note(self, note):
+        self.register_function(functions.BytecodeFunction(note))
 
     def new_stack(self):
         return stack.Stack(self.wordsize)
