@@ -4,6 +4,13 @@ What has changed in I8C?
 Changes since I8C 0.0.2
 -----------------------
 
+Removed features
+~~~~~~~~~~~~~~~~
+
+* Support for notes with version 1 signature and code chunks has been
+  removed from I8X.
+
+
 Changes in I8C 0.0.2
 --------------------
 

@@ -124,11 +124,7 @@ class BytecodeFunction(Function):
         return unterminated[:limit]
 
     def __unpack_signature(self):
-        chunk = self.one_chunk(constants.I8_CHUNK_SIGNATURE, 2, False)
-        if chunk is None:
-            # XXX support for v1 chunks (aka I8_CHUNK_INFO) is DEPRECATED
-            # XXX change "False" to "True" above when this is removed
-            chunk = self.one_chunk(constants.I8_CHUNK_SIGNATURE, 1, True)
+        chunk = self.one_chunk(constants.I8_CHUNK_SIGNATURE, 2, True)
 
         offset, provider_o = leb128.read_uleb128(chunk, 0)
         offset, name_o = leb128.read_uleb128(chunk, offset)
@@ -146,24 +142,11 @@ class BytecodeFunction(Function):
     def __unpack_bytecode(self):
         self.ops = {}
 
-        chunk = self.one_chunk(constants.I8_CHUNK_BYTECODE, (1, 2), False)
+        chunk = self.one_chunk(constants.I8_CHUNK_BYTECODE, 2, False)
         if chunk is None:
             return
 
-        if chunk.version == 1:
-            # XXX support for version 1 chunks is DEPRECATED
-            # XXX change "(1, 2)" to "2" above when this is removed
-            bomfmt = self.byteorder + b"H"
-            bomsize = struct.calcsize(bomfmt)
-            byteorder = struct.unpack(bomfmt, chunk[:bomsize].bytes)[0]
-            if byteorder != constants.I8_BYTE_ORDER_MARK:
-                raise UnhandledNoteError(self.code)
-            self.bytecode = chunk + bomsize
-            self.deprecated_auto_push_externals = True
-        else:
-            self.bytecode = chunk
-            self.deprecated_auto_push_externals = False
-
+        self.bytecode = chunk
         pc, limit = 0, len(self.bytecode)
         while pc < limit:
             op = operations.Operation(self, pc)
@@ -183,8 +166,7 @@ class BytecodeFunction(Function):
         while len(unterminated):
             offset, type = leb128.read_uleb128(unterminated, 0)
             klass = {constants.I8_EXT_FUNCTION: UnresolvedFunction,
-                     constants.I8_EXT_SYMBOL: UnresolvedSymbol,
-                     constants.I8_EXT_RELADDR: UnrelocatedAddress}.get(
+                     constants.I8_EXT_SYMBOL: UnresolvedSymbol}.get(
                 chr(type), None)
             if klass is None:
                 raise UnhandledNoteError(unterminated)
@@ -199,19 +181,9 @@ class BytecodeFunction(Function):
                 for ext in self.externals
                 if isinstance(ext, UnresolvedFunction)]
 
-    @property
-    def external_pointers(self):
-        # XXX deprecated
-        return [ext.value
-                for ext in self.externals
-                if isinstance(ext, UnrelocatedAddress)]
-
     def execute(self, ctx, caller_stack):
         stack = ctx.new_stack()
         caller_stack.pop_multi_onto(reversed(self.ptypes), stack)
-        if self.deprecated_auto_push_externals:
-            for external in self.externals:
-                stack.push_typed(*external.resolve(ctx))
         pc, return_pc = 0, len(self.bytecode)
         while pc >= 0 and pc < return_pc:
             op = self.ops.get(pc, None)
@@ -255,15 +227,6 @@ class UnresolvedFunction(Function):
 
     def resolve(self, ctx):
         return self.type, ctx.get_function(self)
-
-class UnrelocatedAddress(object):
-    # XXX deprecated
-    def __init__(self, referrer, unterminated):
-        offset, self.value = leb128.read_uleb128(unterminated, 0)
-        self.src = unterminated[:offset]
-
-    def resolve(self, ctx):
-        return types.PointerType, self.value
 
 class UnresolvedSymbol(object):
     def __init__(self, referrer, unterminated):
