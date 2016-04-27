@@ -72,7 +72,9 @@ class ELFFile(object):
             start -= hdrsz
             namesz, descsz = struct.unpack(
                 hdrfmt, self.bytes[start:start + hdrsz])
-            assert namesz == len(notename)
+            if namesz != len(notename):
+                start += hdrsz + 1 # Spurious match
+                continue
             descstart = start + hdrsz + struct.calcsize("I") + len(notename)
             desclimit = descstart + descsz
             yield self[descstart:desclimit]
