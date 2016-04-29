@@ -627,8 +627,7 @@ class Operations(TreeNode):
 
     # Do not add a "bra" instruction, it gives no clue as to why
     # it would branch and makes code harder to read.  Users should
-    # use "load NULL, bne" or "load 0, bne" and let the optimizer
-    # figure it out.
+    # use "bne NULL" or "bne 0" and let the optimizer figure it out.
     assert "bra" not in CLASSES
 
     # Do not add "plus" or "minus" operations.  To calculate the
