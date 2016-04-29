@@ -25,6 +25,7 @@ from i8c.compiler import commands
 from i8c import compiler
 from i8c import runtime
 from i8c import version
+from i8c.compiler import target
 from i8c.runtime.testcase import BaseTestCase
 import io
 import os
@@ -122,6 +123,8 @@ class TestOutput(runtime.Context):
         return [op.name for op in self.ops]
 
 class TestCase(BaseTestCase):
+    _wordsize = target.guess_wordsize()
+
     def __locate_topdir(self):
         self.topdir = os.path.realpath(__file__)
         self.topdir, check = os.path.split(self.topdir)
@@ -137,6 +140,11 @@ class TestCase(BaseTestCase):
 
     def compile(self, input):
         self.compilecount += 1
+        for line in input.split("\n"):
+            if line.lstrip().startswith("wordsize "):
+                break
+        else:
+            input = "wordsize %d\n%s" % (self._wordsize, input)
         input = SourceReader(b'# 1 "<testcase>"\n' + input.encode("utf-8"))
         output = io.BytesIO()
         tree = compiler.compile(input.readline, output.write)

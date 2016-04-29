@@ -174,6 +174,10 @@ class TopLevel(TreeNode):
         self.latest_child.consume(tokens)
 
     @property
+    def wordsize_directives(self):
+        return self.some_children(Wordsize)
+
+    @property
     def typedefs(self):
         return self.some_children(Typedef)
 

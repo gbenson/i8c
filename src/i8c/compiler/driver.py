@@ -35,6 +35,7 @@ from . import optimizer
 from . import parser
 from . import serializer
 from . import stack
+from . import target
 from . import types
 import copy
 import io
@@ -225,8 +226,9 @@ def setup_output(args):
             outfile = open(filename, "wb")
     return process, outfile
 
-def compile(readline, write):
+def compile(readline, write, commandline=None):
     tree = parser.build_tree(lexer.generate_tokens(readline))
+    tree.accept(target.TargetAnnotator(commandline))
     tree.accept(types.TypeAnnotator())
     tree.accept(names.NameAnnotator())
     tree.accept(externals.PerFileTableCreator())
@@ -254,7 +256,7 @@ def main(args):
     process, infile = setup_input(args)
     try:
         if args.with_i8c:
-            compile(infile.readline, outfile.write)
+            compile(infile.readline, outfile.write, args)
         else:
             outfile.write(infile.read())
 
