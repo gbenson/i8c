@@ -162,6 +162,8 @@ class Boolean(BuiltinConstant):
 class TopLevel(TreeNode):
     def consume(self, tokens):
         klass = self.CLASSES.get(tokens[0].text, None)
+        if klass is Wordsize and self.children:
+            raise ParserError(tokens)
         if klass is not None:
             if (klass is not External
                   or not self.children
@@ -365,10 +367,18 @@ class External(TypeAndName):
         self.tokens = tokens
         TypeAndName.consume(self, tokens[1:])
 
+class Wordsize(TreeNode):
+    def consume(self, tokens):
+        raise_unless_len(tokens, EXACTLY, 2)
+        if self.tokens:
+            raise ParserError(tokens)
+        self.add_child(Integer).consume(tokens[1:])
+
 TopLevel.CLASSES = {
     "define": Function,
     "extern": External,
-    "typedef": Typedef}
+    "typedef": Typedef,
+    "wordsize": Wordsize}
 
 # XXX
 

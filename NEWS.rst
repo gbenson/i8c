@@ -4,6 +4,13 @@ What has changed in I8C?
 Changes since I8C 0.0.2
 -----------------------
 
+Source language changes
+~~~~~~~~~~~~~~~~~~~~~~~
+
+* A new directive "wordsize" has been added to specify the word size
+  of the target system in environments where I8C cannot determine it
+  automatically.
+
 Bug fixes
 ~~~~~~~~~
 

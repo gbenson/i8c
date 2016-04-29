@@ -80,6 +80,9 @@ class NameAnnotator(object):
             self.function = None
             node.accept(self)
 
+    def visit_wordsize(self, wordsize):
+        pass
+
     def visit_typedef(self, typedef):
         pass
 

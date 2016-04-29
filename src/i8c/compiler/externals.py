@@ -109,6 +109,9 @@ class PerFileTableCreator(TableCreator):
     def visit_function(self, function):
         self.table.add(function, function.type)
 
+    def visit_wordsize(self, wordsize):
+        pass
+
     def visit_typedef(self, typedef):
         pass
 

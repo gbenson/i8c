@@ -45,7 +45,7 @@
   `(,(rx symbol-start
          (or
 	  ;; Keywords.
-	  "argument" "define" "extern" "returns" "typedef"
+	  "argument" "define" "extern" "returns" "typedef" "wordsize"
 	  ;; Operators.
 	  "abs" "add" "and" "beq" "bge" "bgt" "ble" "blt" "bne" "call"
 	  "cast" "deref" "div" "drop" "dup" "eq" "ge" "goto" "gt" "le"

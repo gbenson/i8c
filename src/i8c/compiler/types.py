@@ -275,6 +275,9 @@ class TypeAnnotator(object):
 
     # Add "type" fields where necessary in function definitions
 
+    def visit_wordsize(self, wordsize):
+        pass
+
     def visit_function(self, function):
         toplevel_types = self.types
         self.types = self.types.copy()
