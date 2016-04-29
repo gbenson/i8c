@@ -21,6 +21,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from .. import archspec
 from .. import constants
 from ..compat import fwrite, str
 from . import logger
@@ -255,6 +256,7 @@ class Emitter(NoOutputOpSkipper):
         self.num_labels = 0
         self.__label = None
         self.__constants = {}
+        self.wordsize = toplevel.wordsize
         self.emit('.section .note.infinity, "", "note"')
         self.emit(".balign 4")
         for node in toplevel.functions:
@@ -339,7 +341,7 @@ class Emitter(NoOutputOpSkipper):
             return True
 
     def emit_codeinfo(self, function):
-        self.emit_2byte("I8_BYTE_ORDER_MARK")
+        self.emit_2byte(archspec.encode(self.wordsize), "archspec")
         self.emit_uleb128(function.max_stack, "max stack")
 
     def emit_bytecode(self, function):

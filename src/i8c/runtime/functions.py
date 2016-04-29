@@ -24,6 +24,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from ..compat import integer
+from .. import archspec
 from .. import constants
 from . import *
 from . import leb128
@@ -145,7 +146,7 @@ class BytecodeFunction(Function):
         if chunk is None:
             return
 
-        expect = constants.I8_BYTE_ORDER_MARK
+        expect = archspec.encode(chunk.wordsize)
         format = self.byteorder + b"H"
         offset = struct.calcsize(format)
         actual = struct.unpack(format, chunk[:offset].bytes)[0]

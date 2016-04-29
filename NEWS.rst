@@ -11,6 +11,13 @@ Source language changes
   of the target system in environments where I8C cannot determine it
   automatically.
 
+Note format changes
+~~~~~~~~~~~~~~~~~~~
+
+* The byte order mark from the code info chunk has been replaced
+  with an architecture specifier which encodes both byte order and
+  wordsize.
+
 Bug fixes
 ~~~~~~~~~
 

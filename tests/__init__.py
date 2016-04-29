@@ -86,22 +86,27 @@ class TestOutput(runtime.Context):
             prefix = os.path.splitext(filename)[0]
             assert prefix == self.fileprefix
             prefix, testfunc = os.path.split(prefix)
+            testfunc = testfunc.split("_")
+            index = testfunc.pop()
+            testfunc = "_".join(testfunc)
             prefix, pyfile = os.path.split(prefix)
             assert os.path.basename(prefix) == "output"
-            return prefix, pyfile, testfunc
+            return prefix, pyfile, testfunc, index
 
         def import_note(self, note):
             # First actually import the note
             runtime.Context.import_note(self, note)
             # Now decide where we'll save it
-            prefix, pyfile, testfunc \
+            prefix, pyfile, testfunc, index \
                 = self.__split_note_filename(note.filename)
             self.export_count = getattr(self, "export_count", 0) + 1
             dir = os.path.join(
                 prefix, "for-libi8x", "i8c", version(),
-                pyfile, testfunc,
-                {b"<": "el", b">": "be"}[self.byteorder])
-            filename = os.path.join(dir, "%04d" % self.export_count)
+                "%d%s" % (self.wordsize,
+                          {b"<": "el", b">": "be"}[self.byteorder]),
+                pyfile, testfunc)
+            filename = os.path.join(dir,
+                                    "%s-%04d" % (index, self.export_count))
             # Now save it
             if not os.path.exists(dir):
                 os.makedirs(dir)
