@@ -48,5 +48,5 @@ class TestExternals(TestCase):
         for source in SOURCE1, SOURCE2:
             tree, output = self.compile(source)
             self.assertEqual(
-                ["load_external", "load_external", "call"],
+                ["addr", "load_external", "call"],
                 output.opnames)

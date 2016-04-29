@@ -168,10 +168,10 @@ class Operation(object):
         return self.src.byteorder
 
     @staticmethod
-    def decode_address(code): # pragma: no cover
-        # This function is excluded from coverage because it
-        # should never be implemented.  See XXX UNWRITTEN.
-        raise NotImplementedError
+    def decode_address(code):
+        fmt = code.byteorder + {32: b"I", 64: b"Q"}[code.wordsize]
+        size = struct.calcsize(fmt)
+        return size, struct.unpack(fmt, code[:size].bytes)[0]
 
     @staticmethod
     def decode_uleb128(code):
@@ -233,6 +233,19 @@ class Operation(object):
         b = pop()
         a = pop()
         stack.push_intptr(func(a, b))
+
+    def exec_addr(self, ctx, externals, stack):
+        exception = None
+        for name in self.src[1:].symbol_names:
+            try:
+                value = ctx.env.lookup_symbol(name)
+            except KeyError as e:
+                exception = e
+                continue
+            stack.push_intptr(value)
+            return
+        assert exception is not None
+        raise exception
 
     def __exec_constX(self, ctx, externals, stack):
         stack.push_intptr(self.operand)

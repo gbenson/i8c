@@ -34,5 +34,5 @@ class TestDerefOffsetBase(TestCase):
     def test_deref_offset_base(self):
         """Basic check for "deref offset(base), ..."."""
         tree, output = self.compile(SOURCE)
-        self.assertEqual(["load_external", "over", "plus", "deref_int"],
+        self.assertEqual(["addr", "over", "plus", "deref_int"],
                          output.opnames)

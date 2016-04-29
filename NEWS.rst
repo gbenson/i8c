@@ -18,6 +18,11 @@ Note format changes
   with an architecture specifier which encodes both byte order and
   wordsize.
 
+Bytecode changes
+~~~~~~~~~~~~~~~~
+
+* "extern ptr" statements are now output as DW_OP_addr instructions.
+
 Bug fixes
 ~~~~~~~~~
 

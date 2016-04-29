@@ -635,8 +635,8 @@ class Operations(TreeNode):
         CLASSES["b" + op] = CondBranchOp
     del op
 
-    # Do not add an "addr" instruction for DW_OP_addr.
-    # See XXX UNWRITTEN DOCS.
+    # Do not add an "addr" instruction for DW_OP_addr.  Users
+    # should define an "extern ptr" and then "load" it.
     assert "addr" not in CLASSES
 
     # Do not add a "bra" instruction, it gives no clue as to why

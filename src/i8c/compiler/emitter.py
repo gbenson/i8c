@@ -115,29 +115,18 @@ class ExternTable(object):
             return index
         index = len(self.entries)
         type = external.basetype
-        if type is PTRTYPE:
-            self.entries.append(
-                SymRef(self.strings.new(external.name.name)))
-        else:
-            self.entries.append(FuncRef(*map(self.strings.new, (
-                external.name.provider,
-                external.name.name,
-                "".join((t.encoding for t in type.paramtypes)),
-                "".join((t.encoding for t in type.returntypes))))))
+        assert type.is_function
+        self.entries.append(FuncRef(*map(self.strings.new, (
+            external.name.provider,
+            external.name.name,
+            "".join((t.encoding for t in type.paramtypes)),
+            "".join((t.encoding for t in type.returntypes))))))
         self.indexes[key] = index
         return index
 
     def emit(self, emitter):
         for entry, index in zip(self.entries, range(len(self.entries))):
             entry.emit(emitter, "extern %d " % index)
-
-class SymRef(object):
-    def __init__(self, name):
-        self.name = name
-
-    def emit(self, emitter, prefix):
-        emitter.emit_byte("I8_EXT_SYMBOL", prefix + "type")
-        emitter.emit_uleb128(self.name.offset, prefix + "name")
 
 class FuncRef(object):
     def __init__(self, provider, name, params, returns):
@@ -246,7 +235,6 @@ class Emitter(NoOutputOpSkipper):
         widecode = getattr(constants, widename, None)
         if widecode is not None:
             name = "GNU_wide_op"
-        assert name != "addr" # See XXX UNWRITTEN DOCS.
         name = "DW_OP_" + name
         self.emit_byte(name, comment)
         if widecode is not None:
@@ -257,6 +245,9 @@ class Emitter(NoOutputOpSkipper):
         self.__label = None
         self.__constants = {}
         self.wordsize = toplevel.wordsize
+        bytes, check = divmod(self.wordsize, 8)
+        assert check == 0
+        self.emit_address = getattr(self, "emit_%dbyte" % bytes)
         self.emit('.section .note.infinity, "", "note"')
         self.emit(".balign 4")
         for node in toplevel.functions:
@@ -462,7 +453,11 @@ class Emitter(NoOutputOpSkipper):
                 self.emit_byte(op.pickslot)
         else:
             assert op.is_loadext
-            self.emit_uleb128(self.externs.index_of(op.external))
+            if op.external.basetype is PTRTYPE:
+                self.emit_address(op.external.name)
+            else:
+                assert op.external.type.is_function
+                self.emit_uleb128(self.externs.index_of(op.external))
 
     def visit_plusuconst(self, op):
         self.emit_op("plus_uconst", op.fileline)

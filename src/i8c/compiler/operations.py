@@ -24,6 +24,7 @@ from __future__ import unicode_literals
 from ..compat import integer
 from . import parser
 from . import visitors
+from .types import PTRTYPE
 
 class Operation(visitors.Visitable):
     """Base class for all operations.
@@ -292,9 +293,11 @@ class LoadOp(NonTerminalOp):
     def dwarfname(self):
         if self.is_pick:
             return {0: "dup", 1: "over"}.get(self.pickslot, "pick")
-        else:
-            assert self.is_loadext
-            return "load_external"
+        assert self.is_loadext
+        if self.external.basetype is PTRTYPE:
+            return "addr"
+        assert self.external.type.is_function
+        return "load_external"
 
     # The thing we are trying to load
 

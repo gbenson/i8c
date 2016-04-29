@@ -78,8 +78,8 @@ class TestFoldLoad(TestCase):
 
     def __do_test(self, source, ops, load_arg, extra=None):
         for op in ops:
-            expect_ops = [op in ("call", "deref")
-                          and "load_external" or "lit%s" % load_arg,
+            expect_ops = [{"call": "load_external",
+                           "deref": "addr"}.get(op, "lit%s" % load_arg),
                           {"add": "plus",
                            "sub": "minus"}.get(op, op)]
             if expect_ops[1] == "plus":

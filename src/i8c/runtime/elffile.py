@@ -27,8 +27,8 @@ from ..compat import integer
 from .. import constants
 from . import ELFFileError
 import struct
+import subprocess
 import sys
-import weakref
 
 class ELFFile(object):
     ELFCLASS32 = 1
@@ -56,6 +56,7 @@ class ELFFile(object):
             self.byteorder = self.BYTEORDERS[ei_data]
         except KeyError:
             raise ELFFileError(filename, "unhandled ELF file")
+        self.sections = self.relocations = self.symbols = None
 
     @property
     def infinity_notes(self):
@@ -81,7 +82,73 @@ class ELFFile(object):
             start = desclimit
 
     def __getitem__(self, key):
-        return ELFSlice(weakref.ref(self), key)
+        return ELFSlice(self, key)
+
+    def __objdump(self, what):
+        command = ["objdump", "--" + what, self.filename]
+        process = None
+        try:
+            process = subprocess.Popen(command, stdout=subprocess.PIPE)
+            return [line.decode("utf-8")
+                    for line in process.stdout.readlines()]
+        finally:
+            if process is not None:
+                process.stdout.close()
+                process.wait()
+                if process.returncode != 0:
+                    sys.exit(process.returncode) # XXX
+
+    def __read_sections(self):
+        self.sections = {}
+        for line in self.__objdump("section-headers"):
+            fields = line.strip().split()
+            if len(fields) != 7 or fields[6][1:-1] != "**":
+                continue
+            name = fields[1]
+            assert not name in self.sections
+            self.sections[name] = int(fields[5], 16)
+
+    def __read_relocations(self):
+        if self.sections is None:
+            self.__read_sections()
+        self.relocations = {}
+        for line in self.__objdump("reloc"):
+            fields = line.strip().split()
+            if fields[:3] == ["RELOCATION", "RECORDS", "FOR"]:
+                sectionoffset = self.sections[fields[3][1:-2]]
+                continue
+            if len(fields) != 3:
+                continue
+            try:
+                offset = sectionoffset + int(fields[0], 16)
+            except ValueError:
+                continue
+            assert offset not in self.relocations
+            self.relocations[offset] = fields[2]
+
+    def __read_symbols(self):
+        self.symbols = {}
+        for line in self.__objdump("syms"):
+            fields = line.strip().split()
+            if len(fields) < 2:
+                continue
+            try:
+                address = int(fields[0], 16)
+            except ValueError:
+                continue
+            if address not in self.symbols:
+                self.symbols[address] = []
+            self.symbols[address].append(fields[-1])
+
+    def relocation_at(self, location):
+        if self.relocations is None:
+            self.__read_relocations()
+        return self.relocations[location]
+
+    def symbol_names(self, address):
+        if self.symbols is None:
+            self.__read_symbols()
+        return self.symbols[address]
 
 class ELFSlice(object):
     def __init__(self, elffile, ourslice):
@@ -89,17 +156,24 @@ class ELFSlice(object):
         assert ourslice.step in (None, 1)
         self.elffile = elffile
 
-        elffile = elffile()
-        self.filename = elffile.filename
-        self.wordsize = elffile.wordsize
-        self.byteorder = elffile.byteorder
-
         assert ourslice.start >= 0
         self.start = elffile.start + ourslice.start
         assert self.start <= elffile.limit
         assert ourslice.stop >= 0
         self.limit = elffile.start + ourslice.stop
         assert self.limit <= elffile.limit
+
+    @property
+    def filename(self):
+        return self.elffile.filename
+
+    @property
+    def wordsize(self):
+        return self.elffile.wordsize
+
+    @property
+    def byteorder(self):
+        return self.elffile.byteorder
 
     def __getitem__(self, key):
         if isinstance(key, integer):
@@ -120,7 +194,7 @@ class ELFSlice(object):
             assert limit <= self.limit
         else:
             limit = self.limit
-        return self.elffile()[start:limit]
+        return self.elffile[start:limit]
 
     def __len__(self):
         return self.limit - self.start
@@ -128,11 +202,11 @@ class ELFSlice(object):
     def __add__(self, offset):
         start = self.start + offset
         assert start <= self.limit
-        return self.elffile()[start:self.limit]
+        return self.elffile[start:self.limit]
 
     @property
     def bytes(self):
-        return self.elffile().bytes[self.start:self.limit]
+        return self.elffile.bytes[self.start:self.limit]
 
     @property
     def text(self):
@@ -141,5 +215,14 @@ class ELFSlice(object):
             text = "".join(map(chr, text))
         assert isinstance(text, str)
         return text
+
+    @property
+    def symbol_names(self):
+        format = self.byteorder + {32: b"I", 64: b"Q"}[self.wordsize]
+        address = struct.unpack(format, self.bytes)[0]
+        if address == 0:
+            return [self.elffile.relocation_at(self.start)]
+        else:
+            return self.elffile.symbol_names(address)
 
 open = ELFFile

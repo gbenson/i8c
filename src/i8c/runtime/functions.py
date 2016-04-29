@@ -181,13 +181,10 @@ class BytecodeFunction(Function):
         unterminated = chunk
         while len(unterminated):
             offset, type = leb128.read_uleb128(unterminated, 0)
-            klass = {constants.I8_EXT_FUNCTION: UnresolvedFunction,
-                     constants.I8_EXT_SYMBOL: UnresolvedSymbol}.get(
-                chr(type), None)
-            if klass is None:
+            if chr(type) != constants.I8_EXT_FUNCTION:
                 raise UnhandledNoteError(unterminated)
             unterminated += offset
-            extern = klass(self, unterminated)
+            extern = UnresolvedFunction(self, unterminated)
             self.externals.append(extern)
             unterminated += len(extern.src)
 
@@ -243,12 +240,3 @@ class UnresolvedFunction(Function):
 
     def resolve(self, ctx):
         return self.type, ctx.get_function(self)
-
-class UnresolvedSymbol(object):
-    def __init__(self, referrer, unterminated):
-        offset, name_o = leb128.read_uleb128(unterminated, 0)
-        self.src = unterminated[:offset]
-        self.name = referrer.get_string(name_o).text
-
-    def resolve(self, ctx):
-        return types.PointerType, ctx.env.lookup_symbol(self.name)

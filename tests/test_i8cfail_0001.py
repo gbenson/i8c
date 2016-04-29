@@ -67,7 +67,7 @@ class TestI8CFail0001(TestCase):
         # Fragile test: check that the stream is as we expect.
         # This may need fixing up to cope with future compiler changes.
         self.assertEqual(["load_external", "load_external",
-                          "load_external",
+                          "addr",
                           "deref", "bra", "swap", "drop",
                           "lit0", "rot", "call", "ne",
                           "skip", "drop", "call"], ops)

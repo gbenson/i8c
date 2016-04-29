@@ -89,7 +89,7 @@ class TestTopLevelExtSym(TestCase):
 
     def __test_good(self, source):
         tree, output = self.compile(source % "a_symbol")
-        self.assertEqual(["load_external"], output.opnames)
+        self.assertEqual(["addr"], output.opnames)
 
     def test_basic_with_prov(self):
         """Check basic toplevel symbols with providers fail."""
