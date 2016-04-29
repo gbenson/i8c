@@ -82,6 +82,7 @@ class BytecodeFunction(Function):
         Function.__init__(self, src)
         self.__split_chunks()
         self.__unpack_signature()
+        self.__unpack_codeinfo()
         self.__unpack_bytecode()
         self.__unpack_externals()
 
@@ -138,6 +139,20 @@ class BytecodeFunction(Function):
         ptypes = types.decode(ptypes)
         rtypes = types.decode(rtypes)
         self.set_signature(provider.text, name.text, ptypes, rtypes)
+
+    def __unpack_codeinfo(self):
+        chunk = self.one_chunk(constants.I8_CHUNK_CODEINFO, 1, False)
+        if chunk is None:
+            return
+
+        expect = constants.I8_BYTE_ORDER_MARK
+        format = self.byteorder + b"H"
+        offset = struct.calcsize(format)
+        actual = struct.unpack(format, chunk[:offset].bytes)[0]
+        if actual != expect:
+            raise UnhandledNoteError(chunk)
+
+        offset, self.max_stack = leb128.read_uleb128(chunk, offset)
 
     def __unpack_bytecode(self):
         self.ops = {}
