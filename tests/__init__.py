@@ -21,6 +21,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from i8c.compiler import commands
 from i8c import compiler
 from i8c import runtime
 from i8c import version
@@ -48,7 +49,8 @@ class TestOutput(runtime.Context):
             fp.write(asm)
         # Assemble it
         objfile = self.fileprefix + ".o"
-        subprocess.check_call(["gcc", "-c", asmfile, "-o", objfile])
+        subprocess.check_call(
+            commands.I8C_CC + ["-c", asmfile, "-o", objfile])
         # Load the notes from it
         self.import_notes(objfile)
         self.notes = []

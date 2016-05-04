@@ -4,6 +4,13 @@ What has changed in I8C?
 Changes since I8C 0.0.2
 -----------------------
 
+Enhancements
+~~~~~~~~~~~~
+
+* I8C now supports the use of the environment variables "I8C_CC",
+  "I8C_CPP" and "I8C_AS" to specify the external compiler it will
+  use.  (https://github.com/gbenson/i8c/issues/13)
+
 Removed features
 ~~~~~~~~~~~~~~~~
 
