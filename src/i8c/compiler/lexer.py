@@ -22,7 +22,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from ..compat import strtoint_c
-from . import I8CError, LexerError
+from . import LexerError
 import re
 
 TOKEN = re.compile(r"\s+|::|[:,()]|"
@@ -60,7 +60,10 @@ class WORD(Token): pass
 class NUMBER(Token):
     def __init__(self, *args):
         Token.__init__(self, *args)
-        self.value = strtoint_c(self.text, I8CError)
+        self.value = strtoint_c(self.text, self.__wrap_exception)
+
+    def __wrap_exception(self, msg):
+        raise LexerError(self.filename, self.linenumber, msg)
 
 SIMPLE_CLASSES = {
     ",": COMMA,

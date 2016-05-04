@@ -4,6 +4,11 @@ What has changed in I8C?
 Changes since I8C 0.0.2
 -----------------------
 
+Bug fixes
+~~~~~~~~~
+
+* Hexadecimal numbers prefixed with "0X" are now correctly parsed.
+
 Enhancements
 ~~~~~~~~~~~~
 

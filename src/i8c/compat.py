@@ -46,18 +46,19 @@ def fwrite(file, text):
     file.write(text)
 
 def strtoint_c(text, exception):
-    if text in ("0", "-0"):
-        return 0
-    if not text.startswith("0o"):
-        if text.startswith("0") and not text.startswith("0x"):
-            text = "0o" + text[1:]
-        elif text.startswith("-0") and not text.startswith("-0x"):
-            text = "-0o" + text[2:]
-        try:
-            return int(text, 0)
-        except ValueError:
-            pass
-    raise exception("invalid integer literal: " + text)
+    if text.startswith("-"):
+        sign, unsigned = "-", text[1:]
+    else:
+        sign, unsigned = "", text
+    if (len(unsigned) > 1 and unsigned[0] == "0"):
+        if unsigned[1] in "oO":
+            unsigned = "BadOctal" # Force exception
+        elif unsigned[1] not in "xX":
+            unsigned = "0o" + unsigned[1:]
+    try:
+        return int(sign + unsigned, 0)
+    except ValueError:
+        raise exception("invalid integer literal ‘%s’" % text)
 
 if sys.version_info < (3, 3):
     from imp import load_source as load_module_from_source
