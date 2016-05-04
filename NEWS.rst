@@ -18,6 +18,13 @@ Note format changes
   with an architecture specifier which encodes both byte order and
   wordsize.
 
+* All externals table entries now reference functions, and the
+  identifying byte at the start of each entry has been removed.
+  Additionally, the table is now indexed from 1, with entry 0
+  being an implicit reference to the current function.  The
+  externals table chunk's version has been incremented to 2 to
+  indicate these changes.
+
 Bytecode changes
 ~~~~~~~~~~~~~~~~
 

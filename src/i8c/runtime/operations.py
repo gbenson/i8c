@@ -167,6 +167,10 @@ class Operation(object):
     def byteorder(self):
         return self.src.byteorder
 
+    @property
+    def function(self):
+        return self.location[0]
+
     @staticmethod
     def decode_address(code):
         fmt = code.byteorder + {32: b"I", 64: b"Q"}[code.wordsize]
@@ -297,8 +301,11 @@ class Operation(object):
         stack.push_intptr(self.opcode - constants.DW_OP_lit0)
 
     def exec_load_external(self, ctx, externals, stack):
-        external = externals[self.operand]
-        stack.push_typed(*external.resolve(ctx))
+        if self.operand == 0:
+            external = self.function.type, self.function
+        else:
+            external = externals[self.operand - 1].resolve(ctx)
+        stack.push_typed(*external)
 
     def exec_over(self, ctx, externals, stack):
         stack.push_boxed(stack.slots[1])

@@ -103,9 +103,9 @@ class StringTable(object):
             emitter.emit('.string "%s"' % text)
 
 class ExternTable(object):
-    def __init__(self, strings):
+    def __init__(self, funcname, strings):
         self.strings = strings
-        self.indexes = {}
+        self.indexes = {str(funcname): 0}
         self.entries = []
 
     def index_of(self, external):
@@ -113,7 +113,7 @@ class ExternTable(object):
         index = self.indexes.get(key, None)
         if index is not None:
             return index
-        index = len(self.entries)
+        index = len(self.entries) + 1
         type = external.basetype
         assert type.is_function
         self.entries.append(FuncRef(*map(self.strings.new, (
@@ -125,7 +125,7 @@ class ExternTable(object):
         return index
 
     def emit(self, emitter):
-        for entry, index in zip(self.entries, range(len(self.entries))):
+        for entry, index in zip(self.entries, range(1, len(self.entries) + 1)):
             entry.emit(emitter, "extern %d " % index)
 
 class FuncRef(object):
@@ -136,7 +136,6 @@ class FuncRef(object):
         self.returns = returns
 
     def emit(self, emitter, prefix):
-        emitter.emit_byte("I8_EXT_FUNCTION", prefix + "type")
         emitter.emit_uleb128(self.provider.offset, prefix + "provider offset")
         emitter.emit_uleb128(self.name.offset, prefix + "name offset")
         emitter.emit_uleb128(self.params.offset, prefix + "ptypes offset")
@@ -193,12 +192,7 @@ class Emitter(NoOutputOpSkipper):
         value = getattr(constants, name, None)
         if value is None:
             return
-        if isinstance(value, str):
-            format = "'%s'"
-        else:
-            format = "0x%02x"
-        value = format % value
-        self.emit("#define %s %s" % (name, value))
+        self.emit("#define %s 0x%02x" % (name, value))
         self.__constants[name] = True
 
     def to_string(self, value):
@@ -278,12 +272,14 @@ class Emitter(NoOutputOpSkipper):
         self.emit(".balign 4")
 
     def __visit_function(self, function):
+        funcname = function.name.value
+        assert funcname.is_fullname
         strings = StringTable()
-        self.externs = ExternTable(strings)
+        self.externs = ExternTable(funcname, strings)
 
         # Create strings for the signature chunk.
-        self.provider = strings.new(function.name.provider)
-        self.name = strings.new(function.name.shortname)
+        self.provider = strings.new(funcname.provider)
+        self.name = strings.new(funcname.name)
         self.paramtypes = strings.new()
         function.parameters.accept(self)
         self.returntypes = strings.new()
@@ -302,7 +298,7 @@ class Emitter(NoOutputOpSkipper):
         # Emit the remaining chunks.
         self.emit_chunk("signature", 2, Emitter.emit_signature)
         if self.externs.entries:
-            self.emit_chunk("externals", 1, self.externs.emit)
+            self.emit_chunk("externals", 2, self.externs.emit)
         self.emit_chunk("strings", 1, strings.emit)
 
     def emit_chunk(self, name, version, emitfunc, *args):

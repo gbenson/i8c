@@ -174,16 +174,12 @@ class BytecodeFunction(Function):
     def __unpack_externals(self):
         self.externals = []
 
-        chunk = self.one_chunk(constants.I8_CHUNK_EXTERNALS, 1, False)
+        chunk = self.one_chunk(constants.I8_CHUNK_EXTERNALS, 2, False)
         if chunk is None:
             return
 
         unterminated = chunk
         while len(unterminated):
-            offset, type = leb128.read_uleb128(unterminated, 0)
-            if chr(type) != constants.I8_EXT_FUNCTION:
-                raise UnhandledNoteError(unterminated)
-            unterminated += offset
             extern = UnresolvedFunction(self, unterminated)
             self.externals.append(extern)
             unterminated += len(extern.src)
