@@ -175,7 +175,7 @@ class SizedType(AliasType):
 
     def __init__(self, nbits, is_signed):
         assert not SizedType.class_init_complete
-        name = "%s%d" % (is_signed and "s" or "u", nbits)
+        name = "%s%d" % (is_signed and "i" or "u", nbits)
         AliasType.__init__(self, None, name, INTTYPE)
         self.nbits = nbits
         self.is_signed = is_signed

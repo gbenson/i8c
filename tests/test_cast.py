@@ -46,7 +46,7 @@ class TestCast(TestCase):
         for type in ("int",              # cast to same type
                      "bool",             # upcast to builtin derived type
                      "derived_int_t",    # upcast to user-defined derived type
-                     "s32",              # upcast to builtin sized type
+                     "i32",              # upcast to builtin sized type
                      "ptr",              # cast to unrelated builtin type
                      "derived_ptr_t",    # cast to unrelated derived type
                      "func ptr (int)",   # cast to function

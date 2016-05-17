@@ -38,7 +38,7 @@ class TestDeref(TestCase):
              "int", "bool",
              "opaque", "func ()", "func int (ptr)",
              "u8", "u16", "u32", "u64",
-             "s8", "s16", "s32", "s64")
+             "i8", "i16", "i32", "i64")
 
     def test_deref(self):
         """Check that deref works."""
@@ -73,9 +73,9 @@ class TestDeref(TestCase):
                     continue
 
                 self.assertEqual("deref_int", op.name)
-                if rettype[0] in "su":
+                if rettype[0] in "iu" and rettype != "int":
                     sizecode = int(rettype[1:])
-                    if rettype[0] == "s":
+                    if rettype[0] == "i":
                         sizecode *= -1
                 else:
                     sizecode = 0

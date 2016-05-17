@@ -53,7 +53,7 @@ class TestTypedef(TestCase):
     def test_redefined(self):
         """Check that duplicate typedefs are inhibited."""
         self.__test_redefined(REDEF_SOURCE)
-        for builtin in ("int", "ptr", "opaque", "bool", "s32", "u64"):
+        for builtin in ("int", "ptr", "opaque", "bool", "i32", "u64"):
             self.__test_redefined("typedef u8 " + builtin)
 
     def __test_redefined(self, source):

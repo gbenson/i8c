@@ -11,6 +11,9 @@ Source language changes
   of the target system in environments where I8C cannot determine it
   automatically.
 
+* The signed types for the deref operator have been renamed from
+  s8, s16, s32 and s64 to i8, i16, i32 and i64.
+
 Note format changes
 ~~~~~~~~~~~~~~~~~~~
 
