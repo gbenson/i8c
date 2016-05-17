@@ -35,7 +35,7 @@ commands::
   sudo yum install python-pip
 
 The latest development versions of I8C and I8X are available from
-GitHub_.  To build and install from source use setup.py::
+GitLab_.  To build and install from source use setup.py::
 
   python setup.py install --user
 
@@ -135,7 +135,7 @@ and isn’t a good model to base things on.
 .. reStructuredText stuff:
 
 .. Links
-.. _GitHub: https://github.com/gbenson/i8c/
+.. _GitLab: https://gitlab.com/gbenson/i8c/
 .. _installing pip: https://pip.pypa.io/en/stable/installing/
 .. _version 3: http://gnu.org/licenses/gpl-3.0.html
 .. _version 2.1: http://gnu.org/licenses/lgpl-2.1.html
