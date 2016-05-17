@@ -30,6 +30,10 @@ Bytecode changes
 
 * "extern ptr" statements are now output as DW_OP_addr instructions.
 
+* The operand of I8_OP_deref_int has been changed from a 1-byte signed
+  integer to a signed LEB128 integer, and its meaning has been changed
+  from a number of bytes to a number of bits.
+
 Bug fixes
 ~~~~~~~~~
 

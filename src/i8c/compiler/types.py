@@ -173,11 +173,11 @@ class SizedType(AliasType):
     """
     class_init_complete = False
 
-    def __init__(self, size_bytes, is_signed):
+    def __init__(self, nbits, is_signed):
         assert not SizedType.class_init_complete
-        name = "%s%d" % (is_signed and "s" or "u", size_bytes << 3)
+        name = "%s%d" % (is_signed and "s" or "u", nbits)
         AliasType.__init__(self, None, name, INTTYPE)
-        self.size_bytes = size_bytes
+        self.nbits = nbits
         self.is_signed = is_signed
 
     @property
@@ -196,8 +196,8 @@ def __create_builtin_types():
     add_builtin_type(AliasType(None, "bool", INTTYPE))
     for is_signed in range(2):
         for shift in range(4):
-            size = 1 << shift
-            add_builtin_type(SizedType(size, is_signed))
+            nbits = 8 << shift
+            add_builtin_type(SizedType(nbits, is_signed))
     SizedType.class_init_complete = True
 __create_builtin_types()
 

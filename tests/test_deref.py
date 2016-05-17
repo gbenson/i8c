@@ -74,7 +74,7 @@ class TestDeref(TestCase):
 
                 self.assertEqual("deref_int", op.name)
                 if rettype[0] in "su":
-                    sizecode = int(rettype[1:]) // 8
+                    sizecode = int(rettype[1:])
                     if rettype[0] == "s":
                         sizecode *= -1
                 else:

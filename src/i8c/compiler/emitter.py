@@ -435,12 +435,12 @@ class Emitter(NoOutputOpSkipper):
             assert basetype is types.INTTYPE
             operand = 0
         elif sizedtype.is_signed:
-            operand = -sizedtype.size_bytes
+            operand = -sizedtype.nbits
         else:
-            operand = sizedtype.size_bytes
+            operand = sizedtype.nbits
 
         self.emit_op("deref_int", op.fileline)
-        self.emit_byte(operand)
+        self.emit_sleb128(operand)
 
     def visit_loadop(self, op):
         self.emit_op(op.dwarfname, op.fileline)

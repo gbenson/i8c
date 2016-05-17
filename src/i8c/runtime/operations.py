@@ -93,7 +93,7 @@ class Operation(object):
         constants.DW_OP_deref_size: ["u1"],
         constants.DW_OP_xderef_size: ["u1"],
         constants.I8_OP_load_external: ["uleb128"],
-        constants.I8_OP_deref_int: ["s1"],
+        constants.I8_OP_deref_int: ["sleb128"],
     }
 
     OPTABLE = {
@@ -261,18 +261,16 @@ class Operation(object):
     def exec_deref(self, ctx, externals, stack):
         self.__exec_deref(ctx, externals, stack, 0)
 
-    def exec_deref_size(self, ctx, externals, stack):
-        self.__exec_deref(ctx, externals, stack, self.operand)
-
     def exec_deref_int(self, ctx, externals, stack):
         self.__exec_deref(ctx, externals, stack, self.operand)
 
     def __exec_deref(self, ctx, externals, stack, size):
         if size == 0:
-            size = ctx.wordsize // 8
+            size = ctx.wordsize
         is_signed = size < 0
         if is_signed:
             size *= -1
+        size >>= 3
         sizecode = "%s%d" % (is_signed and "s" or "u", size)
         sizecode = self.FIXEDSIZE.get(sizecode, None)
         if sizecode is None:
