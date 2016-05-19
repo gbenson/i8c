@@ -290,7 +290,7 @@ class Emitter(NoOutputOpSkipper):
         # as a side-effect.
         if self.has_code(function):
             self.emit_chunk("codeinfo", 1, Emitter.emit_codeinfo, function)
-            self.emit_chunk("bytecode", 2, Emitter.emit_bytecode, function)
+            self.emit_chunk("bytecode", 3, Emitter.emit_bytecode, function)
 
         # Lay out the string table.
         strings.layout_table(self.new_label)

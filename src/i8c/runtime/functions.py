@@ -158,7 +158,7 @@ class BytecodeFunction(Function):
     def __unpack_bytecode(self):
         self.ops = {}
 
-        chunk = self.one_chunk(constants.I8_CHUNK_BYTECODE, 2, False)
+        chunk = self.one_chunk(constants.I8_CHUNK_BYTECODE, 3, False)
         if chunk is None:
             return
 
