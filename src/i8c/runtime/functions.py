@@ -114,8 +114,11 @@ class BytecodeFunction(Function):
             raise UnhandledNoteError(self.src)
         if len(chunks) != 1:
             # The second chunk is the first error
-            raise UnsupportedNoteError(chunks[1])
-        return chunks[0]
+            raise UnhandledNoteError(chunks[1])
+        chunk = chunks[0]
+        if chunk.version not in supported_versions:
+            raise UnhandledNoteError(chunk)
+        return chunk
 
     def get_string(self, start):
         chunk = self.one_chunk(constants.I8_CHUNK_STRINGS, 1, True)

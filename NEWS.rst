@@ -43,6 +43,8 @@ Bug fixes
 
 * Hexadecimal numbers prefixed with "0X" are now correctly parsed.
 
+* I8X now rejects chunks with versions other than expected.
+
 Enhancements
 ~~~~~~~~~~~~
 
