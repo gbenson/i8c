@@ -200,14 +200,14 @@ class CallOp(NoOperandsOp):
     dwarfname = "call"
 
 class CastOp(NonTerminalOp):
-    operands = ("slot", "type")
+    operands = ("slot", "new_type")
 
     @property
     def slot(self):
         return self.ast.slot.value
 
     @property
-    def type(self):
+    def new_type(self):
         return self.ast.typename.type
 
 class ConstOp(NonTerminalOp):

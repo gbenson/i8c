@@ -129,3 +129,22 @@ class StackMergeError(StackError):
         else:
             msg += "because depths differ"
         StackError.__init__(self, to_op, None, msg)
+
+class CastError(StackError):
+    """A cast operation is somehow wrong.
+    """
+
+class UnnecessaryCastError(CastError):
+    """An unnecessary cast was encountered.
+    """
+    def __init__(self, cause, stack):
+        CastError.__init__(self, cause, stack, "unnecessary ‘cast’")
+
+class InvalidCastError(CastError):
+    """An invalid cast was encountered.
+    """
+    def __init__(self, cause, stack, old_type, new_type):
+        msg = "can't cast from ‘%s’ to ‘%s’" % (old_type.name,
+                                                new_type.name)
+        CastError.__init__(self, cause, stack, msg)
+

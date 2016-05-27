@@ -22,18 +22,33 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from ..compat import integer
-from . import ParsedError
+from . import InvalidCastError
 from . import logger
 from . import names
+from . import ParsedError
 from . import RedefinedIdentError
 from . import StackError
 from . import StackMergeError
 from . import StackTypeError
 from . import UndefinedIdentError
+from . import UnnecessaryCastError
 from .types import Type, INTTYPE, PTRTYPE, BOOLTYPE
 import copy
 
 debug_print = logger.debug_printer_for(__name__)
+
+class CastError(Exception):
+    def __init__(self, *args):
+        self.args = args
+
+    def decorate_and_raise(self, *args):
+        raise self.EXCEPTION(*(args + self.args))
+
+class _UnnecessaryCastError(CastError):
+    EXCEPTION = UnnecessaryCastError
+
+class _InvalidCastError(CastError):
+    EXCEPTION = InvalidCastError
 
 class Stack(object):
     def __init__(self, externals):
@@ -93,14 +108,21 @@ class Stack(object):
             raise AssertionError
         raise RedefinedIdentError(newname, "name", newname.name, prev)
 
-    def cast_slot(self, name_or_index, type):
+    def cast_slot(self, name_or_index, new_type):
         assert self.is_mutable
-        assert isinstance(type, Type)
+        assert isinstance(new_type, Type)
         index = self.__get_name_cast_index(name_or_index)
-
         elem = copy.copy(self.slots[index])
-        elem.type = type
+        old_type = elem.type
+
+        if new_type.basetype == old_type.basetype:
+            raise _UnnecessaryCastError()
+        if not old_type.is_computable or not new_type.is_computable:
+            raise _InvalidCastError(old_type, new_type)
+
+        elem.type = new_type
         self.slots[index] = elem
+        return old_type
 
     def __get_name_cast_index(self, name_or_index):
         if isinstance(name_or_index, integer):
@@ -403,7 +425,10 @@ class StackWalker(object):
             self.stack.push(Element(ftype.returntypes[rindex]))
 
     def visit_castop(self, op):
-        self.stack.cast_slot(op.slot, op.type)
+        try:
+            self.stack.cast_slot(op.slot, op.new_type)
+        except CastError as e:
+            e.decorate_and_raise(op, self.stack)
 
     def visit_compareop(self, op):
         # Check the types before mutating the stack

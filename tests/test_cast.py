@@ -22,9 +22,11 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from tests import TestCase
+from i8c.compiler import InvalidCastError
 from i8c.compiler import ParserError
 from i8c.compiler import StackError
 from i8c.compiler import UndefinedIdentError
+from i8c.compiler import UnnecessaryCastError
 
 SOURCE = """\
 typedef func ptr (int) derived_func_t
@@ -32,42 +34,78 @@ typedef ptr derived_ptr_t
 typedef int derived_int_t
 typedef opaque derived_opaque_t
 
-define test::test_cast returns ptr
-   argument int an_argument
+define test::test_cast returns %s
+   argument %s an_argument
 """
 
+TYPEGROUPS = (
+    ("int",             # builtin
+     "bool",            # builtin (derived)
+     "i32",             # buildin (derived, sized)
+     "derived_int_t"),  # user-defined (derived)
+
+    ("ptr",             # builtin
+     "derived_ptr_t"),  # user-defined (derived)
+
+    ("opaque",              # builtin
+     "derived_opaque_t"),   # user-defined (derived)
+
+    ("func ptr (int)",  # builtin (function)
+     "derived_func_t")) # user-defined (function, derived)
+
 class TestCast(TestCase):
-    def test_nocast_fails(self):
-        """Check that the test code fails without a cast."""
-        self.assertRaises(StackError, self.compile, SOURCE)
+    TYPES = []
+    CASTS = {}
+    for group in TYPEGROUPS:
+        for type1 in group:
+            TYPES.append(type1)
+            for type2 in group:
+                CASTS[(type1, type2)] = True
+    del group, type1, type2
+
+    @classmethod
+    def types_match(cls, type1, type2):
+        return cls.CASTS.get((type1, type2), False)
+
+    @classmethod
+    def can_cast(cls, type1, type2):
+        for ab in (("int", "ptr"), ("ptr", "int")):
+            if (cls.types_match(type1, ab[0])
+                  and cls.types_match(type2, ab[1])):
+                return True
+        return False
 
     def test_cast(self):
         """Check that cast works."""
-        for type in ("int",              # cast to same type
-                     "bool",             # upcast to builtin derived type
-                     "derived_int_t",    # upcast to user-defined derived type
-                     "i32",              # upcast to builtin sized type
-                     "ptr",              # cast to unrelated builtin type
-                     "derived_ptr_t",    # cast to unrelated derived type
-                     "func ptr (int)",   # cast to function
-                     "derived_func_t",   # cast to derived function type
-                     "opaque",           # cast to opaque
-                     "derived_opaque_t", # cast to derived opaque type
-                     ):
-            for slot in (0, "an_argument", 15, "no_such_slot"):
-                source = SOURCE + "cast %s, %s" % (slot, type)
-
-                if (type in ("ptr", "derived_ptr_t")
-                    and slot in (0, "an_argument")):
+        for rtype in self.TYPES:
+            for ptype in self.TYPES:
+                # Test without casting
+                source = SOURCE % (rtype, ptype)
+                if self.types_match(ptype, rtype):
                     error = None
-                elif type == "func ptr (int)":
-                    error = ParserError
-                elif slot == "no_such_slot":
-                    error = UndefinedIdentError
                 else:
                     error = StackError
+                self.__do_test(source, error)
 
-                if error is None:
-                    tree, output = self.compile(source)
-                else:
-                    self.assertRaises(error, self.compile, source)
+                # Test with a cast
+                for slot in (0, "an_argument", 15, "no_such_slot"):
+                    cast = "cast %s, %s" % (slot, rtype)
+                    if rtype == "func ptr (int)":
+                        error = ParserError
+                    elif slot == 15:
+                        error = StackError
+                    elif slot == "no_such_slot":
+                        error = UndefinedIdentError
+                    elif self.types_match(ptype, rtype):
+                        error = UnnecessaryCastError
+                    elif self.can_cast(ptype, rtype):
+                        error = None
+                    else:
+                        error = InvalidCastError
+                    self.__do_test(source + cast, error)
+
+    def __do_test(self, source, error):
+        if error is None:
+            tree, output = self.compile(source)
+        else:
+            self.assertRaises(error, self.compile, source)

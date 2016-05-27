@@ -45,6 +45,9 @@ Bug fixes
 
 * I8X now rejects chunks with versions other than expected.
 
+* The "cast" operator now rejects operations which are invalid or
+  unnecessary.
+
 Enhancements
 ~~~~~~~~~~~~
 
