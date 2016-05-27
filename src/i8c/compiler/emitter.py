@@ -142,9 +142,6 @@ class FuncRef(object):
         emitter.emit_uleb128(self.returns.offset, prefix + "rtypes offset")
 
 class NoOutputOpSkipper(object):
-    def visit_castop(self, op):
-        pass
-
     def visit_nameop(self, op):
         pass
 
@@ -374,6 +371,11 @@ class Emitter(NoOutputOpSkipper):
         self.emit_label(source)
 
     # Visitors for operations that need specific handling.
+
+    def visit_castop(self, op):
+        self.emit_op("cast_%s2%s" % (op.old_type.basetype.name,
+                                     op.new_type.basetype.name))
+        self.emit_uleb128(op.slot)
 
     def visit_constop(self, op):
         value = op.value

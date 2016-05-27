@@ -94,6 +94,8 @@ class Operation(object):
         constants.DW_OP_xderef_size: ["u1"],
         constants.I8_OP_load_external: ["uleb128"],
         constants.I8_OP_deref_int: ["sleb128"],
+        constants.I8_OP_cast_int2ptr: ["uleb128"],
+        constants.I8_OP_cast_ptr2int: ["uleb128"],
     }
 
     OPTABLE = {
@@ -283,6 +285,12 @@ class Operation(object):
         except KeyError as e:
             raise BadDerefError(self, ctx.env.memory, e.args[0])
         stack.push_intptr(struct.unpack(fmt, result)[0])
+
+    def exec_cast_int2ptr(self, ctx, externals, stack):
+        pass
+
+    def exec_cast_ptr2int(self, ctx, externals, stack):
+        pass
 
     def exec_drop(self, ctx, externals, stack):
         stack.pop_boxed()

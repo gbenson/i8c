@@ -223,3 +223,5 @@ DW_OP_PGI_omp_thread_num = 0xf8
 I8_OP_call = 0x100
 I8_OP_load_external = 0x101
 I8_OP_deref_int = 0x102
+I8_OP_cast_int2ptr = 0x103
+I8_OP_cast_ptr2int = 0x104

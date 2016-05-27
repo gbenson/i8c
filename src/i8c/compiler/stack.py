@@ -426,7 +426,7 @@ class StackWalker(object):
 
     def visit_castop(self, op):
         try:
-            self.stack.cast_slot(op.slot, op.new_type)
+            op.old_type = self.stack.cast_slot(op.slot, op.new_type)
         except CastError as e:
             e.decorate_and_raise(op, self.stack)
 

@@ -38,6 +38,9 @@ Bytecode changes
   from a number of bytes to a number of bits.  The bytecode chunk's
   version has been incremented to 3 to indicate this.
 
+* Two new wide operations I8_OP_cast_int2ptr and I8_OP_cast_ptr2int
+  have been added to support "cast" statements.
+
 Bug fixes
 ~~~~~~~~~
 

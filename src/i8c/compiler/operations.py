@@ -200,7 +200,7 @@ class CallOp(NoOperandsOp):
     dwarfname = "call"
 
 class CastOp(NonTerminalOp):
-    operands = ("slot", "new_type")
+    operands = ("slot", "old_type", "new_type")
 
     @property
     def slot(self):
