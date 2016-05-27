@@ -40,4 +40,4 @@ def usage_message_footer_for(program):
     return """
 
 Report %s bugs to infinity@sourceware.org
-Infinity home page: <https://sourceware.org/gdb/wiki/Infinity>""" % program
+Infinity home page: <https://infinitynotes.org/>""" % program
