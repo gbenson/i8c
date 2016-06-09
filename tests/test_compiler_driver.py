@@ -27,7 +27,6 @@ from i8c.compiler.driver import main
 import os
 import subprocess
 import sys
-import tempfile
 
 SOURCE = """\
 define test::func
@@ -44,13 +43,28 @@ class TestCompilerDriver(TestCase):
     should be in their own files.
     """
 
+    def __workdir(self):
+        test_id = self.id().split(".")
+        # Remove the common prefix and the name of the class
+        assert test_id[0] == "tests"
+        test_id.pop(0)
+        test_id.pop(-2)
+        return os.path.join(self.topdir, "tests", "output", *test_id)
+
     def setUp(self):
         # Set up a working directory
-        self.workdir = tempfile.mkdtemp()
+        self.workdir = self.__workdir()
+        if os.path.exists(self.workdir):
+            os.chmod(self.workdir, 0o700)
+            subprocess.call(("rm", "-rf", self.workdir))
+        os.makedirs(self.workdir)
         self.filebase = os.path.join(self.workdir, "test")
         self.infile = self.filebase + ".i8"
         with open(self.infile, "w") as fp:
             fp.write(SOURCE)
+        self.header = self.filebase + ".h"
+        with open(self.header, "w") as fp:
+            pass
         # Pipe stderr to a file
         tmpfile = os.path.join(self.workdir, "stderr")
         self.stderr_fd = os.open(tmpfile,
@@ -66,9 +80,6 @@ class TestCompilerDriver(TestCase):
         os.dup2(self.saved_stderr_fd, 2)
         os.close(self.saved_stderr_fd)
         os.close(self.stderr_fd)
-        # Delete the working directory
-        os.chmod(self.workdir, 0o700)
-        subprocess.call(("rm", "-rf", self.workdir))
 
     # Test all specifiable permutations of (with_cpp,with_i8c,with_asm)
 
@@ -136,3 +147,12 @@ class TestCompilerDriver(TestCase):
         open(infile2, "w")
         self.assertRaises(I8CError,
                           self.__run_permtest, ["-c", infile2], ".o")
+
+    # Test that -S -fpreprocessed -include FILE-include works
+
+    def test_include(self):
+        """Check that -S -fpreprocessed -include FILE works."""
+        self.__run_permtest(["-S", "-fpreprocessed",
+                             "-include", self.header], ".S")
+        with open(self.outfile) as fp:
+            self.assertEqual(fp.readline(), '#include "%s"\n' % self.header)

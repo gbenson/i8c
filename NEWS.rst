@@ -58,6 +58,10 @@ Enhancements
   "I8C_CPP" and "I8C_AS" to specify the external compiler it will
   use.  (https://github.com/gbenson/i8c/issues/13)
 
+* When invoked with "-S -fpreprocessed", I8C now prepends its output
+  with an "#include" statement for each "-include" option specified
+  on the command line.
+
 Removed features
 ~~~~~~~~~~~~~~~~
 

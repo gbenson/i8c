@@ -56,6 +56,10 @@ Options:
   -c         Compile and assemble, but do not link.
   -fpreprocessed
              Do not preprocess.
+  -include FILE
+             Add ‘#include "FILE"’ at the start of the output
+             when invoked with ‘-S -fpreprocessed’; passed to
+             GCC otherwise.
   -o FILE    Place the output into FILE.
 
 Note that I8C uses GCC both to preprocess its input (unless invoked
@@ -80,6 +84,7 @@ class CommandLine(object):
         self.with_i8c = True
         self.with_asm = True
         self.infiles = []
+        self.includes = []
         self.outfile = None
         self.cpp_args = []
         self.asm_args = []
@@ -175,6 +180,8 @@ class CommandLine(object):
             # All other options get passed through to both the
             # preprocessor and the assembler, if they are used.
             else:
+                if self.asm_args and self.asm_args[-1] == "-include":
+                    self.includes.append(arg)
                 self.cpp_args.append(arg)
                 self.asm_args.append(arg)
 
@@ -253,6 +260,10 @@ def main(args):
         raise I8CError("nothing to do!\n%s" % clue)
 
     outfile = io.BytesIO()
+    if not args.with_cpp and not args.with_asm:
+        for include in args.includes:
+            outfile.write(('#include "%s"\n' % include).encode("utf-8"))
+
     process, infile = setup_input(args)
     try:
         if args.with_i8c:
