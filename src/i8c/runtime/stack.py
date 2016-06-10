@@ -25,6 +25,7 @@ from __future__ import unicode_literals
 
 from ..compat import fprint, integer
 from . import functions
+from . import memory
 from . import types
 import ctypes
 import sys
@@ -98,6 +99,8 @@ class Stack(object):
             self, "_Stack__unbox_" + type.name.upper())(type, value)
 
     def __box_INTPTR(self, type, value):
+        if isinstance(value, memory.Block):
+            value = value.location
         assert isinstance(value, integer)
         return self.__uint_t(value)
 

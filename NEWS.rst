@@ -62,6 +62,9 @@ Enhancements
   with an "#include" statement for each "-include" option specified
   on the command line.
 
+* I8X now automatically unwraps memory.Block objects passed as
+  arguments to self.i8ctx.call.
+
 Removed features
 ~~~~~~~~~~~~~~~~
 
