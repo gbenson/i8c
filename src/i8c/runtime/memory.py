@@ -74,25 +74,25 @@ class Block(object):
     def __add__(self, offset):
         return OffsetBlock(self, offset)
 
-    def store_s8(self, offset, value):
+    def store_i8(self, offset, value):
         self.__store(offset, value, 8, True)
 
     def store_u8(self, offset, value):
         self.__store(offset, value, 8, False)
 
-    def store_s16(self, offset, value):
+    def store_i16(self, offset, value):
         self.__store(offset, value, 16, True)
 
     def store_u16(self, offset, value):
         self.__store(offset, value, 16, False)
 
-    def store_s32(self, offset, value):
+    def store_i32(self, offset, value):
         self.__store(offset, value, 32, True)
 
     def store_u32(self, offset, value):
         self.__store(offset, value, 32, False)
 
-    def store_s64(self, offset, value):
+    def store_i64(self, offset, value):
         self.__store(offset, value, 64, True)
 
     def store_u64(self, offset, value):
