@@ -51,7 +51,7 @@ if install_requires:
 
 setup(
     name="i8c",
-    version="0.0.3",
+    version="0.0.4",
     description="Infinity Note Compiler",
     long_description=long_description,
     license="GPLv3+ and LGPLv2.1+",
