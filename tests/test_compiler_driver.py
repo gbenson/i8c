@@ -137,7 +137,10 @@ class TestCompilerDriver(TestCase):
     def test_asm_failure(self):
         """Check that assembler errors are handled correctly."""
         os.chmod(self.workdir, 0o500)
-        self.__run_failtest()
+        try:
+            self.__run_failtest()
+        finally:
+            os.chmod(self.workdir, 0o700)
 
     # Test that multiple input files with no output file is caught
 
