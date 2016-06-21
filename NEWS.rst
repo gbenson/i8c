@@ -51,6 +51,8 @@ Bug fixes
 * The "cast" operator now rejects operations which are invalid or
   unnecessary.
 
+* I8C now rejects 64-bit dereferences in 32-bit notes.
+
 Enhancements
 ~~~~~~~~~~~~
 

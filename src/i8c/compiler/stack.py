@@ -288,6 +288,7 @@ class Element(object):
 
 class StackWalker(object):
     def visit_toplevel(self, toplevel):
+        self.wordsize = toplevel.wordsize
         for node in toplevel.functions:
             node.accept(self)
 
@@ -453,6 +454,11 @@ class StackWalker(object):
         if not rtype.is_computable:
             raise ParsedError(
                 op, "%s: invalid type for ‘deref’" % rtype.name)
+        sizedtype = rtype.sizedtype
+        if sizedtype is not None and sizedtype.nbits > self.wordsize:
+            raise ParsedError(
+                op, "can't ‘deref %s’ in %d-bit note" % (sizedtype.name,
+                                                         self.wordsize))
         # Check the types before mutating the stack
         # so any error messages show the whole setup
         type = self.stack[0].type

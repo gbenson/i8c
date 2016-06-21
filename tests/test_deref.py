@@ -46,7 +46,10 @@ class TestDeref(TestCase):
             argtype_is_ok = argtype.startswith("ptr")
             for rettype in self.TYPES:
                 rettype_is_func = rettype.startswith("func")
-                rettype_is_ok = not (rettype_is_func or rettype == "opaque")
+                rettype_is_ok = not (rettype_is_func
+                                     or rettype == "opaque"
+                                     or (self._wordsize == 32
+                                         and rettype.endswith("64")))
 
                 source = SOURCE % (argtype, rettype)
 
