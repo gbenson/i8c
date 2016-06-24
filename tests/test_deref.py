@@ -37,8 +37,8 @@ class TestDeref(TestCase):
     TYPES = ("ptr", "ptr_alias",
              "int", "bool",
              "opaque", "func ()", "func int (ptr)",
-             "u8", "u16", "u32", "u64",
-             "i8", "i16", "i32", "i64")
+             "uint8_t", "uint16_t", "uint32_t", "uint64_t",
+             "int8_t", "int16_t", "int32_t", "int64_t")
 
     def test_deref(self):
         """Check that deref works."""
@@ -49,7 +49,7 @@ class TestDeref(TestCase):
                 rettype_is_ok = not (rettype_is_func
                                      or rettype == "opaque"
                                      or (self._wordsize == 32
-                                         and rettype.endswith("64")))
+                                         and rettype[-4:-2] == "64"))
 
                 source = SOURCE % (argtype, rettype)
 
@@ -77,7 +77,7 @@ class TestDeref(TestCase):
 
                 self.assertEqual("deref_int", op.name)
                 if rettype[0] in "iu" and rettype != "int":
-                    sizecode = int(rettype[1:])
+                    sizecode = int(rettype[-4:-2].replace("t8", "8"))
                     if rettype[0] == "i":
                         sizecode *= -1
                 else:

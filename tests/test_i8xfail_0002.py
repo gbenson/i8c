@@ -28,7 +28,7 @@ from tests import TestCase
 SOURCE = """\
 define test::i8xfail_0002 returns int
     extern ptr sym1
-    deref sym1, u32
+    deref sym1, uint32_t
 """
 
 class TestI8XFail0002(TestCase):

@@ -4,6 +4,13 @@ What has changed in I8C?
 Changes since I8C 0.0.3
 -----------------------
 
+Source language changes
+~~~~~~~~~~~~~~~~~~~~~~~
+
+* The sized integer types for the deref operator have been renamed
+  to have the same names as the C99 exact width integer types, so
+  for example "s8" is now "int8_t" and "u32" is now "uint32_t".
+
 Bug fixes
 ~~~~~~~~~
 

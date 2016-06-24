@@ -41,7 +41,7 @@ define test::test_cast returns %s
 TYPEGROUPS = (
     ("int",             # builtin
      "bool",            # builtin (derived)
-     "i32",             # buildin (derived, sized)
+     "int32_t",         # builtin (derived, sized)
      "derived_int_t"),  # user-defined (derived)
 
     ("ptr",             # builtin
