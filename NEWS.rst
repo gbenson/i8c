@@ -1,6 +1,16 @@
 What has changed in I8C?
 ========================
 
+Changes since I8C 0.0.3
+-----------------------
+
+Bug fixes
+~~~~~~~~~
+
+* The test suite no longer leaves unwritable directories.
+
+* I8C now rejects 64-bit dereferences in 32-bit notes.
+
 Changes in I8C 0.0.3
 --------------------
 
@@ -50,8 +60,6 @@ Bug fixes
 
 * The "cast" operator now rejects operations which are invalid or
   unnecessary.
-
-* I8C now rejects 64-bit dereferences in 32-bit notes.
 
 Enhancements
 ~~~~~~~~~~~~
