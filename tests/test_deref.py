@@ -38,7 +38,8 @@ class TestDeref(TestCase):
              "int", "bool",
              "opaque", "func ()", "func int (ptr)",
              "uint8_t", "uint16_t", "uint32_t", "uint64_t",
-             "int8_t", "int16_t", "int32_t", "int64_t")
+             "int8_t", "int16_t", "int32_t", "int64_t",
+             "intptr_t", "uintptr_t")
 
     def test_deref(self):
         """Check that deref works."""
@@ -46,10 +47,11 @@ class TestDeref(TestCase):
             argtype_is_ok = argtype.startswith("ptr")
             for rettype in self.TYPES:
                 rettype_is_func = rettype.startswith("func")
-                rettype_is_ok = not (rettype_is_func
-                                     or rettype == "opaque"
-                                     or (self._wordsize == 32
-                                         and rettype[-4:-2] == "64"))
+                rettype_is_ok = ((rettype.startswith("ptr")
+                                  or rettype == "int"
+                                  or rettype.endswith("_t"))
+                                 and (self._wordsize >= 64
+                                      or rettype[-4:-2] != "64"))
 
                 source = SOURCE % (argtype, rettype)
 
@@ -76,10 +78,18 @@ class TestDeref(TestCase):
                     continue
 
                 self.assertEqual("deref_int", op.name)
-                if rettype[0] in "iu" and rettype != "int":
-                    sizecode = int(rettype[-4:-2].replace("t8", "8"))
-                    if rettype[0] == "i":
-                        sizecode *= -1
+                if rettype == "int":
+                    self.assertEqual(op.operand, 0)
+                    return
+                is_signed = rettype[0] != "u"
+                if not is_signed:
+                    rettype = rettype[1:]
+                rettype = rettype[3:-2]
+                if rettype == "ptr":
+                    sizecode = self._wordsize
                 else:
-                    sizecode = 0
+                    sizecode = int(rettype)
+                self.assertNotEqual(sizecode, 0)
+                if is_signed:
+                    sizecode *= -1
                 self.assertEqual(op.operand, sizecode)

@@ -436,10 +436,12 @@ class Emitter(NoOutputOpSkipper):
         if sizedtype is None:
             assert basetype is types.INTTYPE
             operand = 0
-        elif sizedtype.is_signed:
-            operand = -sizedtype.nbits
         else:
             operand = sizedtype.nbits
+            if operand is None:
+                operand = self.wordsize
+            if sizedtype.is_signed:
+                operand *= -1
 
         self.emit_op("deref_int", op.fileline)
         self.emit_sleb128(operand)

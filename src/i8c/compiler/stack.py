@@ -455,7 +455,9 @@ class StackWalker(object):
             raise ParsedError(
                 op, "%s: invalid type for ‘deref’" % rtype.name)
         sizedtype = rtype.sizedtype
-        if sizedtype is not None and sizedtype.nbits > self.wordsize:
+        if (sizedtype is not None
+                and sizedtype.nbits is not None
+                and sizedtype.nbits > self.wordsize):
             raise ParsedError(
                 op, "can't ‘deref %s’ in %d-bit note" % (sizedtype.name,
                                                          self.wordsize))

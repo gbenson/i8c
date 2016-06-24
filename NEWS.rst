@@ -11,12 +11,16 @@ Source language changes
   to have the same names as the C99 exact width integer types, so
   for example "s8" is now "int8_t" and "u32" is now "uint32_t".
 
+* Two new sized integer types "intptr_t" and "uintptr_t" have been
+  added.
+
 Bug fixes
 ~~~~~~~~~
 
 * The test suite no longer leaves unwritable directories.
 
 * I8C now rejects 64-bit dereferences in 32-bit notes.
+
 
 Changes in I8C 0.0.3
 --------------------

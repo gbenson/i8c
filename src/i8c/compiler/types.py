@@ -175,7 +175,8 @@ class SizedType(AliasType):
 
     def __init__(self, nbits, is_signed):
         assert not SizedType.class_init_complete
-        name = "%sint%d_t" % (not is_signed and "u" or "", nbits)
+        name = "%sint%s_t" % (not is_signed and "u" or "",
+                              nbits is None and "ptr" or nbits)
         AliasType.__init__(self, None, name, INTTYPE)
         self.nbits = nbits
         self.is_signed = is_signed
@@ -195,6 +196,7 @@ def __create_builtin_types():
     CoreType.class_init_complete = True
     add_builtin_type(AliasType(None, "bool", INTTYPE))
     for is_signed in range(2):
+        add_builtin_type(SizedType(None, is_signed))
         for shift in range(4):
             nbits = 8 << shift
             add_builtin_type(SizedType(nbits, is_signed))
