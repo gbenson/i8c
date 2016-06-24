@@ -48,7 +48,6 @@ class TestDeref(TestCase):
             for rettype in self.TYPES:
                 rettype_is_func = rettype.startswith("func")
                 rettype_is_ok = ((rettype.startswith("ptr")
-                                  or rettype == "int"
                                   or rettype.endswith("_t"))
                                  and (self._wordsize >= 64
                                       or rettype[-4:-2] != "64"))
@@ -78,9 +77,6 @@ class TestDeref(TestCase):
                     continue
 
                 self.assertEqual("deref_int", op.name)
-                if rettype == "int":
-                    self.assertEqual(op.operand, 0)
-                    return
                 is_signed = rettype[0] != "u"
                 if not is_signed:
                     rettype = rettype[1:]

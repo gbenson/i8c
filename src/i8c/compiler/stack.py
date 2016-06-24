@@ -451,16 +451,16 @@ class StackWalker(object):
 
     def visit_derefop(self, op):
         rtype = op.type
-        if not rtype.is_computable:
-            raise ParsedError(
-                op, "%s: invalid type for ‘deref’" % rtype.name)
-        sizedtype = rtype.sizedtype
-        if (sizedtype is not None
-                and sizedtype.nbits is not None
-                and sizedtype.nbits > self.wordsize):
-            raise ParsedError(
-                op, "can't ‘deref %s’ in %d-bit note" % (sizedtype.name,
-                                                         self.wordsize))
+        if rtype.basetype is not PTRTYPE:
+            sizedtype = rtype.sizedtype
+            if sizedtype is None:
+                raise ParsedError(
+                    op, "can't ‘deref’ unsized type ‘%s’" % rtype.name)
+            nbits = sizedtype.nbits
+            if nbits is not None and nbits > self.wordsize:
+                raise ParsedError(
+                    op, "can't ‘deref %s’ in %d-bit note" % (rtype.name,
+                                                             self.wordsize))
         # Check the types before mutating the stack
         # so any error messages show the whole setup
         type = self.stack[0].type

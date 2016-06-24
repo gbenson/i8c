@@ -264,6 +264,7 @@ class Operation(object):
         self.__exec_deref(ctx, externals, stack, 0)
 
     def exec_deref_int(self, ctx, externals, stack):
+        assert self.operand != 0
         self.__exec_deref(ctx, externals, stack, self.operand)
 
     def __exec_deref(self, ctx, externals, stack, size):

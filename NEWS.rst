@@ -14,6 +14,14 @@ Source language changes
 * Two new sized integer types "intptr_t" and "uintptr_t" have been
   added.
 
+* "deref int" is no longer valid.  Code using it should be changed
+  to "deref intptr_t" or "deref uintptr_t" as appropriate.
+
+Bytecode changes
+~~~~~~~~~~~~~~~~
+
+* The operand of I8_OP_deref_int may no longer be zero.
+
 Bug fixes
 ~~~~~~~~~
 

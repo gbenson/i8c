@@ -27,7 +27,7 @@ SOURCE = """\
 define test::deref_offset_base returns int
    extern ptr base
    argument int offset
-   deref offset(base), int
+   deref offset(base), intptr_t
 """
 
 class TestDerefOffsetBase(TestCase):

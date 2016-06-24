@@ -427,21 +427,20 @@ class Emitter(NoOutputOpSkipper):
                 self.emit_sleb128(value)
 
     def visit_derefop(self, op):
-        basetype = op.type.basetype
-        if basetype is types.PTRTYPE:
+        if op.type.basetype is types.PTRTYPE:
             self.emit_op("deref", op.fileline)
             return
 
         sizedtype = op.type.sizedtype
-        if sizedtype is None:
-            assert basetype is types.INTTYPE
-            operand = 0
-        else:
-            operand = sizedtype.nbits
-            if operand is None:
-                operand = self.wordsize
-            if sizedtype.is_signed:
-                operand *= -1
+        operand = sizedtype.nbits
+        if operand is None:
+            operand = self.wordsize
+        if sizedtype.is_signed:
+            operand *= -1
+
+        # "deref_int 0" used to mean a word-sized integer, but its
+        # signedness was ambiguous so this use has been deprecated.
+        assert operand != 0
 
         self.emit_op("deref_int", op.fileline)
         self.emit_sleb128(operand)
