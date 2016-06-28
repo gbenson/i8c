@@ -23,6 +23,7 @@ from __future__ import unicode_literals
 
 from . import RedefinedIdentError
 from . import names
+from . import parser
 from . import stack
 from . import types
 from . import visitors
@@ -30,13 +31,14 @@ from . import warn
 import copy
 
 class External(stack.Element):
-    def __init__(self, name, type):
+    def __init__(self, name, type, ast):
         if type.basetype is types.PTRTYPE:
             assert name.is_shortname
         else:
             assert type.is_function
             assert name.is_fullname
         stack.Element.__init__(self, type, name)
+        self.ast = ast
 
     @property
     def name(self):
@@ -53,7 +55,7 @@ class ExternTable(visitors.Visitable):
 
     def add(self, node, type):
         """Add an entry to the table."""
-        self.__add(node, External, type)
+        self.__add(node, External, type, node)
 
     def block(self, node):
         """Reserve a name in the table."""
@@ -71,9 +73,11 @@ class ExternTable(visitors.Visitable):
             if (isinstance(entry, External)
                   and isinstance(prev, External)
                   and entry.type.encoding == prev.type.encoding):
-                warn("unnecessary definition of ‘%s’" % entry.name,
-                     entry.name)
-                warn("‘%s’ was first defined here" % prev.name, prev.name)
+                if not isinstance(entry.ast, parser.Function):
+                    warn("unnecessary definition of ‘%s’" % entry.name,
+                         entry.name)
+                    warn("‘%s’ was first defined here" % prev.name,
+                         prev.name)
                 return
             raise RedefinedIdentError(entry.name, "name", key, prev.name)
 
