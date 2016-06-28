@@ -19,6 +19,9 @@ Source language changes
 
 * Long lines may be continued with backslashes.
 
+* Parameter and return types in "extern func" statements, and return
+  types in "define statements", may be named for clarity.
+
 Bytecode changes
 ~~~~~~~~~~~~~~~~
 

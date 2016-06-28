@@ -239,6 +239,11 @@ class TypeList(TreeNode):
             if stop_at is not None and isinstance(tokens[0], stop_at):
                 break
             self.add_child(Type.class_for(tokens)).pop_consume(tokens)
+            if tokens and isinstance(tokens[0], lexer.WORD):
+                # This is a named type.  We've no use for the name
+                # right now, but we could replace self.children[-1]
+                # with a TypeAndName if we need it for something.
+                tokens.pop(0)
             if tokens:
                 if stop_at is not None and isinstance(tokens[0], stop_at):
                     break
