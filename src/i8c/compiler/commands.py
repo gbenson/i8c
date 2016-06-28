@@ -40,7 +40,7 @@ class Variable(object):
 I8C_CC = Variable("I8C_CC", "gcc")
 
 # Program for running the C preprocessor, with results to standard output.
-I8C_CPP = Variable("I8C_CPP", "%s -E -x c" % I8C_CC)
+I8C_CPP = Variable("I8C_CPP", "%s -E -x assembler-with-cpp" % I8C_CC)
 
 # Program for compiling assembly files.
 I8C_AS = Variable("I8C_AS", "%s -x assembler-with-cpp" % I8C_CC)

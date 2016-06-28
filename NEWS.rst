@@ -17,6 +17,8 @@ Source language changes
 * "deref int" is no longer valid.  Code using it should be changed
   to "deref intptr_t" or "deref uintptr_t" as appropriate.
 
+* Long lines may be continued with backslashes.
+
 Bytecode changes
 ~~~~~~~~~~~~~~~~
 
