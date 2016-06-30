@@ -32,8 +32,6 @@ Bug fixes
 
 * The test suite no longer leaves unwritable directories.
 
-* I8C now rejects 64-bit dereferences in 32-bit notes.
-
 
 Changes in I8C 0.0.3
 --------------------

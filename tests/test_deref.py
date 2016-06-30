@@ -47,10 +47,8 @@ class TestDeref(TestCase):
             argtype_is_ok = argtype.startswith("ptr")
             for rettype in self.TYPES:
                 rettype_is_func = rettype.startswith("func")
-                rettype_is_ok = ((rettype.startswith("ptr")
-                                  or rettype.endswith("_t"))
-                                 and (self._wordsize >= 64
-                                      or rettype[-4:-2] != "64"))
+                rettype_is_ok = (rettype.startswith("ptr")
+                                 or rettype.endswith("_t"))
 
                 source = SOURCE % (argtype, rettype)
 
