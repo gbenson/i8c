@@ -100,6 +100,10 @@ class TestCompilerDriver(TestCase):
         """Check that preprocessed source to assembly works."""
         self.__run_permtest(["-S", "-fpreprocessed"], ".S")
 
+    def test_pp_to_wrap_asm(self):
+        """Check that preprocessed source to wrapped assembly works."""
+        self.__run_permtest(["-S", "-fpreprocessed", "--wrap-asm"], ".c")
+
     def test_pp_to_obj(self):
         """Check that preprocessed source to object code works."""
         self.__run_permtest(["-fpreprocessed", "-c"], ".o")
@@ -111,6 +115,10 @@ class TestCompilerDriver(TestCase):
     def test_i8_to_asm(self):
         """Check that i8 source to assembly works."""
         self.__run_permtest(["-S"], ".S")
+
+    def test_i8_to_wrap_asm(self):
+        """Check that i8 source to wrapped assembly works."""
+        self.__run_permtest(["-S", "--wrap-asm"], ".c")
 
     def test_i8_to_obj(self):
         """Check that i8 source to object code works."""

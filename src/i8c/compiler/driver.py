@@ -56,6 +56,8 @@ Options:
   -c         Compile and assemble, but do not link.
   -fpreprocessed
              Do not preprocess.
+  --wrap-asm
+             Wrap ‘-S’ output in C ‘asm’ statements.
   -o FILE    Place the output into FILE.
 
 Note that I8C uses GCC both to preprocess its input (unless invoked
@@ -83,6 +85,7 @@ class CommandLine(object):
         self.outfile = None
         self.cpp_args = []
         self.asm_args = []
+        self.wrap_asm = False
         self.__process_args(args)
 
     def __process_args(self, args):
@@ -126,6 +129,9 @@ class CommandLine(object):
 
             elif arg == "-fpreprocessed":
                 self.with_cpp = False
+
+            elif arg == "--wrap-asm":
+                self.wrap_asm = True
 
             # -o <file>  Place the output into <file>
             #
@@ -198,6 +204,8 @@ def guess_outfile(args):
     if args.with_asm:
         assert "-c" in args.asm_args
         ext = ".o"
+    elif args.wrap_asm:
+        ext = ".c"
     else:
         ext = ".S"
     if len(args.infiles) != 1:
@@ -238,7 +246,7 @@ def compile(readline, write, commandline=None):
     tree.accept(optimizer.BlockOptimizer())
     tree.accept(serializer.Serializer())
     tree.accept(optimizer.StreamOptimizer())
-    tree.accept(emitter.Emitter(write))
+    tree.accept(emitter.Emitter(write, commandline))
     return tree
 
 def main(args):

@@ -149,11 +149,20 @@ class NoOutputOpSkipper(object):
         pass
 
 class Emitter(NoOutputOpSkipper):
-    def __init__(self, write):
+    def __init__(self, write, commandline=None):
         self.__write = write
+        self.wrap_asm = commandline is not None and commandline.wrap_asm
 
     def write(self, text):
         self.__write(text.encode("utf-8"))
+
+    def write_asm(self, line, comment=None):
+        if self.wrap_asm and line:
+            line = r'  "%s\n"' % line.replace('"', r'\"')
+        if comment is not None:
+            line += "\t/* %s */" % comment
+        line += "\n"
+        self.write(line)
 
     def new_label(self):
         self.num_labels += 1
@@ -165,10 +174,7 @@ class Emitter(NoOutputOpSkipper):
         if not line.startswith("#") and self.__label is not None:
             line = "%s:%s" % (self.__label.name, line)
             self.__label = None
-        if comment is not None:
-            line += "\t/* %s */" % comment
-        line += "\n"
-        self.write(line)
+        self.write_asm(line, comment)
 
     def emit_newline(self):
         self.emit("")
@@ -178,30 +184,26 @@ class Emitter(NoOutputOpSkipper):
 
     def emit_label(self, label):
         if self.__label is not None:
-            self.write("%s:\n" % self.__label.name)
+            self.write_asm("%s:" % self.__label.name)
             self.__label = None
         self.__label = label
         label.emitted = True
 
-    def maybe_define_constant(self, name):
-        if name in self.__constants:
-            return
-        value = getattr(constants, name, None)
-        if value is None:
-            return
-        self.emit("#define %s 0x%02x" % (name, value))
-        self.__constants[name] = True
-
-    def to_string(self, value):
+    def __emit_constant(self, directive, value, comment):
         value = str(value)
-        if not (value[0].isdigit() or value[0] == "-"):
-            self.maybe_define_constant(value)
+        tmp = getattr(constants, value, None)
+        if tmp is not None:
+            if comment is None:
+                comment = value
+            else:
+                comment = "%s (%s)" % (value, comment)
             if value.startswith("I8_OP_"):
-                value += " - 0x100"
-        return value
+                tmp -= 0x100
+            value = tmp
+        self.emit(".%s %s" % (directive, value), comment)
 
     def __emit_nbyte(self, n, value, comment):
-        self.emit((".%sbyte " % n) + self.to_string(value), comment)
+        self.__emit_constant(("%sbyte" % n), value, comment)
 
     def emit_byte(self, value, comment=None):
         self.__emit_nbyte("", value, comment)
@@ -216,10 +218,10 @@ class Emitter(NoOutputOpSkipper):
         self.__emit_nbyte(8, value, comment)
 
     def emit_uleb128(self, value, comment=None):
-        self.emit(".uleb128 " + self.to_string(value), comment)
+        self.__emit_constant("uleb128", value, comment)
 
     def emit_sleb128(self, value, comment=None):
-        self.emit(".sleb128 " + self.to_string(value), comment)
+        self.__emit_constant("sleb128", value, comment)
 
     def emit_op(self, name, comment=None):
         widename = "I8_OP_" + name
@@ -234,15 +236,19 @@ class Emitter(NoOutputOpSkipper):
     def visit_toplevel(self, toplevel):
         self.num_labels = 0
         self.__label = None
-        self.__constants = {}
         self.wordsize = toplevel.wordsize
         bytes, check = divmod(self.wordsize, 8)
         assert check == 0
         self.emit_address = getattr(self, "emit_%dbyte" % bytes)
-        self.emit('.section .note.infinity, "", "note"')
+        if self.wrap_asm:
+            self.write("__asm__ (\n")
+        self.emit('.pushsection .note.infinity, "", "note"')
         self.emit(".balign 4")
         for node in toplevel.functions:
             node.accept(self)
+        self.emit(".popsection")
+        if self.wrap_asm:
+            self.write("  );\n")
 
     def visit_function(self, function):
         debug_print("\n%s:\n%s\n" % (function.name.value, function.ops))

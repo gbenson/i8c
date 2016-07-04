@@ -32,6 +32,12 @@ Bug fixes
 
 * The test suite no longer leaves unwritable directories.
 
+Enhancements
+~~~~~~~~~~~~
+
+* A new command-line option "--wrap-asm" has been added which causes
+  I8C to wrap its assembly language output in a C "asm" statement.
+
 Removed features
 ~~~~~~~~~~~~~~~~
 
