@@ -32,6 +32,12 @@ Bug fixes
 
 * The test suite no longer leaves unwritable directories.
 
+Removed features
+~~~~~~~~~~~~~~~~
+
+* I8C no longer inserts "#include" statements for "-include" options
+  when invoked with "-S -fpreprocessed".
+
 
 Changes in I8C 0.0.3
 --------------------

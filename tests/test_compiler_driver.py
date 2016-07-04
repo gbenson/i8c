@@ -62,9 +62,6 @@ class TestCompilerDriver(TestCase):
         self.infile = self.filebase + ".i8"
         with open(self.infile, "w") as fp:
             fp.write(SOURCE)
-        self.header = self.filebase + ".h"
-        with open(self.header, "w") as fp:
-            pass
         # Pipe stderr to a file
         tmpfile = os.path.join(self.workdir, "stderr")
         self.stderr_fd = os.open(tmpfile,
@@ -150,12 +147,3 @@ class TestCompilerDriver(TestCase):
         open(infile2, "w")
         self.assertRaises(I8CError,
                           self.__run_permtest, ["-c", infile2], ".o")
-
-    # Test that -S -fpreprocessed -include FILE-include works
-
-    def test_include(self):
-        """Check that -S -fpreprocessed -include FILE works."""
-        self.__run_permtest(["-S", "-fpreprocessed",
-                             "-include", self.header], ".S")
-        with open(self.outfile) as fp:
-            self.assertEqual(fp.readline(), '#include "%s"\n' % self.header)
