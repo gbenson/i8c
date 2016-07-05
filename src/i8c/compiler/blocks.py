@@ -324,3 +324,6 @@ class BlockCreator(object):
 
     def visit_returnop(self, op):
         self.add_op(ReturnOp(op))
+
+    def visit_warnop(self, op):
+        self.add_op(WarnOp(op))

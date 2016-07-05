@@ -22,10 +22,17 @@ Source language changes
 * Parameter and return types in "extern func" statements, and return
   types in "define statements", may be named for clarity.
 
+* A new operator "warn" has been added.  Its single argument is a
+  string that note consumers may display to the user.
+
 Bytecode changes
 ~~~~~~~~~~~~~~~~
 
 * The operand of I8_OP_deref_int may no longer be zero.
+
+* The new wide operation I8_OP_warn was added to support "warn"
+  statements.  Its single operand is an unsigned LEB128 integer
+  index into the string table.
 
 Bug fixes
 ~~~~~~~~~

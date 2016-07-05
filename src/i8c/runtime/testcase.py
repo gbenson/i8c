@@ -23,7 +23,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from ..compat import strtoint_c
+from ..compat import fprint, strtoint_c
 from . import I8XError, HeaderFileError, TestFileError
 from . import memory
 import copy
@@ -31,6 +31,7 @@ import inspect
 import os
 import platform
 import struct
+import sys
 try:
     import unittest2 as unittest
 except ImportError: # pragma: no cover
@@ -55,6 +56,10 @@ class BaseTestCase(unittest.TestCase):
     def read_memory(self, fmt, addr):
         """Hook method for reading bytes from memory."""
         return self.memory.read(addr, struct.calcsize(fmt))
+
+    def warn_caller(self, msg):
+        """Hook method for warning the caller about something."""
+        fprint(sys.stderr, "warning: " + msg)
 
 class TestCase(BaseTestCase):
     include_path = []

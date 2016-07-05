@@ -341,4 +341,12 @@ class SwapOp(NoOperandsOp):
 class RotOp(NoOperandsOp):
     pass
 
+class WarnOp(NonTerminalOp):
+    dwarfname = "warn"
+    operands = ("message",)
+
+    @property
+    def value(self):
+        return self.ast.operand.value
+
 XorOp = BinaryOp

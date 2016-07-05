@@ -96,6 +96,7 @@ class Operation(object):
         constants.I8_OP_deref_int: ["sleb128"],
         constants.I8_OP_cast_int2ptr: ["uleb128"],
         constants.I8_OP_cast_ptr2int: ["uleb128"],
+        constants.I8_OP_warn: ["string"],
     }
 
     OPTABLE = {
@@ -132,6 +133,7 @@ class Operation(object):
 
     def __init__(self, function, pc):
         src = function.bytecode + pc
+        self.get_string = function.get_string
         # Read the opcode
         self.opcode = ord(src[0])
         next = src + 1
@@ -160,6 +162,8 @@ class Operation(object):
         self.encoded = self.src.text
         # Counter for coverage checks
         self.hitcount = 0
+        # Tidy up
+        del self.get_string
 
     @property
     def size(self):
@@ -187,6 +191,10 @@ class Operation(object):
     def decode_sleb128(code):
         return leb128.read_sleb128(code, 0)
 
+    def decode_string(self, code):
+        size, index = self.decode_uleb128(code)
+        return size, self.get_string(index).text
+
     @property
     def name(self):
         result = self.NAMES[self.opcode]
@@ -203,7 +211,7 @@ class Operation(object):
                             " ".join("%02x" % ord(c)
                                      for c in self.encoded),
                             " ".join([self.NAMES[self.opcode]]
-                                     + list(map(str, self.operands))))
+                                     + list(map(repr, self.operands))))
 
     def execute(self, ctx, externals, stack):
         self.__trace(ctx, stack)
@@ -340,3 +348,6 @@ class Operation(object):
         b = stack.pop_boxed()
         stack.push_boxed(a)
         stack.push_boxed(b)
+
+    def exec_warn(self, ctx, externals, stack):
+        ctx.env.warn_caller(self.operand)

@@ -146,6 +146,13 @@ class Integer(Constant):
             raise ParserError(tokens)
         self.value = self.tokens[0].value
 
+class String(Constant):
+    def consume(self, tokens):
+        Constant.consume(self, tokens)
+        if not isinstance(self.tokens[0], lexer.STRING):
+            raise ParserError(tokens)
+        self.value = self.tokens[0].value
+
 class BuiltinConstant(Constant):
     def consume(self, tokens):
         Constant.consume(self, tokens)
@@ -617,6 +624,12 @@ class PickOp(OneArgOp):
 class ReturnOp(NoArgOp):
     has_own_handler = True
 
+class WarnOp(OneArgOp):
+    has_own_handler = True
+
+    def add_children(self, text):
+        self.add_child(String).consume(text)
+
 # XXX
 
 class Operations(TreeNode):
@@ -629,7 +642,8 @@ class Operations(TreeNode):
                "name": NameOp,
                "over": OverOp,
                "pick": PickOp,
-               "return": ReturnOp}
+               "return": ReturnOp,
+               "warn": WarnOp}
     for op in ("abs", "drop", "neg", "not", "rot", "swap"):
         CLASSES[op] = SimpleOp
     for op in ("and", "div", "call", "mod", "mul", "or",

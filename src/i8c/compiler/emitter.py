@@ -53,6 +53,14 @@ class String(object):
     def append(self, more):
         self.text += more
 
+    @staticmethod
+    def quote(text):
+        return '"%s"' % text.replace("\\", "\\\\").replace('"', '\\"')
+
+    @property
+    def quoted(self):
+        return String.quote(self.text)
+
 class StringTable(object):
     def __init__(self):
         self.strings = []
@@ -100,7 +108,7 @@ class StringTable(object):
     def emit(self, emitter):
         for label, text in self.entries:
             emitter.emit_label(label)
-            emitter.emit('.string "%s"' % text)
+            emitter.emit(".string " + String.quote(text))
 
 class ExternTable(object):
     def __init__(self, funcname, strings):
@@ -140,6 +148,58 @@ class FuncRef(object):
         emitter.emit_uleb128(self.name.offset, prefix + "name offset")
         emitter.emit_uleb128(self.params.offset, prefix + "ptypes offset")
         emitter.emit_uleb128(self.returns.offset, prefix + "rtypes offset")
+
+class TableBuilder(object):
+    def __init__(self, emitter):
+        self.emitter = emitter
+
+    def visit_function(self, function):
+        funcname = function.name.value
+        assert funcname.is_fullname
+        self.strings = StringTable()
+        self.externs = ExternTable(funcname, self.strings)
+
+        # Create strings for the signature chunk.
+        self.emitter.provider = self.strings.new(funcname.provider)
+        self.emitter.name = self.strings.new(funcname.name)
+        self.emitter.paramtypes = self.strings.new()
+        function.parameters.accept(self)
+        self.emitter.returntypes = self.strings.new()
+        function.returntypes.accept(self)
+
+        # Create externals and strings for the bytecode chunk.
+        function.ops.accept(self)
+
+        # Lay out the strings table.
+        self.strings.layout_table(self.emitter.new_label)
+
+        self.emitter.strings = self.strings
+        self.emitter.externs = self.externs
+
+    def visit_parameters(self, parameters):
+        for node in parameters.children:
+            node.accept(self)
+
+    def visit_parameter(self, param):
+        self.emitter.paramtypes.append(param.typename.type.encoding)
+
+    def visit_returntypes(self, returntypes):
+        for node in returntypes.children:
+            self.emitter.returntypes.append(node.type.encoding)
+
+    def visit_operationstream(self, ops):
+        for index, op in ops.stream:
+            op.accept(self)
+
+    def visit_loadop(self, op):
+        if op.is_loadext and op.external.type.is_function:
+            op.etable_index = self.externs.index_of(op.external)
+
+    def visit_warnop(self, op):
+        op.string = self.strings.new(op.value)
+
+    def visit_operation(self, op):
+        pass
 
 class NoOutputOpSkipper(object):
     def visit_nameop(self, op):
@@ -275,34 +335,19 @@ class Emitter(NoOutputOpSkipper):
         self.emit(".balign 4")
 
     def __visit_function(self, function):
-        funcname = function.name.value
-        assert funcname.is_fullname
-        strings = StringTable()
-        self.externs = ExternTable(funcname, strings)
+        # Build the strings and externals tables.
+        function.accept(TableBuilder(self))
 
-        # Create strings for the signature chunk.
-        self.provider = strings.new(funcname.provider)
-        self.name = strings.new(funcname.name)
-        self.paramtypes = strings.new()
-        function.parameters.accept(self)
-        self.returntypes = strings.new()
-        function.returntypes.accept(self)
-
-        # Emit the code chunks if required, laying out
-        # the externals table and creating its strings
-        # as a side-effect.
+        # Emit the code chunks if required.
         if self.has_code(function):
             self.emit_chunk("codeinfo", 1, Emitter.emit_codeinfo, function)
             self.emit_chunk("bytecode", 3, Emitter.emit_bytecode, function)
-
-        # Lay out the string table.
-        strings.layout_table(self.new_label)
 
         # Emit the remaining chunks.
         self.emit_chunk("signature", 2, Emitter.emit_signature)
         if self.externs.entries:
             self.emit_chunk("externals", 2, self.externs.emit)
-        self.emit_chunk("strings", 1, strings.emit)
+        self.emit_chunk("strings", 1, self.strings.emit)
 
     def emit_chunk(self, name, version, emitfunc, *args):
         start = self.new_label()
@@ -336,19 +381,6 @@ class Emitter(NoOutputOpSkipper):
 
     def emit_bytecode(self, function):
         function.ops.accept(self)
-
-    # Populate the string and extern tables
-
-    def visit_parameters(self, parameters):
-        for node in parameters.children:
-            node.accept(self)
-
-    def visit_parameter(self, param):
-        self.paramtypes.append(param.typename.type.encoding)
-
-    def visit_returntypes(self, returntypes):
-        for node in returntypes.children:
-            self.returntypes.append(node.type.encoding)
 
     # Emit the bytecode
 
@@ -462,8 +494,12 @@ class Emitter(NoOutputOpSkipper):
                 self.emit_address(op.external.name)
             else:
                 assert op.external.type.is_function
-                self.emit_uleb128(self.externs.index_of(op.external))
+                self.emit_uleb128(op.etable_index)
 
     def visit_plusuconst(self, op):
         self.emit_op("plus_uconst", op.fileline)
         self.emit_uleb128(op.value)
+
+    def visit_warnop(self, op):
+        self.emit_op("warn", op.fileline)
+        self.emit_uleb128(op.string.offset, op.string.quoted)

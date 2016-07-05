@@ -538,3 +538,6 @@ class StackWalker(object):
         b = self.stack.pop()
         self.stack.push(a)
         self.stack.push(b)
+
+    def visit_warnop(self, op):
+        pass

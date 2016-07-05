@@ -65,6 +65,11 @@ class NUMBER(Token):
     def __wrap_exception(self, msg):
         raise LexerError(self.filename, self.linenumber, msg)
 
+class STRING(Token):
+    def __init__(self, *args):
+        Token.__init__(self, *args)
+        self.value = eval(self.text)
+
 SIMPLE_CLASSES = {
     ",": COMMA,
     "(": OPAREN,
@@ -75,6 +80,18 @@ SIMPLE_CLASSES = {
 def parse_line_control(line):
     line = line.split()
     return eval(line[2]), int(line[1])
+
+def parse_quoted(line):
+    for index, c in zip(range(len(line)), line):
+        if index == 0:
+            term = c
+            skip = False
+        elif not skip and c == term:
+            return line[:index + 1]
+        else:
+            if skip and c not in '\\"':
+                break # Not supported by emitter.String.quote
+            skip = c == '\\'
 
 def generate_tokens(readline):
     filename, linenumber = None, 0
@@ -88,11 +105,16 @@ def generate_tokens(readline):
             filename, linenumber = parse_line_control(line)
             continue
         while line:
-            match = TOKEN.match(line)
-            if match is None:
+            tokentext = None
+            if line.startswith('"'):
+                tokentext = parse_quoted(line)
+            else:
+                match = TOKEN.match(line)
+                if match is not None:
+                    tokentext = match.group(0)
+            if tokentext is None:
                 raise LexerError(filename, linenumber,
                                  "invalid syntax: ‘%s’" % line.rstrip())
-            tokentext = match.group(0)
             assert len(tokentext) > 0
             assert line.startswith(tokentext)
             line = line[len(tokentext):]
@@ -105,6 +127,8 @@ def generate_tokens(readline):
                         klass = NEWLINE
                 elif tokentext[0] == "-" or tokentext[0].isdigit():
                     klass = NUMBER
+                elif tokentext[0] == '"':
+                    klass = STRING
                 else:
                     klass = WORD
             if klass is not None:
