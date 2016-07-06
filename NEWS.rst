@@ -48,6 +48,9 @@ Enhancements
 * I8X's mechanism for specifying builtin functions has been updated to
   allow testcases to override existing bytecode functions.
 
+* I8X now has a convenience mechanism to generate stub functions that
+  expect fixed arguments and return fixed results.
+
 Removed features
 ~~~~~~~~~~~~~~~~
 

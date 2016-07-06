@@ -32,6 +32,7 @@ import os
 import platform
 import struct
 import sys
+import weakref
 try:
     import unittest2 as unittest
 except ImportError: # pragma: no cover
@@ -115,3 +116,21 @@ class TestCase(BaseTestCase):
     @property
     def byteorder(self):
         return self.i8ctx.byteorder
+
+    def implement(self, func, args, rets):
+        provider, name = func.split("::")
+        setattr(self, "%s_%s_impl" % (provider, name),
+                StubImpl(weakref.ref(self), args, rets))
+
+class StubImpl(object):
+    def __init__(self, tref, args, rets):
+        self.tref = tref
+        self.args = args
+        self.rets = rets
+
+    def __call__(self, *args):
+        self.tref().assertEqual(args, self.args)
+        if len(self.rets) == 1:
+            return self.rets[0]
+        else:
+            return self.rets
