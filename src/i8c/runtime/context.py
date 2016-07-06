@@ -57,7 +57,15 @@ class Context(object):
             signature = sig_or_ref
             reference = None
         assert isinstance(signature, str)
-        # First check the registered functions
+        # First check for implementations in the testcase.
+        # We do this first to allow testcases to override
+        # functions which may actually exist.
+        if reference is not None:
+            impl = "%s_%s_impl" % (reference.provider, reference.name)
+            impl = getattr(self.env, impl, None)
+            if impl is not None:
+                return functions.BuiltinFunction(reference, impl)
+        # Now check the registered functions
         funclist = self.functions.get(signature, None)
         if funclist is not None:
             if len(funclist) == 1:
@@ -65,11 +73,6 @@ class Context(object):
             elif len(funclist) > 1:
                 raise AmbiguousFunctionError(sig_or_ref)
         # No registered function with this name
-        if reference is not None:
-            impl = "call_%s_%s" % (reference.provider, reference.name)
-            impl = getattr(self.env, impl, None)
-            if impl is not None:
-                return functions.BuiltinFunction(reference, impl)
         raise UndefinedFunctionError(sig_or_ref)
 
     # Methods to XXX

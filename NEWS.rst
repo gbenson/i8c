@@ -45,6 +45,9 @@ Enhancements
 * A new command-line option "--wrap-asm" has been added which causes
   I8C to wrap its assembly language output in a C "asm" statement.
 
+* I8X's mechanism for specifying builtin functions has been updated to
+  allow testcases to override existing bytecode functions.
+
 Removed features
 ~~~~~~~~~~~~~~~~
 
