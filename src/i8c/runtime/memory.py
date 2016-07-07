@@ -98,12 +98,18 @@ class Block(object):
     def store_u64(self, offset, value):
         self.__store(offset, value, 64, False)
 
+    def store_ixx(self, offset, value):
+        self.__store(offset, value, self.wordsize, True)
+
+    def store_uxx(self, offset, value):
+        self.__store(offset, value, self.wordsize, False)
+
     def store_ptr(self, offset, value):
         if value in (0, None): # 0 == NULL
             value = 0
         else:
             assert isinstance(value, Block)
-        self.__store(offset, value, self.wordsize, False)
+        self.store_uxx(offset, value)
 
     def __store(self, offset, value, nbits, is_signed):
         offset += self.offset
