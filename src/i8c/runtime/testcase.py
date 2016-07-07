@@ -23,7 +23,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from ..compat import fprint, strtoint_c
+from ..compat import strtoint_c
 from . import I8XError, HeaderFileError, TestFileError
 from . import memory
 import copy
@@ -31,7 +31,6 @@ import inspect
 import os
 import platform
 import struct
-import sys
 import weakref
 try:
     import unittest2 as unittest
@@ -60,7 +59,7 @@ class BaseTestCase(unittest.TestCase):
 
     def warn_caller(self, msg):
         """Hook method for warning the caller about something."""
-        fprint(sys.stderr, "warning: " + msg)
+        self.fail("unexpected warning: " + msg)
 
 class TestCase(BaseTestCase):
     include_path = []
