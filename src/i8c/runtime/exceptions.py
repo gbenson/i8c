@@ -37,8 +37,8 @@ class InputFileError(I8XError):
     def __init__(self, filename, msg):
         I8XError.__init__(self, msg, filename)
 
-class ELFFileError(InputFileError):
-    """An error occurred processing an ELF file.
+class ProviderError(InputFileError):
+    """An error occurred processing a note-providing file.
     """
 
 class TestFileError(InputFileError):

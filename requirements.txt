@@ -1,0 +1,3 @@
+# Remember to update setup.py
+arpy
+pyelftools >= 0.24

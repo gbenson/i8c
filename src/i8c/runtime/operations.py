@@ -179,9 +179,7 @@ class Operation(object):
 
     @staticmethod
     def decode_address(code):
-        fmt = code.byteorder + {32: b"I", 64: b"Q"}[code.wordsize]
-        size = struct.calcsize(fmt)
-        return size, struct.unpack(fmt, code[:size].bytes)[0]
+        return code.wordsize >> 3, code.symbol_names
 
     @staticmethod
     def decode_uleb128(code):
@@ -250,7 +248,7 @@ class Operation(object):
 
     def exec_addr(self, ctx, externals, stack):
         exception = None
-        for name in self.src[1:].symbol_names:
+        for name in self.operand:
             try:
                 value = ctx.env.lookup_symbol(name)
             except KeyError as e:

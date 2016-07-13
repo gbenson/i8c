@@ -25,7 +25,7 @@ from __future__ import unicode_literals
 
 from ..compat import fprint, str
 from . import *
-from . import elffile
+from . import provider
 from . import functions
 from . import stack
 import sys
@@ -78,19 +78,19 @@ class Context(object):
     # Methods to XXX
 
     def import_notes(self, filename):
-        ef = elffile.open(filename)
-        if self.wordsize is None:
-            self.wordsize = ef.wordsize
-        else:
-            assert ef.wordsize == self.wordsize
-        if self.byteorder is None:
-            self.byteorder = ef.byteorder
-        else:
-            assert ef.byteorder == self.byteorder
-        for note in ef.infinity_notes:
-            self.import_note(note)
+        with provider.open(filename) as np:
+            for note in np.infinity_notes:
+                self.import_note(note)
 
     def import_note(self, note):
+        if self.wordsize is None:
+            self.wordsize = note.wordsize
+        else:
+            assert note.wordsize == self.wordsize
+        if self.byteorder is None:
+            self.byteorder = note.byteorder
+        else:
+            assert note.byteorder == self.byteorder
         self.register_function(functions.BytecodeFunction(note))
 
     def new_stack(self):

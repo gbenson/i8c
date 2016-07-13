@@ -31,8 +31,13 @@ here = path.realpath(path.dirname(__file__))
 with open(path.join(here, "README.rst"), encoding="utf-8") as fp:
     long_description = fp.read()
 
+# Remember to update requirements.txt
+install_requires = [
+    "arpy",
+    "pyelftools >= 0.24",
+]
+
 # Ensure we have a suitable unittest
-install_requires = []
 try:
     import unittest2 as unittest
 except ImportError:
@@ -41,7 +46,7 @@ if not hasattr(unittest.TestCase, "assertIsInstance"):
     install_requires.append("unittest2")
 
 # Ensure we don't ever release packages requiring unittest2
-if install_requires:
+if "unittest2" in install_requires:
     for arg in sys.argv[1:]:
         for bail in ("register", "upload", "dist"):
             if arg.find(bail) >= 0:
@@ -70,11 +75,8 @@ setup(
         "Operating System :: OS Independent",
         "Topic :: Software Development :: Compilers",
         "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.1",
-        "Programming Language :: Python :: 3.2",
         "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",

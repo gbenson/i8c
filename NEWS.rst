@@ -51,11 +51,20 @@ Enhancements
 * I8X now has a convenience mechanism to generate stub functions that
   expect fixed arguments and return fixed results.
 
+* I8X can now import notes from ar archives.  This change introduces
+  dependencies on two packages, arpy and pyelftools.
+
 Removed features
 ~~~~~~~~~~~~~~~~
 
 * I8C no longer inserts "#include" statements for "-include" options
   when invoked with "-S -fpreprocessed".
+
+* I8X no longer runs with unmodified Python 2.6 because pyelftools
+  requires collections.OrderedDict which was added in Python 2.7.
+
+* I8X no longer runs with Python 3.1 or 3.2 because arpy does not
+  work with these versions of Python.
 
 
 Changes in I8C 0.0.3
