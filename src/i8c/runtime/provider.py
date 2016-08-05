@@ -194,6 +194,10 @@ class Note(object):
         self.bytes = bytes
 
     @property
+    def filename(self):
+        return self.elf.filename
+
+    @property
     def wordsize(self):
         return self.elf.wordsize
 
@@ -247,6 +251,10 @@ class NoteSlice(object):
         start = self.start + offset
         assert start <= self.limit
         return NoteSlice(self.note, slice(start, self.limit))
+
+    @property
+    def filename(self):
+        return self.note.filename
 
     @property
     def wordsize(self):
