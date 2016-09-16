@@ -18,5 +18,5 @@ tests/output/
 .coverage
 htmlcov/
 
-*.egg/
+*.egg
 .eggs/
