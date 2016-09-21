@@ -42,7 +42,8 @@ def fprint(file, text=""):
 
 def fwrite(file, text):
     if sys.version_info < (3,):
-        text = text.encode(getattr(file, "encoding", None) or "utf-8")
+        text = text.encode(getattr(file, "encoding", None) or "utf-8",
+                           "replace")
     file.write(text)
 
 def strtoint_c(text, exception):
