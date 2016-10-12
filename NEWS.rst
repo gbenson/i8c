@@ -1,8 +1,8 @@
 What has changed in I8C?
 ========================
 
-Changes since I8C 0.0.3
------------------------
+Changes in I8C 0.0.4
+--------------------
 
 Source language changes
 ~~~~~~~~~~~~~~~~~~~~~~~
