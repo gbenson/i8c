@@ -56,7 +56,7 @@ if "unittest2" in install_requires:
 
 setup(
     name="i8c",
-    version="0.0.4",
+    version="0.0.5",
     description="Infinity Note Compiler",
     long_description=long_description,
     license="GPLv3+ and LGPLv2.1+",
