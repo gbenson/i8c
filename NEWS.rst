@@ -43,6 +43,8 @@ Bug fixes
 
 * The test suite no longer leaves unwritable directories.
 
+* "i8c --help" no longer fails when LANG is unset.
+
 Enhancements
 ~~~~~~~~~~~~
 
