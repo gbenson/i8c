@@ -166,7 +166,7 @@ class CompareOp(NoOperandsOp):
                "ne": "eq", "ge": "lt", "gt": "le"}
 
     def __init__(self, ast):
-        NonTerminalOp.__init__(self, ast)
+        NoOperandsOp.__init__(self, ast)
         self.reversed = False
 
     @property
