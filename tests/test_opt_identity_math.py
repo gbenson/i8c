@@ -43,3 +43,17 @@ class TestEliminateIdentityMath(TestCase):
         for op, identity in IDENTITIES:
             tree, output = self.compile(SOURCE % (identity, op))
             self.assertEqual(len(output.ops), 0)
+
+    def test_noelim_nonidentity_math(self):
+        """Check that non-identity math and logic are not eliminated."""
+        for op, identity in IDENTITIES:
+            tree, output = self.compile(SOURCE % (identity + 1, op))
+            if op == "add":
+                expect_ops = ["plus_uconst"]
+            elif op in ("mul", "div"):
+                expect_ops = ["lit2", op]
+            else:
+                if op == "sub":
+                    op = "minus"
+                expect_ops = ["lit1", op]
+            self.assertEqual(expect_ops, output.opnames)
