@@ -97,6 +97,7 @@ class BlockOptimizer(Optimizer):
         self.try_eliminate_lit0_cmp_before_bra(block)
         self.try_reverse_branch_exits(block)
         self.try_peephole(block, self.try_eliminate_identity_math, 2)
+        self.try_peephole(block, self.try_eliminate_constant_math, 2)
         self.try_peephole(block, self.try_use_plus_uconst, 2)
 
     def __tecbcc_helper(self, block):
@@ -294,6 +295,43 @@ class BlockOptimizer(Optimizer):
         removed_op = block.ops.pop(index)
         assert removed_op.is_load_constant
 
+        return True
+
+    def try_eliminate_constant_math(self, block, index):
+        # This optimizer handles both unary and binary operations,
+        # but try_peephole should be called with size==2 for unary
+        # operations and size==3 for binary ones.  We cope with
+        # this by calling try_peephole with size==2, looking for
+        # an operation at index+1, then backtracking if necessary
+        # for binary operations.
+        index += 1          # Advance to the operation.
+        op = block.ops[index]
+        if not hasattr(op, "impl"):
+            return False
+        index -= op.arity   # Backtrack
+        if index < 0:
+            return False
+
+        for i in range(op.arity):
+            if not block.ops[i].is_load_constant:
+                return False
+            if block.ops[i].type.basetype is not INTTYPE:
+                return False
+
+        self.debug_print_hit(block.ops[index])
+
+        if op.arity == 1:
+            block.ops[index].value = op.impl(block.ops[index].value)
+        elif op.arity == 2:
+            block.ops[index].value = op.impl(block.ops[index].value,
+                                             block.ops[index + 1].value)
+            removed_op = block.ops.pop(index + 1)
+            assert removed_op.is_load_constant
+        else:
+            raise NotImplementedError
+
+        removed_op = block.ops.pop(index + 1)
+        assert removed_op is op
         return True
 
     def try_use_plus_uconst(self, block, index):

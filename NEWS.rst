@@ -4,6 +4,12 @@ What has changed in I8C?
 Changes since I8C 0.0.4
 -----------------------
 
+Enhancements
+~~~~~~~~~~~~
+
+* I8C now optimizes out some constant math operations, specifically
+  "add", "mul", "neg" and "sub".
+
 
 Changes in I8C 0.0.4
 --------------------

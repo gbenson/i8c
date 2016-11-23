@@ -25,6 +25,7 @@ from ..compat import integer
 from . import parser
 from . import visitors
 from .types import PTRTYPE
+import operator
 
 class Operation(visitors.Visitable):
     """Base class for all operations.
@@ -186,6 +187,7 @@ AndOp = BinaryOp
 
 class AddOp(BinaryOp):
     dwarfname = "plus"
+    impl = operator.add
 
 class PlusUConst(NonTerminalOp):
     dwarfname = "plus_uconst"
@@ -213,13 +215,13 @@ class CastOp(NonTerminalOp):
 class ConstOp(NonTerminalOp):
     operands = ("type", "value")
 
+    def __init__(self, ast):
+        NonTerminalOp.__init__(self, ast)
+        self.value = self.ast.operand.value
+
     @property
     def type(self):
         return self.ast.operand.type
-
-    @property
-    def value(self):
-        return self.ast.operand.value
 
 class DerefOp(NonTerminalOp):
     arity, verb = 1, "dereference to"
@@ -306,7 +308,9 @@ class LoadOp(NonTerminalOp):
         return self.ast.name.value
 
 ModOp = BinaryOp
-MulOp = BinaryOp
+
+class MulOp(BinaryOp):
+    impl = operator.mul
 
 class NameOp(NonTerminalOp):
     operands = ("slot", "newname")
@@ -319,7 +323,9 @@ class NameOp(NonTerminalOp):
     def newname(self):
         return self.ast.newname.value
 
-NegOp = UnaryOp
+class NegOp(UnaryOp):
+    impl = operator.neg
+
 NotOp = UnaryOp
 OrOp = BinaryOp
 
@@ -334,6 +340,7 @@ ShraOp = BinaryOp
 
 class SubOp(BinaryOp):
     dwarfname = "minus"
+    impl = operator.sub
 
 class SwapOp(NoOperandsOp):
     pass
