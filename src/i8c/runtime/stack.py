@@ -27,15 +27,13 @@ from ..compat import fprint, integer
 from . import functions
 from . import memory
 from . import types
-import ctypes
 import sys
 
 # XXX most every assert here should be a proper error
 
 class Stack(object):
-    def __init__(self, wordsize):
-        self.__sint_t = getattr(ctypes, "c_int%d" % wordsize)
-        self.__uint_t = getattr(ctypes, "c_uint%d" % wordsize)
+    def __init__(self, ctx):
+        self.ctx = ctx
         self.slots = []
 
     # Generic push and pop
@@ -83,7 +81,7 @@ class Stack(object):
         return self.pop_typed(types.IntPtrType)
 
     def pop_signed(self):
-        return self.__sint_t(self.pop_unsigned()).value
+        return self.ctx.to_signed(self.pop_unsigned())
 
     def pop_function(self):
         return self.__unbox_FUNCTION(None, self.pop_boxed())
@@ -102,10 +100,10 @@ class Stack(object):
         if isinstance(value, memory.Block):
             value = value.location
         assert isinstance(value, integer)
-        return self.__uint_t(value)
+        return self.ctx.uint_t(value)
 
     def __unbox_INTPTR(self, type, boxed):
-        assert isinstance(boxed, self.__uint_t)
+        assert isinstance(boxed, self.ctx.uint_t)
         return boxed.value
 
     def __box_FUNCTION(self, type, value):
@@ -136,7 +134,7 @@ class Stack(object):
     def trace(self, tracelevel):
         depth = tracelevel + 1
         for item, index in zip(self.slots[:depth], range(depth)):
-            if isinstance(item, self.__uint_t):
+            if isinstance(item, self.ctx.uint_t):
                 value = item.value
                 item = "%d" % value
                 if value < 0 or value > 15:

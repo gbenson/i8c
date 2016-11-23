@@ -28,6 +28,7 @@ from . import *
 from . import provider
 from . import functions
 from . import stack
+import ctypes
 import sys
 
 class Context(object):
@@ -85,6 +86,8 @@ class Context(object):
     def import_note(self, note):
         if self.wordsize is None:
             self.wordsize = note.wordsize
+            self.sint_t = getattr(ctypes, "c_int%d" % self.wordsize)
+            self.uint_t = getattr(ctypes, "c_uint%d" % self.wordsize)
         else:
             assert note.wordsize == self.wordsize
         if self.byteorder is None:
@@ -94,7 +97,7 @@ class Context(object):
         self.register_function(functions.BytecodeFunction(note))
 
     def new_stack(self):
-        return stack.Stack(self.wordsize)
+        return stack.Stack(self)
 
     def call(self, signature, *args):
         function = self.get_function(signature)
@@ -126,3 +129,7 @@ class Context(object):
     def trace_return(self, location, stack):
         self.__trace(location, stack, "", "RETURN")
         self.__last_traced = None
+
+    def to_signed(self, value):
+        """Convert an unsigned integer to signed, wrt self.wordsize."""
+        return self.sint_t(value).value
