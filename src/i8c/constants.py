@@ -23,7 +23,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-NT_GNU_INFINITY = 5
+NT_GNU_INFINITY = 8995
 
 I8_CHUNK_SIGNATURE = 1
 I8_CHUNK_BYTECODE = 2

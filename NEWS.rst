@@ -4,6 +4,15 @@ What has changed in I8C?
 Changes since I8C 0.0.4
 -----------------------
 
+Note format changes
+~~~~~~~~~~~~~~~~~~~
+
+* NT_GNU_INFINITY has been redefined from 5 to 8995, to avoid
+  collision with both the new NT_GNU_PROPERTY_TYPE_0 note type,
+  and with any subsequent note types introduced before I8C 1.0.
+  NT_GNU_INFINITY will be updated again to its final value with
+  the release of I8C 1.0.
+
 Enhancements
 ~~~~~~~~~~~~
 
