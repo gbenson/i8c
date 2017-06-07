@@ -1,6 +1,11 @@
 What has changed in I8C?
 ========================
 
+Changes since I8C 0.0.5
+-----------------------
+
+
+
 Changes in I8C 0.0.5
 --------------------
 
