@@ -1,8 +1,8 @@
 What has changed in I8C?
 ========================
 
-Changes since I8C 0.0.4
------------------------
+Changes in I8C 0.0.5
+--------------------
 
 Note format changes
 ~~~~~~~~~~~~~~~~~~~
