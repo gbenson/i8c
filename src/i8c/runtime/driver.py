@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2015-16 Red Hat, Inc.
+# Copyright (C) 2015-17 Red Hat, Inc.
 # This file is part of the Infinity Note Execution Environment.
 #
 # The Infinity Note Execution Environment is free software; you can
@@ -75,7 +75,7 @@ class TestSuite(unittest.TestSuite):
         unittest.TestSuite.__init__(self, *args, **kwargs)
         self.__loader = unittest.TestLoader()
 
-    def load_i8tests(self, ctx, filename):
+    def load_i8tests(self, filename):
         name = os.path.splitext(os.path.basename(filename))[0]
         module = load_module_from_source(name, filename)
         for name in dir(module):
@@ -137,7 +137,7 @@ def main(args):
 
     tests = TestSuite()
     for filename in args:
-        tests.load_i8tests(ctx, filename)
+        tests.load_i8tests(filename)
 
     result = unittest.TextTestRunner(stream=sys.stdout,
                                      verbosity=2).run(tests)
