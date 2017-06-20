@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2015-16 Red Hat, Inc.
+# Copyright (C) 2015-17 Red Hat, Inc.
 # This file is part of the Infinity Note Compiler.
 #
 # The Infinity Note Compiler is free software: you can redistribute it
@@ -42,7 +42,7 @@ class SourceReader(io.BytesIO):
 
 class TestOutput(runtime.Context):
     def __init__(self, testcase, index, asm):
-        runtime.Context.__init__(self)
+        runtime.Context.__init__(self, testcase)
         self.__set_fileprefix(testcase, index)
         # Store the assembly language we generated
         asmfile = self.fileprefix + ".S"
@@ -60,7 +60,6 @@ class TestOutput(runtime.Context):
         # Make sure we got at least one note
         testcase.assertGreaterEqual(len(self.notes), 1)
         # Setup for note execution
-        self.env = testcase
         self.memory = testcase.memory
         self.memory.env = self
         self.register_symbol = testcase.register_symbol

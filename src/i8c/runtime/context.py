@@ -32,13 +32,21 @@ import ctypes
 import sys
 
 class Context(object):
-    def __init__(self):
+    def __init__(self, env=None):
+        self.__env = env
         self.functions = {}
-        self.env = None
         self.wordsize = None
         self.byteorder = None
         self.tracelevel = 0
         self.__last_traced = None
+
+    @property
+    def env(self):
+        return self.__env
+
+    @env.setter
+    def env(self, value): # pragma: no cover
+        raise RuntimeError
 
     # Methods to XXX
 

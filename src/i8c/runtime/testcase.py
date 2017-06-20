@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2015-16 Red Hat, Inc.
+# Copyright (C) 2015-17 Red Hat, Inc.
 # This file is part of the Infinity Note Execution Environment.
 #
 # The Infinity Note Execution Environment is free software; you can
@@ -25,6 +25,7 @@ from __future__ import unicode_literals
 
 from ..compat import strtoint_c
 from . import I8XError, HeaderFileError, TestFileError
+from . import context
 from . import memory
 import copy
 import inspect
@@ -101,12 +102,13 @@ class TestCase(BaseTestCase):
                 raise HeaderFileError(filename, linenumber)
 
     def run(self, *args, **kwargs):
-        self.addCleanup(self.__restore_env, self.i8ctx.env)
-        self.i8ctx.env = self
-        return BaseTestCase.run(self, *args, **kwargs)
-
-    def __restore_env(self, saved_env):
-        self.i8ctx.env = saved_env
+        ctx = context.Context(self)
+        self.__ctxp.populate(ctx)
+        try:
+            self.i8ctx = ctx
+            return BaseTestCase.run(self, *args, **kwargs)
+        finally:
+            del self.i8ctx
 
     @property
     def wordsize(self):

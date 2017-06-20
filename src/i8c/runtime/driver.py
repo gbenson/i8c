@@ -85,6 +85,19 @@ class TestSuite(unittest.TestSuite):
                 and issubclass(item, TestCase)):
                 self.addTest(self.__loader.loadTestsFromTestCase(item))
 
+class ContextPopulator(object):
+    def __init__(self):
+        self.providers = []
+        self.tracelevel = 0
+
+    def import_notes(self, filename):
+        self.providers.append(filename)
+
+    def populate(self, ctx):
+        ctx.tracelevel = self.tracelevel
+        for provider in self.providers:
+            ctx.import_notes(provider)
+
 def main(args):
     clue = "Try ‘i8x --help’ for more information."
     try:
@@ -94,7 +107,7 @@ def main(args):
             ("help", "version", "import=", "quick", "trace"))
     except getopt.GetoptError as e:
         raise I8XError("%s\n%s" % (e, clue))
-    ctx = context.Context()
+    ctxp = ContextPopulator()
     quickmode = False
     for opt, arg in opts:
         if opt == "--help":
@@ -106,16 +119,18 @@ def main(args):
         elif opt == "-I":
             TestCase.include_path.append(arg)
         elif opt in ("-i", "--import"):
-            ctx.import_notes(arg)
+            ctxp.import_notes(arg)
         elif opt in ("-q", "--quick"):
             quickmode = True
         elif opt in ("-t", "--trace"):
-            ctx.tracelevel += 1
+            ctxp.tracelevel += 1
 
     if len(args) < 1:
         raise I8XError("nothing to do!\n%s" % clue)
 
     if quickmode:
+        ctx = context.Context()
+        ctxp.populate(ctx)
         function = args.pop(0)
         args = [strtoint_c(arg, I8XError) for arg in args]
         result = map(str, ctx.call(function, *args))
@@ -133,7 +148,7 @@ def main(args):
     print("I8X", version(), "on Python", sys.version)
     print()
 
-    TestCase.i8ctx = ctx
+    TestCase._TestCase__ctxp = ctxp
 
     tests = TestSuite()
     for filename in args:
@@ -144,6 +159,8 @@ def main(args):
     if not result.wasSuccessful():
         return 1
 
+# XXX coverage code, doesn't work with per-TestCase contexts
+if False: # pragma: no cover
     report = []
     ops_hit = opcount = maxlen = 0
     for sig, funclist in sorted(ctx.functions.items()):
