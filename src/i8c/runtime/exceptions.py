@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2015-16 Red Hat, Inc.
+# Copyright (C) 2015-17 Red Hat, Inc.
 # This file is part of the Infinity Note Execution Environment.
 #
 # The Infinity Note Execution Environment is free software; you can
@@ -56,8 +56,11 @@ class HeaderFileError(InputFileError):
 class NoteError(I8XError):
     """An error was detected while decoding a note.
     """
-    def __init__(self, es, msg):
-        I8XError.__init__(self, msg, "%s[0x%08x]" % (es.filename, es.start))
+    def __init__(self, elfslice, msg):
+        args = [self, msg]
+        if elfslice is not None:
+            args.append("%s[0x%08x]" % (elfslice.filename, elfslice.start))
+        I8XError.__init__(*args)
 
 class CorruptNoteError(NoteError):
     """A corrupt note was detected.
@@ -71,29 +74,14 @@ class UnhandledNoteError(NoteError):
     def __init__(self, elfslice):
         NoteError.__init__(self, elfslice, "unhandled note")
 
-class FunctionLookupError(I8XError):
-    """An error occurred during function lookup.
-    """
-    def __init__(self, msg, reference=None):
-        if reference is None:
-            I8XError.__init__(self, msg)
-        else:
-            I8XError.__init__(self, msg, reference.referrer)
-
-class UndefinedFunctionError(FunctionLookupError):
-    """The requested function was not defined.
+class UnresolvedFunctionError(NoteError):
+    """The requested function is not present.
     """
     def __init__(self, signature, reference=None):
-        FunctionLookupError.__init__(
-            self, "undefined function ‘%s’" % signature, reference)
-
-class AmbiguousFunctionError(FunctionLookupError):
-    """Multiple copies of the requested function were found.
-    """
-    def __init__(self, signature, reference=None):
-        FunctionLookupError.__init__(
-            self, "function ‘%s’ defined more than once" % signature,
-            reference)
+        if reference is not None:
+            reference = reference.src
+        NoteError.__init__(self, reference,
+                           "unresolved function ‘%s’" % signature)
 
 class ExecutionError(I8XError):
     """An error was detected during bytecode execution.

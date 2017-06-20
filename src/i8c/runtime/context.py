@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2015-16 Red Hat, Inc.
+# Copyright (C) 2015-17 Red Hat, Inc.
 # This file is part of the Infinity Note Execution Environment.
 #
 # The Infinity Note Execution Environment is free software; you can
@@ -68,13 +68,9 @@ class Context(object):
                 return functions.BuiltinFunction(reference, impl)
         # Now check the registered functions
         funclist = self.functions.get(signature, None)
-        if funclist is not None:
-            if len(funclist) == 1:
-                return funclist[0]
-            elif len(funclist) > 1:
-                raise AmbiguousFunctionError(sig_or_ref)
-        # No registered function with this name
-        raise UndefinedFunctionError(sig_or_ref)
+        if funclist is None or len(funclist) != 1:
+            raise UnresolvedFunctionError(signature, reference)
+        return funclist[0]
 
     # Methods to XXX
 
