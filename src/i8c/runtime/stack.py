@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2015-16 Red Hat, Inc.
+# Copyright (C) 2015-17 Red Hat, Inc.
 # This file is part of the Infinity Note Execution Environment.
 #
 # The Infinity Note Execution Environment is free software; you can
@@ -113,7 +113,9 @@ class Stack(object):
             # argument lists.  This is persistent (unboxing won't
             # remove it) so what you pop in this case is not exactly
             # what you pushed.
-            value = functions.BuiltinFunction(AnonFuncRef(type), value)
+            value = functions.BuiltinFunction(
+                "i8x", "anonymous_function_%x" % id(value),
+                type.ptypes, type.rtypes, value)
         assert value.type == type
         return value
 
@@ -141,13 +143,6 @@ class Stack(object):
                     item += " (0x%x)" % value
             fprint(sys.stdout, "    stack[%d] = %s" % (index, item))
         fprint(sys.stdout)
-
-class AnonFuncRef(object):
-    def __init__(self, type):
-        self.provider = "i8x"
-        self.name = "anonymous_function_%x" % id(self)
-        self.ptypes = type.ptypes
-        self.rtypes = type.rtypes
 
 class Opaque(object):
     def __init__(self, value):

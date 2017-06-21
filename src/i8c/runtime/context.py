@@ -73,7 +73,10 @@ class Context(object):
             impl = "%s_%s_impl" % (reference.provider, reference.name)
             impl = getattr(self.env, impl, None)
             if impl is not None:
-                return functions.BuiltinFunction(reference, impl)
+                return functions.BuiltinFunction(reference.provider,
+                                                 reference.name,
+                                                 reference.ptypes,
+                                                 reference.rtypes, impl)
         # Now check the registered functions
         funclist = self.functions.get(signature, None)
         if funclist is None or len(funclist) != 1:

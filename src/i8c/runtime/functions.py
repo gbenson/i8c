@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2015-16 Red Hat, Inc.
+# Copyright (C) 2015-17 Red Hat, Inc.
 # This file is part of the Infinity Note Execution Environment.
 #
 # The Infinity Note Execution Environment is free software; you can
@@ -33,7 +33,7 @@ from . import types
 import struct
 
 class Function(object):
-    def __init__(self, src):
+    def __init__(self, src=None):
         self.src = src
         self.__sig_set = False
 
@@ -62,9 +62,9 @@ class Function(object):
 class BuiltinFunction(Function):
     """A function provided by the note consumer."""
 
-    def __init__(self, ref, impl):
-        Function.__init__(self, ref)
-        self.set_signature(ref.provider, ref.name, ref.ptypes, ref.rtypes)
+    def __init__(self, provider, name, ptypes, rtypes, impl):
+        Function.__init__(self)
+        self.set_signature(provider, name, ptypes, rtypes)
         self.impl = impl
 
     def execute(self, ctx, stack):
