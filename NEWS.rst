@@ -4,6 +4,12 @@ What has changed in I8C?
 Changes since I8C 0.0.5
 -----------------------
 
+Testcase changes
+~~~~~~~~~~~~~~~~
+
+* Infinity functions provided by testcases are now identified using
+  the @TestCase.provide decorator.  The function TestCase.implement
+  has been removed.
 
 
 Changes in I8C 0.0.5

@@ -239,3 +239,11 @@ class UnresolvedFunction(Function):
 
     def resolve(self, ctx):
         return self.type, ctx.get_function(self)
+
+def unpack_signature(signature):
+    provider, tmp = signature.split("::", 1)
+    name, tmp = tmp.split("(", 1)
+    index, ptypes = types.decode(tmp, stop=")")
+    tmp = tmp[index + 1:]
+    rtypes = types.decode(tmp)
+    return provider, name, ptypes, rtypes

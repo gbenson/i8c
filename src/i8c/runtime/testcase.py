@@ -26,13 +26,13 @@ from __future__ import unicode_literals
 from ..compat import strtoint_c
 from . import I8XError, HeaderFileError, TestFileError
 from . import context
+from . import functions
 from . import memory
 import copy
 import inspect
 import os
 import platform
 import struct
-import weakref
 try:
     import unittest2 as unittest
 except ImportError: # pragma: no cover
@@ -104,6 +104,7 @@ class TestCase(BaseTestCase):
     def run(self, *args, **kwargs):
         ctx = context.Context(self)
         self.__ctxp.populate(ctx)
+        self.__install_user_functions(ctx)
         try:
             self.i8ctx = ctx
             return BaseTestCase.run(self, *args, **kwargs)
@@ -118,20 +119,32 @@ class TestCase(BaseTestCase):
     def byteorder(self):
         return self.i8ctx.byteorder
 
-    def implement(self, func, args, rets):
-        provider, name = func.split("::")
-        setattr(self, "%s_%s_impl" % (provider, name),
-                StubImpl(weakref.ref(self), args, rets))
+    class provide(object):
+        def __init__(self, signature):
+            self.signature = signature
 
-class StubImpl(object):
-    def __init__(self, tref, args, rets):
-        self.tref = tref
-        self.args = args
-        self.rets = rets
+        def __call__(self, impl):
+            return UserFunction(self.signature, impl)
+
+    def __install_user_functions(self, ctx):
+        for attr in dir(self):
+            try:
+                func = getattr(self, attr)
+            except AttributeError:
+                continue
+            if isinstance(func, UserFunction):
+                ctx.override(func.bind_to(self))
+
+class UserFunction(object):
+    def __init__(self, signature, impl):
+        self.signature = signature
+        self.impl = impl
 
     def __call__(self, *args):
-        self.tref().assertEqual(args, self.args)
-        if len(self.rets) == 1:
-            return self.rets[0]
-        else:
-            return self.rets
+        raise RuntimeError(self.signature)
+
+    def bind_to(self, testcase):
+        provider, name, ptypes, rtypes \
+            = functions.unpack_signature(self.signature)
+        impl = self.impl.__get__(testcase, self.impl)
+        return functions.BuiltinFunction(provider, name, ptypes, rtypes, impl)

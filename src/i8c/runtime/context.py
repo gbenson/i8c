@@ -56,6 +56,9 @@ class Context(object):
             self.functions[function.signature] = funclist
         funclist.append(function)
 
+    def override(self, function):
+        self.functions[function.signature] = [function]
+
     def get_function(self, sig_or_ref):
         if isinstance(sig_or_ref, functions.UnresolvedFunction):
             reference = sig_or_ref
@@ -66,18 +69,6 @@ class Context(object):
             signature = sig_or_ref
             reference = None
         assert isinstance(signature, str)
-        # First check for implementations in the testcase.
-        # We do this first to allow testcases to override
-        # functions which may actually exist.
-        if reference is not None:
-            impl = "%s_%s_impl" % (reference.provider, reference.name)
-            impl = getattr(self.env, impl, None)
-            if impl is not None:
-                return functions.BuiltinFunction(reference.provider,
-                                                 reference.name,
-                                                 reference.ptypes,
-                                                 reference.rtypes, impl)
-        # Now check the registered functions
         funclist = self.functions.get(signature, None)
         if funclist is None or len(funclist) != 1:
             raise UnresolvedFunctionError(signature, reference)
