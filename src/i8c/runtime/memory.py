@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2015-16 Red Hat, Inc.
+# Copyright (C) 2015-17 Red Hat, Inc.
 # This file is part of the Infinity Note Execution Environment.
 #
 # The Infinity Note Execution Environment is free software; you can
@@ -73,6 +73,9 @@ class Block(object):
 
     def __add__(self, offset):
         return OffsetBlock(self, offset)
+
+    def __int__(self):
+        return self.location
 
     def store_i8(self, offset, value):
         self.__store(offset, value, 8, True)
