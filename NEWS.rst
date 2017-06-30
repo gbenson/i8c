@@ -12,7 +12,10 @@ Testcase changes
   has been removed.
 
 * The interpreter context is no longer accessible as TestCase.i8ctx.
-  Infinity functions should now be executed using TestCase.call.
+  Infinity functions should now be executed using TestCase.call,
+  which operates in much the same way as TestCase.i8ctx.call except
+  that Python functions in argument lists must now be decorated by
+  @TestCase.provide.
 
 
 Changes in I8C 0.0.5

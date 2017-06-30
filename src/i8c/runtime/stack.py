@@ -108,14 +108,11 @@ class Stack(object):
 
     def __box_FUNCTION(self, type, value):
         if not isinstance(value, functions.Function):
-            assert callable(value)
-            # Wrap anonymous functions provided by the testcase in
-            # argument lists.  This is persistent (unboxing won't
+            # Replace testcase.UserFunction objects with the real
+            # registered function.  This is persistent (unboxing won't
             # remove it) so what you pop in this case is not exactly
             # what you pushed.
-            value = functions.BuiltinFunction(
-                "i8x", "anonymous_function_%x" % id(value),
-                type.ptypes, type.rtypes, value)
+            value = self.ctx.get_function(value.signature)
         assert value.type == type
         return value
 
