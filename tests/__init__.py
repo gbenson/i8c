@@ -54,9 +54,7 @@ class TestOutput(runtime.Context):
             commands.I8C_CC + ["-c", asmfile, "-o", objfile])
         # Load the notes from it
         self.import_notes(objfile)
-        self.notes = []
-        for notes in self.functions.values():
-            self.notes.extend(notes)
+        self.notes = list(self._i8ctest_functions)
         # Make sure we got at least one note
         testcase.assertGreaterEqual(len(self.notes), 1)
         # Setup for note execution

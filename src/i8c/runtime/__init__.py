@@ -25,7 +25,7 @@ from __future__ import unicode_literals
 
 from ..compat import fprint
 from .exceptions import *
-from .context import Context
+from .pythonctx import Context
 from .testcase import TestCase
 import sys
 

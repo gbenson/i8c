@@ -23,22 +23,13 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from ..compat import fprint, str
-from . import *
 from . import provider
-from . import functions
-from . import stack
 import ctypes
-import sys
 
-class Context(object):
+class AbstractContext(object):
     def __init__(self, env=None):
         self.__env = env
-        self.functions = {}
-        self.wordsize = None
-        self.byteorder = None
         self.tracelevel = 0
-        self.__last_traced = None
 
     @property
     def env(self):
@@ -48,86 +39,46 @@ class Context(object):
     def env(self, value): # pragma: no cover
         raise RuntimeError
 
-    # Methods to XXX
-
-    def register_function(self, function):
-        funclist = self.functions.get(function.signature, [])
-        if not funclist:
-            self.functions[function.signature] = funclist
-        funclist.append(function)
-
-    def override(self, function):
-        self.functions[function.signature] = [function]
-
-    def get_function(self, sig_or_ref):
-        if isinstance(sig_or_ref, functions.UnresolvedFunction):
-            reference = sig_or_ref
-            signature = reference.signature
-        else:
-            if isinstance(sig_or_ref, bytes):
-                sig_or_ref = sig_or_ref.decode("utf-8")
-            signature = sig_or_ref
-            reference = None
-        assert isinstance(signature, str)
-        funclist = self.functions.get(signature, None)
-        if funclist is None or len(funclist) != 1:
-            raise UnresolvedFunctionError(signature, reference)
-        return funclist[0]
-
-    # Methods to XXX
-
     def import_notes(self, filename):
+        """Import notes from the specified file."""
         with provider.open(filename) as np:
-            for note in np.infinity_notes:
-                self.import_note(note)
+            for ns in np.infinity_notes:
+                self.__setup_platform(ns)
+                self.import_note(ns)
 
-    def import_note(self, note):
-        if self.wordsize is None:
-            self.wordsize = note.wordsize
-            self.sint_t = getattr(ctypes, "c_int%d" % self.wordsize)
-            self.uint_t = getattr(ctypes, "c_uint%d" % self.wordsize)
-        else:
-            assert note.wordsize == self.wordsize
-        if self.byteorder is None:
-            self.byteorder = note.byteorder
-        else:
-            assert note.byteorder == self.byteorder
-        self.register_function(functions.BytecodeFunction(note))
+    def __setup_platform(self, ns):
+        """Initialize platform-specific stuff as per the first note."""
+        if hasattr(self, "wordsize"):
+            assert ns.wordsize == self.wordsize
+            assert ns.byteorder == self.byteorder
+            return
 
-    def new_stack(self):
-        return stack.Stack(self)
+        assert ns.wordsize is not None
+        self.wordsize = ns.wordsize
 
-    def call(self, signature, *args):
-        function = self.get_function(signature)
-        stack = self.new_stack()
-        stack.push_multi(reversed(function.ptypes), reversed(args))
-        function.execute(self, stack)
-        return stack.pop_multi(function.rtypes)
+        assert ns.byteorder in b"<>"
+        self.byteorder = ns.byteorder
 
-    def __trace(self, location, stack, encoded, decoded):
-        function, pc = location
-        if self.tracelevel > 0:
-            if function != self.__last_traced:
-                fprint(sys.stdout, "\n%s:" % function)
-                self.__last_traced = function
-            if self.tracelevel > 1:
-                stack.trace(self.tracelevel)
-            fprint(sys.stdout, "  %04x: %-12s %s" % (pc, encoded, decoded))
+        self.sint_t = getattr(ctypes, "c_int%d" % self.wordsize)
+        self.uint_t = getattr(ctypes, "c_uint%d" % self.wordsize)
 
-    def trace_operation(self, *args):
-        self.__trace(*args)
+    def import_note(self, ns): # pragma: no cover
+        """Import one note."""
+        raise NotImplementedError
 
-    def trace_call(self, function, stack):
-        if not isinstance(function, functions.BytecodeFunction):
-            if self.tracelevel > 0:
-                fprint(sys.stdout, "\n%s:" % function)
-                fprint(sys.stdout, "  NON-BYTECODE FUNCTION")
-        self.__last_traced = None
+    def override(self, function): # pragma: no cover
+        """Register a function, overriding any existing versions."""
+        raise NotImplementedError
 
-    def trace_return(self, location, stack):
-        self.__trace(location, stack, "", "RETURN")
-        self.__last_traced = None
+    def call(self, signature, *args): # pragma: no cover
+        """Call the specified function with the specified arguments."""
+        raise NotImplementedError
 
     def to_signed(self, value):
         """Convert an unsigned integer to signed, wrt self.wordsize."""
         return self.sint_t(value).value
+
+    @property
+    def _i8ctest_functions(self): # pragma: no cover
+        """Iterate over all currently-loaded functions."""
+        raise NotImplementedError
