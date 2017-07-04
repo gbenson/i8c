@@ -67,7 +67,7 @@ class BuiltinFunction(Function):
         self.set_signature(provider, name, ptypes, rtypes)
         self.impl = impl
 
-    def execute(self, ctx, stack):
+    def execute(self, ctx, stack): # pragma: no cover
         args = stack.pop_multi(reversed(self.ptypes))
         args.reverse()
         result = self.impl(*args)
@@ -78,7 +78,7 @@ class BuiltinFunction(Function):
             result = [result]
         stack.push_multi(self.rtypes, result)
 
-class BytecodeFunction(Function):
+class BytecodeFunction(Function): # pragma: no cover
     def __init__(self, src):
         Function.__init__(self, src)
         self.__split_chunks()
@@ -221,7 +221,7 @@ class BytecodeFunction(Function):
             opcount += 1
         return ops_hit, opcount
 
-class UnresolvedFunction(Function):
+class UnresolvedFunction(Function): # pragma: no cover
     def __init__(self, referrer, unterminated):
         offset, provider_o = leb128.read_uleb128(unterminated, 0)
         offset, name_o = leb128.read_uleb128(unterminated, offset)

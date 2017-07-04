@@ -25,7 +25,10 @@ from __future__ import unicode_literals
 
 from ..compat import fprint
 from .exceptions import *
-from .pythonctx import Context
+try:
+    from .libi8xctx import Context
+except ImportError: # pragma: no cover
+    from .pythonctx import Context
 from .testcase import TestCase
 import sys
 

@@ -4,6 +4,14 @@ What has changed in I8C?
 Changes since I8C 0.0.5
 -----------------------
 
+Enhancements
+~~~~~~~~~~~~
+
+* I8X will now use libi8x to execute Infinity functions if libi8x and
+  its Python bindings are installed.  The original Python interpreter
+  has been retained as a fallback but will be removed in a future I8C
+  release.
+
 Testcase changes
 ~~~~~~~~~~~~~~~~
 
