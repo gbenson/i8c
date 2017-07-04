@@ -26,7 +26,7 @@ from __future__ import unicode_literals
 from .. import cmdline
 from .. import version
 from ..compat import fprint, load_module_from_source, strtoint_c
-from . import context
+from . import Context
 from . import I8XError
 from . import TestCase
 import getopt
@@ -129,7 +129,7 @@ def main(args):
         raise I8XError("nothing to do!\n%s" % clue)
 
     if quickmode:
-        ctx = context.Context()
+        ctx = Context()
         ctxp.populate(ctx)
         function = args.pop(0)
         args = [strtoint_c(arg, I8XError) for arg in args]

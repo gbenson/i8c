@@ -25,7 +25,7 @@ from __future__ import unicode_literals
 
 from ..compat import strtoint_c
 from . import I8XError, HeaderFileError, TestFileError
-from . import context
+from . import Context
 from . import functions
 from . import memory
 import copy
@@ -102,7 +102,7 @@ class TestCase(BaseTestCase):
                 raise HeaderFileError(filename, linenumber)
 
     def run(self, *args, **kwargs):
-        self.__ctx = context.Context(self)
+        self.__ctx = Context(self)
         try:
             self.__ctxp.populate(self.__ctx)
             self.__install_user_functions()
