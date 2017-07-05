@@ -11,7 +11,8 @@ Testcase changes
   the @TestCase.provide decorator.  The function TestCase.implement
   has been removed.
 
-* Infinity functions should now be executed using TestCase.call.
+* The interpreter context is no longer accessible as TestCase.i8ctx.
+  Infinity functions should now be executed using TestCase.call.
 
 
 Changes in I8C 0.0.5

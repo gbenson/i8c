@@ -102,26 +102,25 @@ class TestCase(BaseTestCase):
                 raise HeaderFileError(filename, linenumber)
 
     def run(self, *args, **kwargs):
-        ctx = context.Context(self)
-        self.__ctxp.populate(ctx)
-        self.__install_user_functions(ctx)
+        self.__ctx = context.Context(self)
         try:
-            self.i8ctx = ctx
+            self.__ctxp.populate(self.__ctx)
+            self.__install_user_functions()
             return BaseTestCase.run(self, *args, **kwargs)
         finally:
-            del self.i8ctx
+            del self.__ctx
 
     @property
     def wordsize(self):
-        return self.i8ctx.wordsize
+        return self.__ctx.wordsize
 
     @property
     def byteorder(self):
-        return self.i8ctx.byteorder
+        return self.__ctx.byteorder
 
     @property
     def call(self):
-        return self.i8ctx.call
+        return self.__ctx.call
 
     class provide(object):
         def __init__(self, signature):
@@ -130,14 +129,14 @@ class TestCase(BaseTestCase):
         def __call__(self, impl):
             return UserFunction(self.signature, impl)
 
-    def __install_user_functions(self, ctx):
+    def __install_user_functions(self):
         for attr in dir(self):
             try:
                 func = getattr(self, attr)
             except AttributeError:
                 continue
             if isinstance(func, UserFunction):
-                ctx.override(func.bind_to(self))
+                self.__ctx.override(func.bind_to(self))
 
 class UserFunction(object):
     def __init__(self, signature, impl):
