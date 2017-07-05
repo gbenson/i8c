@@ -23,6 +23,6 @@ class TestFactorial(TestCase):
     def test_factorial(self):
         """Test example::factorial"""
         for x, expect in ((0, 1), (1, 1), (12, 479001600)):
-            result = self.i8ctx.call(self.TESTFUNC, x)
+            result = self.call(self.TESTFUNC, x)
             self.assertEqual(len(result), 1)
             self.assertEqual(result[0], expect)

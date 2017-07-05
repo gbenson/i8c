@@ -119,6 +119,10 @@ class TestCase(BaseTestCase):
     def byteorder(self):
         return self.i8ctx.byteorder
 
+    @property
+    def call(self):
+        return self.i8ctx.call
+
     class provide(object):
         def __init__(self, signature):
             self.signature = signature
