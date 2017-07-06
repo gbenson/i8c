@@ -53,7 +53,12 @@ class TestOutput(runtime.Context):
         subprocess.check_call(
             commands.I8C_CC + ["-c", asmfile, "-o", objfile])
         # Load the notes from it
-        self.import_notes(objfile)
+        try:
+            self.import_notes(objfile)
+        except runtime.UnhandledNoteError as e:
+            self.import_error = e
+            return
+        self.import_error = None
         self.notes = list(self._i8ctest_functions)
         # Make sure we got at least one note
         testcase.assertGreaterEqual(len(self.notes), 1)
@@ -112,6 +117,8 @@ class TestOutput(runtime.Context):
 
     @property
     def note(self):
+        if self.import_error is not None:
+            raise self.import_error
         assert len(self.notes) == 1
         return self.notes[0]
 
