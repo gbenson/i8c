@@ -37,7 +37,7 @@ class Type(object):
                 cls.types[code] = item
 
 class BasicType(Type):
-    def __init__(self):
+    def __init__(self): # pragma: no cover
         raise AssertionError
 
     @classmethod
