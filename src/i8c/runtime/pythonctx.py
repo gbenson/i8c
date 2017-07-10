@@ -31,6 +31,8 @@ from . import stack
 import sys
 
 class Context(context.AbstractContext):
+    INTERPRETER = "Python interpreter (deprecated)"
+
     def __init__(self, *args, **kwargs):
         super(Context, self).__init__(*args, **kwargs)
         self.functions = {}

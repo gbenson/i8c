@@ -31,6 +31,7 @@ import io
 import os
 import struct
 import subprocess
+import sys
 
 class SourceReader(io.BytesIO):
     def readline(self):
@@ -162,3 +163,5 @@ class TestCase(BaseTestCase):
     def disable_loggers(self):
         for logger in compiler.loggers.values():
             logger.disable()
+
+print("using", TestOutput.INTERPRETER, file=sys.stderr)

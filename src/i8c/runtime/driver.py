@@ -146,6 +146,7 @@ def main(args):
         raise I8XError(msg)
 
     print("I8X", version(), "on Python", sys.version)
+    print("with", Context.INTERPRETER)
     print()
 
     TestCase._TestCase__ctxp = ctxp

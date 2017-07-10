@@ -33,6 +33,7 @@ import sys
 import syslog
 
 class Context(context.AbstractContext):
+    INTERPRETER = "libi8x interpreter (experimental)"
     MAX_STACK = 512
 
     def __init__(self, *args, **kwargs):
