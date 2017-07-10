@@ -23,6 +23,7 @@ from __future__ import unicode_literals
 
 from tests import TestCase
 from i8c.compiler import ParserError, ParsedError, StackTypeError
+from i8c.runtime import UnhandledNoteError
 
 SOURCE = """\
 typedef ptr ptr_alias
@@ -66,6 +67,14 @@ class TestDeref(TestCase):
                     continue
 
                 tree, output = self.compile(source)
+                if output.import_error is not None:
+                    if (rettype.endswith("int64_t")
+                        and output.wordsize == 32
+                        and isinstance(output.import_error,
+                                       UnhandledNoteError)):
+                        continue
+                    raise output.import_error
+
                 ops = output.ops
                 self.assertEqual(len(ops), 1)
                 op = ops[0]
