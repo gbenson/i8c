@@ -23,12 +23,12 @@ from __future__ import print_function
 
 from setuptools import find_packages, setup
 from codecs import open
-from os import path
+import os
 import sys
 
-here = path.realpath(path.dirname(__file__))
+here = os.path.realpath(os.path.dirname(__file__))
 
-with open(path.join(here, "README.rst"), encoding="utf-8") as fp:
+with open(os.path.join(here, "README.rst"), encoding="utf-8") as fp:
     long_description = fp.read()
 
 # Remember to update requirements.txt
