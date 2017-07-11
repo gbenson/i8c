@@ -255,6 +255,12 @@ class Context(context.AbstractContext):
         assert exception is not None
         raise exception
 
+    # Methods to convert between signed and unsigned integers.
+
+    def to_signed(self, value):
+        """Interpret an integer from the interpreter as signed."""
+        return py8x.to_signed(value)
+
     # Methods for the I8C testsuite.
 
     @property

@@ -104,6 +104,12 @@ class Context(context.AbstractContext):
         self.__trace(location, stack, "", "RETURN")
         self.__last_traced = None
 
+    # Methods to convert between signed and unsigned integers.
+
+    def to_signed(self, value):
+        """Interpret an integer from the interpreter as signed."""
+        return self.sint_t(value).value
+
     # Methods for the I8C testsuite.
 
     @property

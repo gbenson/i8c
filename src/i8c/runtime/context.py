@@ -74,9 +74,9 @@ class AbstractContext(object):
         """Call the specified function with the specified arguments."""
         raise NotImplementedError
 
-    def to_signed(self, value):
-        """Convert an unsigned integer to signed, wrt self.wordsize."""
-        return self.sint_t(value).value
+    def to_signed(self, value): # pragma: no cover
+        """Interpret an integer from the interpreter as signed."""
+        raise NotImplementedError
 
     @property
     def _i8ctest_functions(self): # pragma: no cover
