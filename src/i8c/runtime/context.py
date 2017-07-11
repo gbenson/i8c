@@ -78,6 +78,10 @@ class AbstractContext(object):
         """Interpret an integer from the interpreter as signed."""
         raise NotImplementedError
 
+    def to_unsigned(self, value): # pragma: no cover
+        """Convert a signed integer to the interpreter's representation."""
+        raise NotImplementedError
+
     @property
     def _i8ctest_functions(self): # pragma: no cover
         """Iterate over all currently-loaded functions."""

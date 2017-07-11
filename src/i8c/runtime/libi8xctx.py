@@ -261,6 +261,10 @@ class Context(context.AbstractContext):
         """Interpret an integer from the interpreter as signed."""
         return py8x.to_signed(value)
 
+    def to_unsigned(self, value):
+        """Convert a signed integer to the interpreter's representation."""
+        return py8x.to_unsigned(value)
+
     # Methods for the I8C testsuite.
 
     @property

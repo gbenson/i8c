@@ -110,6 +110,10 @@ class Context(context.AbstractContext):
         """Interpret an integer from the interpreter as signed."""
         return self.sint_t(value).value
 
+    def to_unsigned(self, value):
+        """Convert a signed integer to the interpreter's representation."""
+        return self.uint_t(value).value
+
     # Methods for the I8C testsuite.
 
     @property
