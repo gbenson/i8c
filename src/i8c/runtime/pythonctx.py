@@ -28,6 +28,7 @@ from . import UnresolvedFunctionError
 from . import context
 from . import functions
 from . import stack
+import ctypes
 import sys
 
 class Context(context.AbstractContext):
@@ -42,11 +43,19 @@ class Context(context.AbstractContext):
 
     def import_note(self, ns):
         """Import one note."""
+        self.__setup_platform()
         function = functions.BytecodeFunction(ns)
         funclist = self.functions.get(function.signature, [])
         if not funclist:
             self.functions[function.signature] = funclist
         funclist.append(function)
+
+    def __setup_platform(self):
+        """Initialize platform-specific stuff as per the first note."""
+        if not hasattr(self, "sint_t"):
+            self.sint_t = getattr(ctypes, "c_int%d" % self.wordsize)
+        if not hasattr(self, "uint_t"):
+            self.uint_t = getattr(ctypes, "c_uint%d" % self.wordsize)
 
     def override(self, function):
         """Register a function, overriding any existing versions."""

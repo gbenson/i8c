@@ -24,7 +24,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from . import provider
-import ctypes
 
 class AbstractContext(object):
     def __init__(self, env=None):
@@ -50,17 +49,15 @@ class AbstractContext(object):
         """Initialize platform-specific stuff as per the first note."""
         if hasattr(self, "wordsize"):
             assert ns.wordsize == self.wordsize
+        else:
+            assert ns.wordsize is not None
+            self.wordsize = ns.wordsize
+
+        if hasattr(self, "byteorder"):
             assert ns.byteorder == self.byteorder
-            return
-
-        assert ns.wordsize is not None
-        self.wordsize = ns.wordsize
-
-        assert ns.byteorder in b"<>"
-        self.byteorder = ns.byteorder
-
-        self.sint_t = getattr(ctypes, "c_int%d" % self.wordsize)
-        self.uint_t = getattr(ctypes, "c_uint%d" % self.wordsize)
+        else:
+            assert ns.byteorder in b"<>"
+            self.byteorder = ns.byteorder
 
     def import_note(self, ns): # pragma: no cover
         """Import one note."""
