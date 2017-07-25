@@ -59,12 +59,7 @@ class NoteError(I8XError):
     def __init__(self, elfslice, msg):
         args = [self, msg]
         if elfslice is not None:
-            if hasattr(elfslice, "filename"):
-                args.append("%s[0x%08x]" % (elfslice.filename,
-                                            elfslice.start))
-            else:
-                # XXX HACK: libi8xctx supplies strings
-                args.append(elfslice)
+            args.append("%s[0x%08x]" % (elfslice.filename, elfslice.start))
         I8XError.__init__(*args)
 
 class CorruptNoteError(NoteError):

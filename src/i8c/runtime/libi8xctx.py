@@ -26,37 +26,32 @@ from __future__ import unicode_literals
 from ..compat import fprint, str
 from . import *
 from . import context
-from . import functions
-from . import types
-import _libi8x as py8x
+import libi8x
 import sys
 import syslog
 
 class Context(context.AbstractContext):
     INTERPRETER = "libi8x interpreter (experimental)"
-    MAX_STACK = 512
 
     def __init__(self, *args, **kwargs):
         self.__imports = []
         super(Context, self).__init__(*args, **kwargs)
 
         self.__upbcc = None
-        self.__ctx = py8x.ctx_new(PY8XObject.new,
-                                  py8x.I8X_DBG_MEM,
-                                  self.__logger)
+        self.__ctx = libi8x.Context(libi8x.DBG_MEM, self.__logger)
+        self.__log_pri = self.__ctx.log_priority
 
         # Boost log priority if necessary so we can access warnings
         # and tracing messages.  Our logging function filters these
         # according to the priority the user originally requested.
-        self.__log_pri = py8x.ctx_get_log_priority(self.__ctx)
-        if self.__log_pri < py8x.I8X_LOG_TRACE:
-            py8x.ctx_set_log_priority(self.__ctx, py8x.I8X_LOG_TRACE)
+        if self.__log_pri < libi8x.LOG_TRACE:
+            self.__ctx.log_priority = libi8x.LOG_TRACE
 
-        self.__inf = py8x.inf_new(self.__ctx)
-        py8x.inf_set_read_mem_fn(self.__inf, self.__read_memory)
-        py8x.inf_set_relocate_fn(self.__inf, self.__relocate)
+        self.__inf = self.__ctx.new_inferior()
+        self.__inf.read_memory = self.__read_memory
+        self.__inf.relocate_address = self.__relocate
 
-        self.__xctx = py8x.xctx_new(self.__ctx, self.MAX_STACK)
+        self.__xctx = self.__ctx.new_xctx()
 
     def __del__(self):
         for func in self.__imports:
@@ -76,7 +71,7 @@ class Context(context.AbstractContext):
         if print_it: # pragma: no cover
             sys.stderr.write("i8x: %s: %s" % (function, msg))
         elif (self.tracelevel > 0
-                and priority == syslog.LOG_DEBUG
+                and priority == libi8x.LOG_TRACE
                 and (function.startswith("i8x_xctx_call")
                      or function.startswith("i8x_xctx_trace"))):
             # Let trace messages through if requested.
@@ -96,10 +91,6 @@ class Context(context.AbstractContext):
 
     # Methods to populate the context with Infinity functions.
 
-    __exception_map = {
-        "Unhandled note": UnhandledNoteError
-        }
-
     def import_note(self, ns):
         """Import one note."""
         assert ns.start == 0 # or need to adjust srcoffset
@@ -108,27 +99,15 @@ class Context(context.AbstractContext):
         self.__upbcc = UnpackedBytecodeConsumer()
         exception = None
         try:
-            func = py8x.ctx_import_bytecode(self.__ctx, ns.bytes,
-                                            ns.filename, srcoffset)
-        except py8x.I8XError as e:
-            sep = ": "
-            msg = e.args[0].split(sep)
-            cls = self.__exception_map.get(msg.pop(), None)
-            if cls is None:
-                exception = e
-            else:
-                exception = cls(sep.join(msg))
-        if exception is not None:
-            raise exception
+            func = self.__ctx.import_bytecode(ns.bytes, ns.filename,
+                                              srcoffset)
+        except libi8x.UnhandledNoteError as e:
+            raise UnhandledNoteError(FakeSlice(e))
 
         # Retain a reference to func so we can add things to it.
         # Without this the capsule wrapper will be collected as
         # this method exits.
         self.__imports.append(func)
-
-        # Store the signature.
-        funcref = py8x.func_get_funcref(func)
-        func.signature = py8x.funcref_get_fullname(funcref)
 
         # Store the unpacked bytecode.
         func.ops = self.__upbcc.ops
@@ -137,107 +116,38 @@ class Context(context.AbstractContext):
         # Store any relocations.  Note that this creates
         # circular references that are cleared in __del__.
         func.symbols_at = {}
-        relocs = py8x.func_get_relocs(func)
-        try:
-            li = py8x.list_get_first(relocs)
-            while True:
-                reloc = py8x.listitem_get_object(li)
-                start = py8x.reloc_get_src_offset(reloc) - srcoffset
-                src = ns[start:start + 1]
-                func.symbols_at[reloc] = src.symbol_names
-                li = py8x.list_get_next(relocs, li)
-        except StopIteration:
-            pass
+        for reloc in func.relocations:
+            start = reloc.source_offset - srcoffset
+            src = ns[start:start + 1]
+            func.symbols_at[reloc] = src.symbol_names
 
     def override(self, function):
         """Register a function, overriding any existing versions."""
-        provider, name, ptypes, rtypes \
-            = functions.unpack_signature(function.signature)
-        func = py8x.ctx_import_native(self.__ctx,
-                                      provider, name,
-                                      types.encode(ptypes),
-                                      types.encode(rtypes),
-                                      self.__wrap_native_func(function.impl))
-
-        ref = py8x.func_get_funcref(func)
-        if py8x.funcref_is_resolved(ref):
+        func = self.__ctx.import_native(
+            function.signature,
+            lambda xctx, inf, func, *args: function.impl(*args))
+        ref = func.ref
+        if ref.is_resolved:
             return
 
         # The function already existed; we've added another with the
         # same name and caused the funcref to become unresolved.  We
         # walk the list and unregister the ones that aren't ours.
-        kill_list = []
-        fnlist = py8x.ctx_get_functions(self.__ctx)
-        try:
-            li = py8x.list_get_first(fnlist)
-            while True:
-                func2 = py8x.listitem_get_object(li)
-                if (func2 is not func
-                    and py8x.func_get_funcref(func2) is ref):
-                        kill_list.append(func2)
-                li = py8x.list_get_next(fnlist, li)
-        except StopIteration:
-            pass
-
+        kill_list = [func2
+                     for func2 in self.__ctx.functions
+                     if func2 is not func and func2.ref is ref]
         assert kill_list
         for func in kill_list:
-            py8x.ctx_unregister_func(self.__ctx, func)
-
-    class __wrap_native_func(object):
-        """Fix up native method return values for libi8x.
-
-        libi8x expects all functions to return a sequence, but the
-        original I8X interpreter allowed functions with only one
-        return value to return the value by itself (i.e. not in a
-        one-item sequence).  This wrapper fixes this."""
-
-        def __init__(self, impl):
-            self.__impl = impl
-
-        def __call__(self, xctx, inf, func, *args):
-            rets = self.__impl(*args)
-            try:
-                len(rets)
-            except TypeError:
-                rets = [rets]
-            return rets
+            self.__ctx.unregister(func)
 
     # Methods for Infinity function execution.
 
     def call(self, signature, *args):
         """Call the specified function with the specified arguments."""
-        provider, name, ptypes, rtypes \
-            = functions.unpack_signature(signature)
-        ref = py8x.ctx_get_funcref(self.__ctx,
-                                   provider, name,
-                                   types.encode(ptypes),
-                                   types.encode(rtypes))
-        if not py8x.funcref_is_resolved(ref):
-            raise UnresolvedFunctionError(signature)
-
-        switch_interpreter = (
-            self.tracelevel > 0
-            and not py8x.xctx_get_use_debug_interpreter(self.__xctx))
-        if switch_interpreter:
-            py8x.xctx_set_use_debug_interpreter(self.__xctx, True)
-        try:
-            return list(py8x.xctx_call(self.__xctx, ref, self.__inf,
-                                       tuple(map(self.__wrap_call_arg,
-                                                 args))))
-        finally:
-            if switch_interpreter:
-                py8x.xctx_set_use_debug_interpreter(self.__xctx, False)
-
-    def __wrap_call_arg(self, arg):
-        """Translate I8X function arguments into libi8x funcrefs."""
-        if hasattr(arg, "signature"):
-            provider, name, ptypes, rtypes \
-                = functions.unpack_signature(arg.signature)
-            arg = py8x.ctx_get_funcref(self.__ctx,
-                                       provider, name,
-                                       types.encode(ptypes),
-                                       types.encode(rtypes))
-        return arg
+        return list(self.__xctx.call(signature,
+                                     self.__inf,
+                                     *(getattr(arg, "signature", arg)
+                                       for arg in args)))
 
     def __read_memory(self, inf, addr, len):
         """Memory reader function."""
@@ -246,8 +156,7 @@ class Context(context.AbstractContext):
 
     def __relocate(self, inf, reloc):
         """Address relocation function."""
-        func = py8x.reloc_get_func(reloc)
-        for name in func.symbols_at[reloc]:
+        for name in reloc.function.symbols_at[reloc]:
             try:
                 value = self.env.lookup_symbol(name)
             except KeyError as e:
@@ -261,34 +170,24 @@ class Context(context.AbstractContext):
 
     def to_signed(self, value):
         """Interpret an integer from the interpreter as signed."""
-        return py8x.to_signed(value)
+        return libi8x.to_signed(value)
 
     def to_unsigned(self, value):
         """Convert a signed integer to the interpreter's representation."""
-        return py8x.to_unsigned(value)
+        return libi8x.to_unsigned(value)
 
     # Methods for the I8C testsuite.
 
     @property
     def _i8ctest_functions(self):
-        functions = py8x.ctx_get_functions(self.__ctx)
-        try:
-            li = py8x.list_get_first(functions)
-            while True:
-                yield py8x.listitem_get_object(li)
-                li = py8x.list_get_next(functions, li)
-        except StopIteration:
-            return
+        return self.__ctx.functions
 
-class PY8XObject(object):
-    """Capsule wrapper required by libi8x-lo."""
+class FakeSlice(object):
+    """libi8x.I8XError location, wrapped like a provider.NoteSlice."""
 
-    @classmethod
-    def new(cls, klass):
-        return cls()
-
-    def __init__(self):
-        pass
+    def __init__(self, libi8x_exception):
+        self.filename = libi8x_exception.srcname
+        self.start = libi8x_exception.srcoffset
 
 class UnpackedBytecodeConsumer(object):
     """Grab the decoded bytecode from the trace messages."""
