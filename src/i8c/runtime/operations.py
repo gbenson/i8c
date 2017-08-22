@@ -30,7 +30,7 @@ from . import leb128
 import operator
 import struct
 
-class Operation(object): # pragma: no cover
+class Operation(object):
     NAMES = {}
     for name in dir(constants):
         if name[2:6] == "_OP_":

@@ -59,6 +59,8 @@ class Context(context.AbstractContext):
 
     def override(self, function):
         """Register a function, overriding any existing versions."""
+        function = functions.BuiltinFunction(function.signature,
+                                             function.impl)
         self.functions[function.signature] = [function]
 
     # Methods for Infinity function execution.

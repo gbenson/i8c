@@ -24,15 +24,14 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from ..compat import strtoint_c
-from . import I8XError, HeaderFileError, TestFileError
-from . import Context
-from . import functions
+from . import *
 from . import memory
 import copy
 import inspect
 import os
 import platform
 import struct
+import weakref
 try:
     import unittest2 as unittest
 except ImportError: # pragma: no cover
@@ -147,7 +146,15 @@ class UserFunction(object):
         raise RuntimeError(self.signature)
 
     def bind_to(self, testcase):
-        provider, name, ptypes, rtypes \
-            = functions.unpack_signature(self.signature)
-        impl = self.impl.__get__(testcase, self.impl)
-        return functions.BuiltinFunction(provider, name, ptypes, rtypes, impl)
+        return BoundUserFunction(testcase, self)
+
+class BoundUserFunction(object):
+    def __init__(self, testcase, unbound):
+        self.signature = unbound.signature
+        self.__impl = unbound.impl
+        self.__testcase = weakref.ref(testcase)
+
+    @property
+    def impl(self, *args):
+        testcase = self.__testcase()
+        return self.__impl.__get__(testcase, self.__impl)

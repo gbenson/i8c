@@ -62,12 +62,12 @@ class Function(object):
 class BuiltinFunction(Function):
     """A function provided by the note consumer."""
 
-    def __init__(self, provider, name, ptypes, rtypes, impl):
+    def __init__(self, signature, impl):
         Function.__init__(self)
-        self.set_signature(provider, name, ptypes, rtypes)
+        self.set_signature(*unpack_signature(signature))
         self.impl = impl
 
-    def execute(self, ctx, stack): # pragma: no cover
+    def execute(self, ctx, stack):
         args = stack.pop_multi(reversed(self.ptypes))
         args.reverse()
         result = self.impl(*args)
@@ -78,7 +78,7 @@ class BuiltinFunction(Function):
             result = [result]
         stack.push_multi(self.rtypes, result)
 
-class BytecodeFunction(Function): # pragma: no cover
+class BytecodeFunction(Function):
     def __init__(self, src):
         Function.__init__(self, src)
         self.__split_chunks()
@@ -221,7 +221,7 @@ class BytecodeFunction(Function): # pragma: no cover
             opcount += 1
         return ops_hit, opcount
 
-class UnresolvedFunction(Function): # pragma: no cover
+class UnresolvedFunction(Function):
     def __init__(self, referrer, unterminated):
         offset, provider_o = leb128.read_uleb128(unterminated, 0)
         offset, name_o = leb128.read_uleb128(unterminated, offset)
