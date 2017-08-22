@@ -61,6 +61,7 @@ class Context(context.AbstractContext):
     def __del__(self):
         for func in self.__imports:
             del func.symbols_at
+        del self.__imports
 
     def __logger(self, priority, filename, linenumber, function, msg):
         """Logging function for libi8x messages."""
@@ -133,7 +134,8 @@ class Context(context.AbstractContext):
         func.ops = self.__upbcc.ops
         self.__upbcc = None
 
-        # Store any relocations.
+        # Store any relocations.  Note that this creates
+        # circular references that are cleared in __del__.
         func.symbols_at = {}
         relocs = py8x.func_get_relocs(func)
         try:
