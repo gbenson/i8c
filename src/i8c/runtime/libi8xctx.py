@@ -56,6 +56,8 @@ class Context(context.AbstractContext):
         self.__imports = []
         super(Context, self).__init__(*args, **kwargs)
 
+        # Create the context without specifying a logging priority.
+        self.__log_pri = sys.maxsize
         self.__upbcc = None
         self.__ctx = libi8x.Context(libi8x.DBG_MEM, self.__logger)
         self.__log_pri = self.__ctx.log_priority
@@ -79,15 +81,8 @@ class Context(context.AbstractContext):
 
     def __logger(self, priority, filename, linenumber, function, msg):
         """Logging function for libi8x messages."""
-        try:
-            print_it = priority <= self.__log_pri
-        except AttributeError: # pragma: no cover
-            # We haven't touched the log priority yet, so this
-            # is something the user requested with the I8X_LOG
-            # environment variable.
-            print_it = True
-
-        if print_it: # pragma: no cover
+        if priority <= self.__log_pri: # pragma: no cover
+            # User requested this with I8X_LOG.
             sys.stderr.write("i8x: %s: %s" % (function, msg))
         elif (self.tracelevel > 0
                 and priority == libi8x.LOG_TRACE
