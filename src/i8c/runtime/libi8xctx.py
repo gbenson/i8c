@@ -31,7 +31,26 @@ import sys
 import syslog
 
 class Context(context.AbstractContext):
-    INTERPRETER = "libi8x interpreter (experimental)"
+    INTERPRETER = "UNKNOWN"
+
+    @classmethod
+    def _class_init(cls):
+        """Probe libi8x for component versions."""
+        cls.__components = []
+        libi8x.Context(syslog.LOG_DEBUG, cls.__clinit_logger)
+        for index, component in enumerate(cls.__components):
+            if component.startswith("libi8x "):
+                cls.INTERPRETER = cls.__components.pop(index)
+                break
+        cls.INTERPRETER += " (%s)" % ", ".join(cls.__components)
+        del cls.__components
+
+    @classmethod
+    def __clinit_logger(cls, pri, filename, linenumber, function, msg):
+        """Logger for component versions probe."""
+        PREFIX = "using "
+        if pri == syslog.LOG_DEBUG and msg.startswith(PREFIX):
+            cls.__components.insert(0, msg[len(PREFIX):].rstrip())
 
     def __init__(self, *args, **kwargs):
         self.__imports = []
@@ -188,6 +207,8 @@ class FakeSlice(object):
     def __init__(self, libi8x_exception):
         self.filename = libi8x_exception.srcname
         self.start = libi8x_exception.srcoffset
+
+Context._class_init()
 
 class UnpackedBytecodeConsumer(object):
     """Grab the decoded bytecode from the trace messages."""
