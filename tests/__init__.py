@@ -67,6 +67,7 @@ class TestOutput(runtime.Context):
         self.memory = testcase.memory
         self.memory.env = self
         self.register_symbol = testcase.register_symbol
+        testcase._install_user_functions(self)
 
     def __set_fileprefix(self, testcase, index):
         test_id = testcase.id().split(".")

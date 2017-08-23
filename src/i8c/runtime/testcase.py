@@ -61,6 +61,23 @@ class BaseTestCase(unittest.TestCase):
         """Hook method for warning the caller about something."""
         self.fail("unexpected warning: " + msg)
 
+    class provide(object):
+        """Decorator for Infinity functions provided by the test."""
+        def __init__(self, signature):
+            self.signature = signature
+
+        def __call__(self, impl):
+            return UserFunction(self.signature, impl)
+
+    def _install_user_functions(self, ctx):
+        for attr in dir(self):
+            try:
+                func = getattr(self, attr)
+            except AttributeError:
+                continue
+            if isinstance(func, UserFunction):
+                ctx.override(func.bind_to(self))
+
 class TestCase(BaseTestCase):
     include_path = []
 
@@ -104,7 +121,7 @@ class TestCase(BaseTestCase):
         self.__ctx = Context(self)
         try:
             self.__ctxp.populate(self.__ctx)
-            self.__install_user_functions()
+            self._install_user_functions(self.__ctx)
             return BaseTestCase.run(self, *args, **kwargs)
         finally:
             del self.__ctx
@@ -120,22 +137,6 @@ class TestCase(BaseTestCase):
     @property
     def call(self):
         return self.__ctx.call
-
-    class provide(object):
-        def __init__(self, signature):
-            self.signature = signature
-
-        def __call__(self, impl):
-            return UserFunction(self.signature, impl)
-
-    def __install_user_functions(self):
-        for attr in dir(self):
-            try:
-                func = getattr(self, attr)
-            except AttributeError:
-                continue
-            if isinstance(func, UserFunction):
-                self.__ctx.override(func.bind_to(self))
 
 class UserFunction(object):
     def __init__(self, signature, impl):
