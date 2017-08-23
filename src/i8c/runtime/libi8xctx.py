@@ -241,7 +241,7 @@ class Context(context.AbstractContext):
 
     def __read_memory(self, inf, addr, len):
         """Memory reader function."""
-        fmt = {1: "B", 2: "H", 4: "I", 8: "Q"}[len]
+        fmt = {1: b"B", 2: b"H", 4: b"I", 8: b"Q"}[len]
         return self.env.read_memory(fmt, addr)
 
     def __relocate(self, inf, reloc):
