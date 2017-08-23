@@ -26,7 +26,7 @@ from i8c import constants
 from i8c.compiler import parser
 from i8c.compiler.types import INTTYPE, PTRTYPE, BOOLTYPE
 from i8c.runtime import UnhandledNoteError
-from i8c.runtime import leb128
+from i8c.runtime.pythonctx import leb128
 import struct
 import sys
 

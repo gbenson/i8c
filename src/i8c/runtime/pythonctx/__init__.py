@@ -23,9 +23,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from ..compat import fprint, str
-from . import UnresolvedFunctionError
-from . import context
+from ...compat import fprint, str
+from .. import UnresolvedFunctionError
+from .. import context
 from . import functions
 from . import stack
 import ctypes

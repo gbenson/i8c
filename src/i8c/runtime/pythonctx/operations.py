@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2015-16 Red Hat, Inc.
+# Copyright (C) 2015-17 Red Hat, Inc.
 # This file is part of the Infinity Note Execution Environment.
 #
 # The Infinity Note Execution Environment is free software; you can
@@ -23,9 +23,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from .. import constants
-from . import BadDerefError
-from . import UnhandledNoteError
+from ... import constants
+from .. import BadDerefError
+from .. import UnhandledNoteError
 from . import leb128
 import operator
 import struct

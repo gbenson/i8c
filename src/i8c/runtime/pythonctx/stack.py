@@ -23,9 +23,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from ..compat import fprint, integer
+from ...compat import fprint, integer
+from .. import memory
 from . import functions
-from . import memory
 from . import types
 import sys
 

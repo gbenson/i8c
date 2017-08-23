@@ -23,10 +23,10 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from ..compat import integer
-from .. import archspec
-from .. import constants
-from . import *
+from ...compat import integer
+from ... import archspec
+from ... import constants
+from .. import *
 from . import leb128
 from . import operations
 from . import types
