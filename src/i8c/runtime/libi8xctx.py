@@ -33,6 +33,17 @@ import syslog
 class Context(context.AbstractContext):
     INTERPRETER = "UNKNOWN"
 
+    def translate_exceptions(func):
+        """Decorator to translate libi8x exceptions into ours."""
+        def _func(self, *args, **kwargs):
+            try:
+                return func(self, *args, **kwargs)
+            except libi8x.UnhandledNoteError as e:
+                raise UnhandledNoteError(FakeSlice(e))
+            except libi8x.I8XError as e:
+                raise NotImplementedError("libi8x." + e.__class__.__name__)
+        return _func
+
     @classmethod
     def _class_init(cls):
         """Probe libi8x for component versions."""
@@ -105,18 +116,15 @@ class Context(context.AbstractContext):
 
     # Methods to populate the context with Infinity functions.
 
+    @translate_exceptions
     def import_note(self, ns):
         """Import one note."""
         assert ns.start == 0 # or need to adjust srcoffset
         srcoffset = ns.note.offset
 
         self.__upbcc = UnpackedBytecodeConsumer()
-        exception = None
-        try:
-            func = self.__ctx.import_bytecode(ns.bytes, ns.filename,
-                                              srcoffset)
-        except libi8x.UnhandledNoteError as e:
-            raise UnhandledNoteError(FakeSlice(e))
+        func = self.__ctx.import_bytecode(ns.bytes, ns.filename,
+                                          srcoffset)
 
         # Retain a reference to func so we can add things to it.
         # Without this the capsule wrapper will be collected as
@@ -135,6 +143,7 @@ class Context(context.AbstractContext):
             src = ns[start:start + 1]
             func.symbols_at[reloc] = src.symbol_names
 
+    @translate_exceptions
     def override(self, function):
         """Register a function, overriding any existing versions."""
         func = self.__ctx.import_native(
@@ -156,6 +165,7 @@ class Context(context.AbstractContext):
 
     # Methods for Infinity function execution.
 
+    @translate_exceptions
     def call(self, signature, *args):
         """Call the specified function with the specified arguments."""
         return list(self.__xctx.call(signature,
