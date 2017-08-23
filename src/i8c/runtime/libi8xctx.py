@@ -40,7 +40,7 @@ class Context(context.AbstractContext):
                 return func(self, *args, **kwargs)
             except libi8x.UnhandledNoteError as e:
                 raise UnhandledNoteError(FakeSlice(e))
-            except libi8x.I8XError as e:
+            except libi8x.I8XError as e: # pragma: no cover
                 raise NotImplementedError("libi8x." + e.__class__.__name__)
         return _func
 
@@ -100,7 +100,7 @@ class Context(context.AbstractContext):
                 and (function.startswith("i8x_xctx_call")
                      or function.startswith("i8x_xctx_trace"))):
             # Let trace messages through if requested.
-            sys.stderr.write(msg)
+            sys.stderr.write(msg) # pragma: no cover
 
         # Funnel messages from I8_OP_warn to the testcase.
         if (priority == syslog.LOG_WARNING
