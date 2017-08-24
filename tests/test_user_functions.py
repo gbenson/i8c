@@ -45,6 +45,11 @@ class TestUserFunctions(TestCase):
     def userfunc(self, arg):
         return (arg - 32) * 5 // 9
 
+    def test_call_direct(self):
+        """Test calling a user function directly."""
+        tree, output = self.compile("define ju::nk")
+        self.assertEqual(output.call(self.userfunc, 32), [0])
+
     def test_call_direct_by_name(self):
         """Test calling a user function by name."""
         tree, output = self.compile("define ju::nk")
@@ -63,3 +68,9 @@ class TestUserFunctions(TestCase):
         self.assertEqual(output.call(output.note.signature,
                                      self.userfunc, 0),
                          [output.to_unsigned(-18)])
+
+    def test_call_arg_by_name(self):
+        """Test calling a user function passed as an argument by name."""
+        tree, output = self.compile(CALL_ARGUMENT_SOURCE)
+        self.assertEqual(output.call(output.note.signature,
+                                     self.userfunc.signature, 460), [237])

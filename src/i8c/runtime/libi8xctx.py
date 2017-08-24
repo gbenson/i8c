@@ -166,9 +166,10 @@ class Context(context.AbstractContext):
     # Methods for Infinity function execution.
 
     @translate_exceptions
-    def call(self, signature, *args):
+    def call(self, callee, *args):
         """Call the specified function with the specified arguments."""
-        return list(self.__xctx.call(signature,
+        callee = getattr(callee, "signature", callee)
+        return list(self.__xctx.call(callee,
                                      self.__inf,
                                      *(getattr(arg, "signature", arg)
                                        for arg in args)))

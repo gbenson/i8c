@@ -108,11 +108,11 @@ class Stack(object):
 
     def __box_FUNCTION(self, type, value):
         if not isinstance(value, functions.Function):
-            # Replace testcase.UserFunction objects with the real
-            # registered function.  This is persistent (unboxing won't
-            # remove it) so what you pop in this case is not exactly
-            # what you pushed.
-            value = self.ctx.get_function(value.signature)
+            # Replace signatures (strings) and UserFunction objects
+            # with registered functions.  This is persistent (in
+            # that unboxing won't remove it), meaning what you pop
+            # (in this case) won't be exactly what you pushed.
+            value = self.ctx.get_function(value)
         assert value.type == type
         return value
 

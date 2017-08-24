@@ -67,7 +67,7 @@ class AbstractContext(object):
         """Register a function, overriding any existing versions."""
         raise NotImplementedError
 
-    def call(self, signature, *args): # pragma: no cover
+    def call(self, callee, *args): # pragma: no cover
         """Call the specified function with the specified arguments."""
         raise NotImplementedError
 

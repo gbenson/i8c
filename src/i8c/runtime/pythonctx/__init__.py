@@ -65,9 +65,9 @@ class Context(context.AbstractContext):
 
     # Methods for Infinity function execution.
 
-    def call(self, signature, *args):
+    def call(self, callee, *args):
         """Call the specified function with the specified arguments."""
-        function = self.get_function(signature)
+        function = self.get_function(callee)
         stack = self.new_stack()
         stack.push_multi(reversed(function.ptypes), reversed(args))
         function.execute(self, stack)
@@ -76,13 +76,9 @@ class Context(context.AbstractContext):
     def get_function(self, sig_or_ref):
         if isinstance(sig_or_ref, functions.UnresolvedFunction):
             reference = sig_or_ref
-            signature = reference.signature
         else:
-            if isinstance(sig_or_ref, bytes):
-                sig_or_ref = sig_or_ref.decode("utf-8")
-            signature = sig_or_ref
             reference = None
-        assert isinstance(signature, str)
+        signature = getattr(sig_or_ref, "signature", sig_or_ref)
         funclist = self.functions.get(signature, None)
         if funclist is None or len(funclist) != 1:
             raise UnresolvedFunctionError(signature, reference)
