@@ -138,6 +138,14 @@ class TestCase(BaseTestCase):
     def call(self):
         return self.__ctx.call
 
+    @property
+    def to_signed(self):
+        return self.__ctx.to_signed
+
+    @property
+    def to_unsigned(self):
+        return self.__ctx.to_unsigned
+
 class UserFunction(object):
     def __init__(self, signature, impl):
         self.signature = signature

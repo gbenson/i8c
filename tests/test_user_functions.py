@@ -43,7 +43,7 @@ class TestUserFunctions(TestCase):
 
     @TestCase.provide("test::f2c(i)p")
     def userfunc(self, arg):
-        return (arg - 32) * 5 // 9
+        return self.to_unsigned((self.to_signed(arg) - 32) * 5 // 9)
 
     def test_call_direct(self):
         """Test calling a user function directly."""
@@ -73,4 +73,6 @@ class TestUserFunctions(TestCase):
         """Test calling a user function passed as an argument by name."""
         tree, output = self.compile(CALL_ARGUMENT_SOURCE)
         self.assertEqual(output.call(output.note.signature,
-                                     self.userfunc.signature, 460), [237])
+                                     self.userfunc.signature,
+                                     output.to_unsigned(-459)),
+                         [output.to_unsigned(-273)])
