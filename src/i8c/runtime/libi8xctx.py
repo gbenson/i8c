@@ -85,7 +85,9 @@ class Context(context.AbstractContext):
 
         self.__xctx = self.__ctx.new_xctx()
 
-    def __del__(self):
+    def finalize(self):
+        """Release any resources held by this Context."""
+        super(Context, self).finalize()
         for func in self.__imports:
             del func.symbols_at
         del self.__imports

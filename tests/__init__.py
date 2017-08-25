@@ -44,6 +44,7 @@ class SourceReader(io.BytesIO):
 class TestOutput(runtime.Context):
     def __init__(self, testcase, index, asm):
         runtime.Context.__init__(self, testcase)
+        testcase.addCleanup(self.finalize)
         self.__set_fileprefix(testcase, index)
         # Store the assembly language we generated
         asmfile = self.fileprefix + ".S"

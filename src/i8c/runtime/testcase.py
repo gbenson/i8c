@@ -124,6 +124,7 @@ class TestCase(BaseTestCase):
             self._install_user_functions(self.__ctx)
             return BaseTestCase.run(self, *args, **kwargs)
         finally:
+            self.__ctx.finalize()
             del self.__ctx
 
     @property

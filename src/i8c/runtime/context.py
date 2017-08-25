@@ -30,12 +30,24 @@ class AbstractContext(object):
         self.__env = env
         self.tracelevel = 0
 
+    def __del__(self):
+        """Do not override, extend finalize instead."""
+        try:
+            self.__env
+        except AttributeError:
+            return # It's been run.
+        self.finalize()
+
+    def finalize(self):
+        """Release any resources held by this context."""
+        del self.__env
+
     @property
     def env(self):
         return self.__env
 
     @env.setter
-    def env(self, value): # pragma: no cover
+    def env(self, value):
         raise RuntimeError
 
     def import_notes(self, filename):
