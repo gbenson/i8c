@@ -46,9 +46,11 @@ class Context(context.AbstractContext):
 
     @classmethod
     def _class_init(cls):
-        """Probe libi8x for component versions."""
+        """Probe libi8x for component versions and log priority."""
         cls.__components = []
-        libi8x.Context(syslog.LOG_DEBUG, cls.__clinit_logger)
+        cls.__log_pri = libi8x.Context(0, cls.__clinit_logger).log_priority
+        if not cls.__components:
+            libi8x.Context(syslog.LOG_DEBUG, cls.__clinit_logger)
         for index, component in enumerate(cls.__components):
             if component.startswith("libi8x "):
                 cls.INTERPRETER = cls.__components.pop(index)
@@ -67,17 +69,14 @@ class Context(context.AbstractContext):
         self.__imports = []
         super(Context, self).__init__(*args, **kwargs)
 
-        # Create the context without specifying a logging priority.
-        self.__log_pri = sys.maxsize
-        self.__upbcc = None
-        self.__ctx = libi8x.Context(libi8x.DBG_MEM, self.__logger)
-        self.__log_pri = self.__ctx.log_priority
+        # Enable extra checks if we're in the I8C testsuite.
+        self.__extra_checks = hasattr(self.env, "__i8c_testcase__")
+        if self.__extra_checks:
+            self.__dbg_log = []
 
-        # Boost log priority if necessary so we can access warnings
-        # and tracing messages.  Our logging function filters these
-        # according to the priority the user originally requested.
-        if self.__log_pri < libi8x.LOG_TRACE:
-            self.__ctx.log_priority = libi8x.LOG_TRACE
+        self.__upbcc = None
+        flags = libi8x.DBG_MEM | libi8x.LOG_TRACE
+        self.__ctx = libi8x.Context(flags, self.__logger)
 
         self.__inf = self.__ctx.new_inferior()
         self.__inf.read_memory = self.__read_memory
@@ -90,10 +89,46 @@ class Context(context.AbstractContext):
         super(Context, self).finalize()
         for func in self.__imports:
             del func.symbols_at
+            del func
         del self.__imports
+        del self.__xctx, self.__inf, self.__ctx
+
+        if not self.__extra_checks:
+            return
+
+        SENSES = {"created": 1, "released": -1}
+        counts = {}
+        for entry in self.__dbg_log:
+            priority, filename, line, function, msg = entry
+            if priority != syslog.LOG_DEBUG:
+                continue
+            msg = msg.rstrip().split()
+            if not msg:
+                continue
+            sense = SENSES.get(msg.pop(), None)
+            if sense is None:
+                continue
+            what = " ".join(msg)
+            count = counts.get(what, 0) + sense
+            if count == 0:
+                counts.pop(what)
+            else:
+                counts[what] = count
+        if counts:
+            print("Unreleased items:")
+            for item in sorted(counts):
+                print(" ", item)
+            raise AssertionError("unreleased items")
 
     def __logger(self, priority, filename, linenumber, function, msg):
         """Logging function for libi8x messages."""
+
+        # Store log messages if we're in the I8C testsuite.
+        if self.__extra_checks:
+            self.__dbg_log.append(
+                (priority, filename, linenumber, function, msg))
+
+        # Write message to stderr if requested.
         if priority <= self.__log_pri: # pragma: no cover
             # User requested this with I8X_LOG.
             sys.stderr.write("i8x: %s: %s" % (function, msg))

@@ -55,13 +55,15 @@ class TestOutput(runtime.Context):
         subprocess.check_call(
             commands.I8C_CC + ["-c", asmfile, "-o", objfile])
         # Load the notes from it
+        self.import_error = None
+        testcase.addCleanup(delattr, self, "import_error")
         try:
             self.import_notes(objfile)
         except runtime.UnhandledNoteError as e:
             self.import_error = e
             return
-        self.import_error = None
         self.notes = list(self._i8ctest_functions)
+        testcase.addCleanup(delattr, self, "notes")
         # Make sure we got at least one note
         testcase.assertGreaterEqual(len(self.notes), 1)
         # Setup for note execution
@@ -137,6 +139,7 @@ class TestOutput(runtime.Context):
         return [op.name for op in self.ops]
 
 class TestCase(BaseTestCase):
+    __i8c_testcase__ = True
     _wordsize = target.guess_wordsize()
 
     def __locate_topdir(self):
