@@ -187,29 +187,34 @@ class Context(context.AbstractContext):
             function.signature,
             lambda xctx, inf, func, *args: function.impl(*args))
         ref = func.ref
-        if ref.is_resolved:
-            return
-
-        # The function already existed; we've added another with the
-        # same name and caused the funcref to become unresolved.  We
-        # walk the list and unregister the ones that aren't ours.
-        kill_list = [func2
-                     for func2 in self.__ctx.functions
-                     if func2 is not func and func2.ref is ref]
-        assert kill_list
-        for func in kill_list:
-            self.__ctx.unregister(func)
+        if not ref.is_resolved:
+            # The function already existed; we've added another with the
+            # same name and caused the funcref to become unresolved.  We
+            # walk the list and unregister the ones that aren't ours.
+            kill_list = [func2
+                         for func2 in self.__ctx.functions
+                         if func2 is not func and func2.ref is ref]
+            assert kill_list
+            for func in kill_list:
+                self.__ctx.unregister(func)
+        return ref
 
     # Methods for Infinity function execution.
 
     @translate_exceptions
     def call(self, callee, *args):
         """Call the specified function with the specified arguments."""
-        callee = getattr(callee, "signature", callee)
-        return list(self.__xctx.call(callee,
+        return list(self.__xctx.call(self.__process_value(callee),
                                      self.__inf,
-                                     *(getattr(arg, "signature", arg)
-                                       for arg in args)))
+                                     *map(self.__process_value, args)))
+
+    def __process_value(self, maybe_func):
+        """Convert a Python value into something libi8x can use."""
+        handle = getattr(maybe_func, "_handle", None)
+        if handle is not None:
+            return handle
+        else:
+            return getattr(maybe_func, "signature", maybe_func)
 
     def __read_memory(self, inf, addr, len):
         """Memory reader function."""

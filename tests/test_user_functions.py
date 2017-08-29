@@ -38,17 +38,25 @@ define test::call_argument returns ptr
     call
 """
 
-class TestUserFunctions(TestCase):
+class UserFuncTestCase(object):
     """Test the @TestCase.provide decorator."""
-
-    @TestCase.provide("test::f2c(i)p")
-    def userfunc(self, arg):
-        return self.to_unsigned((self.to_signed(arg) - 32) * 5 // 9)
 
     def test_call_direct(self):
         """Test calling a user function directly."""
         tree, output = self.compile("define ju::nk")
         self.assertEqual(output.call(self.userfunc, 32), [0])
+
+    def test_call_arg(self):
+        """Test calling a user function passed as an argument."""
+        tree, output = self.compile(CALL_ARGUMENT_SOURCE)
+        self.assertEqual(output.call(output.note.signature,
+                                     self.userfunc, 0),
+                         [output.to_unsigned(-18)])
+
+class TestGlobalUserFunctions(TestCase, UserFuncTestCase):
+    @TestCase.provide("test::f2c(i)p")
+    def userfunc(self, arg):
+        return self.to_unsigned((self.to_signed(arg) - 32) * 5 // 9)
 
     def test_call_direct_by_name(self):
         """Test calling a user function by name."""
@@ -62,13 +70,6 @@ class TestUserFunctions(TestCase):
         self.assertEqual(output.call(output.note.signature, 451),
                          [232])
 
-    def test_call_arg(self):
-        """Test calling a user function passed as an argument."""
-        tree, output = self.compile(CALL_ARGUMENT_SOURCE)
-        self.assertEqual(output.call(output.note.signature,
-                                     self.userfunc, 0),
-                         [output.to_unsigned(-18)])
-
     def test_call_arg_by_name(self):
         """Test calling a user function passed as an argument by name."""
         tree, output = self.compile(CALL_ARGUMENT_SOURCE)
@@ -76,3 +77,8 @@ class TestUserFunctions(TestCase):
                                      self.userfunc.signature,
                                      output.to_unsigned(-459)),
                          [output.to_unsigned(-273)])
+
+class TestLocalUserFunctions(TestCase, UserFuncTestCase):
+    @TestCase.provide("::(i)p")
+    def userfunc(self, arg):
+        return self.to_unsigned((self.to_signed(arg) - 32) * 5 // 9)

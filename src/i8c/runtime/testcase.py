@@ -76,7 +76,8 @@ class BaseTestCase(unittest.TestCase):
             except AttributeError:
                 continue
             if isinstance(func, UserFunction):
-                ctx.override(func.bind_to(self))
+                func._handle = ctx.override(func.bind_to(self))
+                self.addCleanup(delattr, func, "_handle")
 
 class TestCase(BaseTestCase):
     include_path = []
