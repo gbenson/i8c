@@ -27,7 +27,6 @@ from ...compat import fprint, integer
 from .. import memory
 from . import functions
 from . import types
-import sys
 
 # XXX most every assert here should be a proper error
 
@@ -130,16 +129,14 @@ class Stack(object):
 
     # Tracing
 
-    def trace(self, tracelevel):
-        depth = tracelevel + 1
-        for item, index in zip(self.slots[:depth], range(depth)):
-            if isinstance(item, self.ctx.uint_t):
-                value = item.value
-                item = "%d" % value
-                if value < 0 or value > 15:
-                    item += " (0x%x)" % value
-            fprint(sys.stdout, "    stack[%d] = %s" % (index, item))
-        fprint(sys.stdout)
+    def trace(self):
+        return [self.__unbox_unchecked(boxed) for boxed in self.slots]
+
+    def __unbox_unchecked(self, boxed):
+        if isinstance(boxed, self.ctx.uint_t):
+            return boxed.value
+        else:
+            return id(boxed)
 
 class Opaque(object):
     def __init__(self, value):

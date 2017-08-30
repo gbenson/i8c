@@ -37,7 +37,6 @@ class Context(context.AbstractContext):
     def __init__(self, *args, **kwargs):
         super(Context, self).__init__(*args, **kwargs)
         self.functions = {}
-        self.__last_traced = None
 
     # Methods to populate the context with Infinity functions.
 
@@ -86,30 +85,6 @@ class Context(context.AbstractContext):
 
     def new_stack(self):
         return stack.Stack(self)
-
-    def __trace(self, location, stack, encoded, decoded):
-        function, pc = location
-        if self.tracelevel > 0:
-            if function != self.__last_traced:
-                fprint(sys.stdout, "\n%s:" % function)
-                self.__last_traced = function
-            if self.tracelevel > 1:
-                stack.trace(self.tracelevel)
-            fprint(sys.stdout, "  %04x: %-12s %s" % (pc, encoded, decoded))
-
-    def trace_operation(self, *args):
-        self.__trace(*args)
-
-    def trace_call(self, function, stack):
-        if not isinstance(function, functions.BytecodeFunction):
-            if self.tracelevel > 0:
-                fprint(sys.stdout, "\n%s:" % function)
-                fprint(sys.stdout, "  NON-BYTECODE FUNCTION")
-        self.__last_traced = None
-
-    def trace_return(self, location, stack):
-        self.__trace(location, stack, "", "RETURN")
-        self.__last_traced = None
 
     # Methods to convert between signed and unsigned integers.
 

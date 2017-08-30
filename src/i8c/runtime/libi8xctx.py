@@ -132,12 +132,11 @@ class Context(context.AbstractContext):
         if priority <= self.__log_pri: # pragma: no cover
             # User requested this with I8X_LOG.
             sys.stderr.write("i8x: %s: %s" % (function, msg))
-        elif (self.tracelevel > 0
-                and priority == libi8x.LOG_TRACE
-                and (function.startswith("i8x_xctx_call")
-                     or function.startswith("i8x_xctx_trace"))):
-            # Let trace messages through if requested.
-            sys.stderr.write(msg) # pragma: no cover
+
+        # Funnel tracing messages to AbstractContext._trace.
+        if (priority == libi8x.LOG_TRACE
+              and function.find("validate") < 0):
+            self.__trace(msg)
 
         # Funnel messages from I8_OP_warn to the testcase.
         if (priority == syslog.LOG_WARNING
@@ -150,6 +149,50 @@ class Context(context.AbstractContext):
               and priority == syslog.LOG_INFO
               and function == "i8x_code_dump_itable"):
             self.__upbcc.consume(msg)
+
+    def __trace(self, msg):
+        """Funnel tracing messages to AbstractContext._trace.
+
+        Tries to be very conservative, while at the same time
+        trying very hard to actually do something.  Note this
+        silently drops any exceptions when running outside of
+        I8C's testsuite.
+        """
+        args, kwargs = [], {}
+        try:
+            self.__parse_trace(args, kwargs, msg)
+        except: # pragma: no cover
+            if self.__extra_checks:
+                raise
+        try:
+            self._trace(*args, **kwargs)
+        except: # pragma: no cover
+            if self.__extra_checks:
+                raise
+
+    @staticmethod
+    def __parse_trace(args, kwargs, msg):
+        signature, msg = msg.rstrip().split(None, 1)
+        is_special = signature.endswith(":")
+        if is_special:
+            signature = signature[:-1]
+        args.append(signature)
+        if is_special:
+            kwargs["opname"] = msg
+            return
+
+        msg = msg.split()
+        args.append(int(msg.pop(0), 16)) # pc
+        args.append(msg.pop(0))          # opname
+
+        stack = []
+        stack_depth = int(msg.pop(0).strip("[]"))
+        for slot in range(stack_depth):
+            if not msg:
+                break
+            stack.append(int(msg.pop(0), 16))
+        stack += [None] * (stack_depth - len(stack))
+        args.append(stack)
 
     # Methods to populate the context with Infinity functions.
 

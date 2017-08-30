@@ -144,6 +144,10 @@ class TestCase(BaseTestCase):
     target_wordsize = target.guess_wordsize()
     assert target_wordsize is not None
 
+    backend = TestOutput.INTERPRETER
+    print("using", backend, file=sys.stderr)
+    backend = backend.split(None, 1)[0].lower()
+
     def __locate_topdir(self):
         self.topdir = os.path.realpath(__file__)
         self.topdir, check = os.path.split(self.topdir)
@@ -172,5 +176,3 @@ class TestCase(BaseTestCase):
     def disable_loggers(self):
         for logger in compiler.loggers.values():
             logger.disable()
-
-print("using", TestOutput.INTERPRETER, file=sys.stderr)

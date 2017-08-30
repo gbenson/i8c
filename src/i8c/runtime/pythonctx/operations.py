@@ -156,10 +156,8 @@ class Operation(object):
             self.operands.append(value)
             next += size
         # Store our source location for exceptions
+        self.function = function
         self.src = src[:next.start - src.start]
-        # Store our location and encoded form for tracing
-        self.location = (function, pc)
-        self.encoded = self.src.text
         # Counter for coverage checks
         self.hitcount = 0
         # Tidy up
@@ -174,8 +172,12 @@ class Operation(object):
         return self.src.byteorder
 
     @property
-    def function(self):
-        return self.location[0]
+    def srcoffset(self):
+        return self.src.note.offset + self.src.start
+
+    @property
+    def location(self):
+        return (self.function, self.srcoffset)
 
     @staticmethod
     def decode_address(code):
@@ -204,15 +206,11 @@ class Operation(object):
         assert len(self.operands) == 1
         return self.operands[0]
 
-    def __trace(self, ctx, stack):
-        ctx.trace_operation(self.location, stack,
-                            " ".join("%02x" % ord(c)
-                                     for c in self.encoded),
-                            " ".join([self.NAMES[self.opcode]]
-                                     + list(map(repr, self.operands))))
-
     def execute(self, ctx, externals, stack):
-        self.__trace(ctx, stack)
+        ctx._trace(self.function.signature,
+                   self.srcoffset,
+                   self.NAMES[self.opcode],
+                   stack.trace())
         self.hitcount += 1
         if (self.opcode >= constants.DW_OP_lit0
               and self.opcode <= constants.DW_OP_lit31):
@@ -307,8 +305,11 @@ class Operation(object):
 
     def exec_call(self, ctx, externals, stack):
         callee = stack.pop_function()
-        ctx.trace_call(callee, stack)
+        if callee.is_native:
+            ctx._trace(callee.signature, opname="native call")
         callee.execute(ctx, stack)
+        if callee.is_native:
+            ctx._trace(callee.signature, opname="native return")
 
     def __exec_litN(self, ctx, externals, stack):
         stack.push_intptr(self.opcode - constants.DW_OP_lit0)

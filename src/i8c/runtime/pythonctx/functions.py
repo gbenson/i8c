@@ -60,7 +60,7 @@ class Function(object):
         return self.signature
 
 class BuiltinFunction(Function):
-    """A function provided by the note consumer."""
+    is_native = True
 
     def __init__(self, signature, impl):
         Function.__init__(self)
@@ -79,6 +79,8 @@ class BuiltinFunction(Function):
         stack.push_multi(self.rtypes, result)
 
 class BytecodeFunction(Function):
+    is_native = False
+
     def __init__(self, src):
         Function.__init__(self, src)
         self.__split_chunks()
@@ -209,7 +211,9 @@ class BytecodeFunction(Function):
             last_op = op
         if pc != return_pc:
             raise BadJumpError(stack.op)
-        ctx.trace_return((self.signature, pc), stack)
+        ctx._trace(self.signature,
+                   self.bytecode.note.offset + self.bytecode.start + pc,
+                   "[return]", stack.trace())
         stack.pop_multi_onto(self.rtypes, caller_stack)
 
     @property

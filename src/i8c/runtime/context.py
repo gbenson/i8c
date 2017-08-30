@@ -24,6 +24,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from . import provider
+import sys
 
 class AbstractContext(object):
     def __init__(self, env=None):
@@ -95,3 +96,33 @@ class AbstractContext(object):
     def _i8ctest_functions(self): # pragma: no cover
         """Iterate over all currently-loaded functions."""
         raise NotImplementedError
+
+    def _trace(self, signature, pc=None, opname=None, stack=None):
+        """Hook called every time an instruction is executed."""
+        if self.tracelevel <= 0:
+            return
+        msg = signature
+        if pc is None:
+            msg += ": "
+        else:
+            msg = "%-39s %10s\t" % (msg, hex(pc))
+        msg += "%-23s " % opname
+        if stack is not None:
+            msg += "%4s" % ("[%d]" % len(stack))
+            for slot in range(self.tracelevel + 1):
+                if len(stack) > slot:
+                    value = stack[slot]
+                else:
+                    value = None
+
+                if value is None:
+                    value = "----------"
+                else:
+                    value = "0x%08x" % value
+
+                msg += "\t%-18s" % value
+        self.trace(msg.rstrip())
+
+    def trace(self, msg): # pragma: no cover
+        """Display a tracing message to the user."""
+        print(msg, file=sys.stderr)
