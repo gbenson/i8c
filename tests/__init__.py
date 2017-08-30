@@ -26,6 +26,7 @@ from i8c import compiler
 from i8c import runtime
 from i8c import version
 from i8c.compiler import target
+from i8c.runtime import coverage
 from i8c.runtime.testcase import BaseTestCase
 import io
 import os
@@ -55,6 +56,7 @@ class TestOutput(runtime.Context):
         subprocess.check_call(
             commands.I8C_CC + ["-c", asmfile, "-o", objfile])
         # Load the notes from it
+        self.coverage = coverage.Accumulator()
         self.import_error = None
         testcase.addCleanup(delattr, self, "import_error")
         try:

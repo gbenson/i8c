@@ -27,6 +27,7 @@ from .. import cmdline
 from .. import version
 from ..compat import fprint, load_module_from_source, strtoint_c
 from . import Context
+from . import coverage
 from . import I8XError
 from . import TestCase
 import getopt
@@ -87,6 +88,7 @@ class TestSuite(unittest.TestSuite):
 
 class ContextPopulator(object):
     def __init__(self):
+        self.coverage = coverage.Accumulator()
         self.providers = []
         self.tracelevel = 0
 
@@ -94,6 +96,7 @@ class ContextPopulator(object):
         self.providers.append(filename)
 
     def populate(self, ctx):
+        ctx.coverage = self.coverage
         ctx.tracelevel = self.tracelevel
         for provider in self.providers:
             ctx.import_notes(provider)
