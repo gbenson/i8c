@@ -24,4 +24,22 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 class Accumulator(object):
-    pass
+    def __init__(self):
+        self.functions = {}
+
+    def add_function(self, func):
+        self.__add_function(func.signature, func.coverage_ops)
+
+    def __add_function(self, sig, ops):
+        func = self.functions.get(sig, None)
+        if func is None:
+            self.functions[sig] = Function(ops)
+        else:
+            func.assertOpsEqual(ops)
+
+class Function(object):
+    def __init__(self, ops):
+        self.ops = ops
+
+    def assertOpsEqual(self, ops):
+        assert ops == self.ops

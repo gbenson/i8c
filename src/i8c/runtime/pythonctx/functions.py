@@ -196,6 +196,12 @@ class BytecodeFunction(Function):
         self.return_op = operations.FakeReturn(self)
 
     @property
+    def coverage_ops(self):
+        ops = list(self.ops.values())
+        ops.append(self.return_op)
+        return dict((op.srcoffset, op) for op in ops)
+
+    @property
     def external_functions(self):
         return [str(ext)
                 for ext in self.externals

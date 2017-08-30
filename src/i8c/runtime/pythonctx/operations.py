@@ -45,6 +45,7 @@ class AbstractOperation(context.AbstractOperation):
 
 class FakeReturn(AbstractOperation):
     fullname = "[return]"
+    operands = None
 
     def __init__(self, function):
         super(FakeReturn, self).__init__(function, function.return_pc)

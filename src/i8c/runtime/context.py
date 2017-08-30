@@ -63,7 +63,7 @@ class AbstractContext(object):
         with provider.open(filename) as np:
             for ns in np.infinity_notes:
                 self.__setup_platform(ns)
-                self.import_note(ns)
+                self.coverage.add_function(self.import_note(ns))
 
     def __setup_platform(self, ns):
         """Initialize platform-specific stuff as per the first note."""

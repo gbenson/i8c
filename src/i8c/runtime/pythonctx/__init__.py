@@ -48,6 +48,7 @@ class Context(context.AbstractContext):
         if not funclist:
             self.functions[function.signature] = funclist
         funclist.append(function)
+        return function
 
     def __setup_platform(self):
         """Initialize platform-specific stuff as per the first note."""

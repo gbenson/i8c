@@ -27,6 +27,7 @@ from ..compat import fprint, str
 from . import *
 from . import context
 import libi8x
+import re
 import sys
 import syslog
 
@@ -74,7 +75,7 @@ class Context(context.AbstractContext):
         if self.__extra_checks:
             self.__dbg_log = []
 
-        self.__upbcc = None
+        self.__bytecode_consumers = None
         flags = libi8x.DBG_MEM | libi8x.LOG_TRACE
         self.__ctx = libi8x.Context(flags, self.__logger)
 
@@ -144,10 +145,11 @@ class Context(context.AbstractContext):
             self.env.warn_caller(msg[:-1].split(": ", 1)[1])
 
         # Funnel itable dump traces to the consumer.
-        if (self.__upbcc is not None
+        if (self.__bytecode_consumers is not None
               and priority == syslog.LOG_INFO
               and function == "i8x_code_dump_itable"):
-            self.__upbcc.consume(msg)
+            for bcc in self.__bytecode_consumers:
+                bcc.consume(msg)
 
     def __trace(self, msg):
         """Funnel tracing messages to AbstractContext._trace.
@@ -201,7 +203,10 @@ class Context(context.AbstractContext):
         self.env.assertEqual(ns.start, 0, "need to adjust srcoffset")
         srcoffset = ns.note.offset
 
-        self.__upbcc = UnpackedBytecodeConsumer()
+        bcc_raw = UnpackedBytecodeConsumer("i8x_code_unpack_bytecode")
+        bcc_cooked = UnpackedBytecodeConsumer("i8x_code_setup_dispatch")
+        self.__bytecode_consumers = (bcc_raw, bcc_cooked)
+
         func = self.__ctx.import_bytecode(ns.bytes, ns.filename,
                                           srcoffset)
 
@@ -211,8 +216,9 @@ class Context(context.AbstractContext):
         self.__imports.append(func)
 
         # Store the unpacked bytecode.
-        func.ops = self.__upbcc.ops
-        self.__upbcc = None
+        func.ops = bcc_raw.ops
+        func.coverage_ops = bcc_cooked.ops
+        self.__bytecode_consumers = None
 
         # Store any relocations.  Note that this creates
         # circular references that are cleared in __del__.
@@ -221,6 +227,8 @@ class Context(context.AbstractContext):
             start = reloc.source_offset - srcoffset
             src = ns[start:start + 1]
             func.symbols_at[reloc] = src.symbol_names
+
+        return func
 
     @translate_exceptions
     def override(self, function):
@@ -303,14 +311,15 @@ Context._class_init()
 class UnpackedBytecodeConsumer(object):
     """Grab the decoded bytecode from the trace messages."""
 
-    def __init__(self):
+    def __init__(self, stage):
+        self.__start_re = re.compile(r"^%s(\s.*)?:\n$" % stage)
         self.ops = {}
         self.__started = False
         self.__finished = False
 
     def consume(self, msg):
         if not self.__started:
-            if msg == "i8x_code_unpack_bytecode:\n":
+            if self.__start_re.match(msg) is not None:
                 self.__started = True
         elif msg.find("I8X_OP_return") != -1:
             self.__finished = True
