@@ -336,7 +336,16 @@ class UnpackedBytecodeConsumer(object):
         op, msg = msg.split("=> ", 1)
         operands = op.rstrip().split()
         fullname = operands.pop(0)
-        operands = tuple(map(self.__str_to_int, operands))
+        if fullname == "I8_OP_warn":
+            assert len(operands) == 1
+            extras = msg.split(" / ", 1)
+            if len(extras) == 2:
+                operand = extras[1]
+            else:
+                operand = ""
+            operands = (operand,)
+        else:
+            operands = tuple(map(self.__str_to_int, operands))
 
         # XXX process the remainder?
         # It has next_pc values, and I8_OP_warn strings.

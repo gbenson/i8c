@@ -33,6 +33,7 @@ define test::coverage_me returns int
   add
   return
 label:
+  warn "it's negative"
   neg
 """
 
@@ -41,9 +42,13 @@ class TestCoverageChecker(TestCase):
         tree, self.output = self.compile(SOURCE)
         self.addCleanup(delattr, self, "output")
         self.assertEqual(len(self.coverage.functions), 1)
+        opnames = self.output.opnames
 
         # deref_int was chosen because libi8x rewrites it.
-        self.assertEqual(self.output.opnames[0], "deref_int")
+        self.assertEqual(opnames[0], "deref_int")
+
+        # warn was chosen because its operand is a string.
+        self.assertEqual(opnames[8], "warn")
 
     @property
     def coverage(self):
