@@ -175,8 +175,6 @@ class Operation(AbstractOperation):
                 size, value = getattr(self, "decode_" + type)(next)
             self.operands.append(value)
             next += size
-        # Counter for coverage checks
-        self.hitcount = 0
         # Tidy up
         self.src = self.src[:next.start - self.src.start]
         del self.get_string
@@ -223,7 +221,6 @@ class Operation(AbstractOperation):
                    self.srcoffset,
                    self.fullname,
                    stack.trace())
-        self.hitcount += 1
         if (self.opcode >= constants.DW_OP_lit0
               and self.opcode <= constants.DW_OP_lit31):
             impl = self.__exec_litN

@@ -216,7 +216,12 @@ class Context(context.AbstractContext):
         self.__imports.append(func)
 
         # Store the unpacked bytecode.
-        func.ops = bcc_raw.ops
+        ops = bcc_raw.ops
+        if ops:
+            last_op = max(ops.keys())
+            check = ops.pop(last_op)
+            self.env.assertEqual(check.fullname, "I8X_OP_return")
+        func.ops = ops
         func.coverage_ops = bcc_cooked.ops
         self.__bytecode_consumers = None
 
@@ -321,10 +326,10 @@ class UnpackedBytecodeConsumer(object):
         if not self.__started:
             if self.__start_re.match(msg) is not None:
                 self.__started = True
-        elif msg.find("I8X_OP_return") != -1:
-            self.__finished = True
         elif not self.__finished:
-            self.__consume_op(msg)
+            op = self.__consume_op(msg)
+            if op.fullname == "I8X_OP_return":
+                self.__finished = True
 
     def __consume_op(self, msg):
         msg = msg.strip()
@@ -333,7 +338,13 @@ class UnpackedBytecodeConsumer(object):
         pc = self.__str_to_int(pc)
         assert pc not in self.ops
 
-        op, msg = msg.split("=> ", 1)
+        msg = msg.split("=> ", 1)
+        op = msg.pop(0)
+        if len(msg) == 1:
+            [msg] = msg
+        else:
+            assert op == "I8X_OP_return"
+            del msg
         operands = op.rstrip().split()
         fullname = operands.pop(0)
         if fullname == "I8_OP_warn":
@@ -350,7 +361,9 @@ class UnpackedBytecodeConsumer(object):
         # XXX process the remainder?
         # It has next_pc values, and I8_OP_warn strings.
 
-        self.ops[pc] = Operation(fullname, operands)
+        op = Operation(fullname, operands)
+        self.ops[pc] = op
+        return op
 
     @staticmethod
     def __str_to_int(value):

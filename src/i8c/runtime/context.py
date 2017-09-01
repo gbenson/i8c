@@ -106,6 +106,8 @@ class AbstractContext(object):
 
     def _trace(self, signature, pc=None, opname=None, stack=None):
         """Hook called every time an instruction is executed."""
+        if pc is not None:
+            self.coverage.log_operation(signature, pc, opname)
         if self.tracelevel <= 0:
             return
         msg = signature

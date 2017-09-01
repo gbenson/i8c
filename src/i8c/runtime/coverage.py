@@ -37,9 +37,20 @@ class Accumulator(object):
         else:
             func.assertOpsEqual(ops)
 
+    def log_operation(self, sig, pc, opname):
+        self.functions[sig].log_operation(pc, opname)
+
 class Function(object):
     def __init__(self, ops):
+        for op in ops.values():
+            assert not hasattr(op, "hitcount")
+            op.hitcount = 0
         self.ops = ops
 
     def assertOpsEqual(self, ops):
         assert ops == self.ops
+
+    def log_operation(self, pc, opname):
+        op = self.ops[pc]
+        assert op.fullname == opname
+        op.hitcount += 1
