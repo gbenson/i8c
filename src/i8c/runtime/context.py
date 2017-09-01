@@ -25,27 +25,34 @@ from __future__ import unicode_literals
 
 from . import provider
 import sys
+import weakref
+try:
+    import unittest2 as unittest
+except ImportError: # pragma: no cover
+    import unittest
+
+class FallbackEnvironment(unittest.TestCase):
+    """Dummy environment; ensures self.env.assert* always works."""
+
+    def runTest(self):
+        self.fail("should not call")
 
 class AbstractContext(object):
+    __fallback_env = FallbackEnvironment()
+
     def __init__(self, env=None):
-        self.__env = env
+        self.__env = weakref.ref(env or self.__fallback_env)
         self.tracelevel = 0
 
     def __del__(self):
-        """Do not override, extend finalize instead."""
-        try:
-            self.__env
-        except AttributeError:
-            return # It's been run.
         self.finalize()
 
     def finalize(self):
         """Release any resources held by this context."""
-        del self.__env
 
     @property
     def env(self):
-        return self.__env
+        return self.__env() or self.__fallback_env
 
     @env.setter
     def env(self, value):

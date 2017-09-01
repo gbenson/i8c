@@ -86,12 +86,11 @@ class Context(context.AbstractContext):
 
     def finalize(self):
         """Release any resources held by this Context."""
-        super(Context, self).finalize()
-        for func in self.__imports:
+        while self.__imports:
+            func = self.__imports.pop()
             del func.symbols_at
             del func
-        del self.__imports
-        del self.__xctx, self.__inf, self.__ctx
+        self.__ctx = self.__inf = self.__xctx = None
 
         if not self.__extra_checks:
             return
