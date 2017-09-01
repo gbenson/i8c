@@ -43,6 +43,10 @@ class TestCoverageChecker(TestCase):
         self.addCleanup(delattr, self, "output")
         self.assertEqual(len(self.coverage.functions), 1)
         opnames = self.output.opnames
+        self.opcount = len(opnames)
+        self.assertGreater(self.opcount, 8)
+        if self.backend == "python":
+            self.opcount += 1 # fake return
 
         # deref_int was chosen because libi8x rewrites it.
         self.assertEqual(opnames[0], "deref_int")
@@ -50,9 +54,18 @@ class TestCoverageChecker(TestCase):
         # warn was chosen because its operand is a string.
         self.assertEqual(opnames[8], "warn")
 
+        with self.memory.builder() as mem:
+            addr = mem.alloc()
+            addr.store_i8(0, 1)
+            addr.store_i8(1, -1)
+        self.addr = addr.location
+
     @property
     def coverage(self):
         return self.output.coverage
+
+    def warn_caller(self, msg):
+        self.assertEqual(msg, "it's negative")
 
     def test_repeat_adds(self):
         """Test adding the same function a second time."""
@@ -95,3 +108,32 @@ class TestCoverageChecker(TestCase):
             coverage_ops = dict(list(func.coverage_ops.items())[:-1])
         with self.assertRaises(AssertionError):
             self.coverage.add_function(TestFunc)
+
+    def test_zero_coverage(self):
+        """Test coverage accessors with 0% coverage."""
+        self.assertFalse(self.coverage.is_total)
+        self.assertEqual(self.coverage.report,
+                         {"test::coverage_me(p)i": (0, self.opcount)})
+
+    def test_full_coverage(self):
+        """Test coverage accessors with 100% coverage."""
+        self.output.call("test::coverage_me(p)i", self.addr)
+        self.output.call("test::coverage_me(p)i", self.addr + 1)
+        self.assertTrue(self.coverage.is_total)
+        self.assertEqual(self.coverage.report,
+                         {"test::coverage_me(p)i": (self.opcount, 0)})
+
+    def test_intermediate_coverage(self):
+        """Test coverage accessors with 0% < x < 100% coverage."""
+        self.output.call("test::coverage_me(p)i", self.addr)
+        self.assertFalse(self.coverage.is_total)
+        report = self.coverage.report
+        self.assertEqual(len(report), 1)
+        [sig] = report.keys()
+        self.assertEqual(sig, "test::coverage_me(p)i")
+        counts = report.pop(sig)
+        self.assertEqual(len(counts), 2)
+        hit, missed = counts
+        self.assertEqual(hit + missed, self.opcount)
+        self.assertNotEqual(missed, 0)
+        self.assertGreater(hit, missed)

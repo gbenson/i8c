@@ -40,6 +40,18 @@ class Accumulator(object):
     def log_operation(self, sig, pc, opname):
         self.functions[sig].log_operation(pc, opname)
 
+    @property
+    def is_total(self):
+        """True if 100% coverage has been acheived, False otherwise."""
+        for func in self.functions.values():
+            if func.has_missed_ops:
+                return False
+        return True
+
+    @property
+    def report(self):
+        return dict((s, f.report) for s, f in self.functions.items())
+
 class Function(object):
     def __init__(self, ops):
         for op in ops.values():
@@ -54,3 +66,21 @@ class Function(object):
         op = self.ops[pc]
         assert op.fullname == opname
         op.hitcount += 1
+
+    @property
+    def has_missed_ops(self):
+        """False if 100% coverage has been acheived, True otherwise."""
+        for op in self.ops.values():
+            if op.hitcount < 1:
+                return True
+        return False
+
+    @property
+    def report(self):
+        hit = missed = 0
+        for op in self.ops.values():
+            if op.hitcount < 1:
+                missed += 1
+            else:
+                hit += 1
+        return hit, missed
