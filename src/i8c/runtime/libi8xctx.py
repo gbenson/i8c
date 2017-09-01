@@ -113,11 +113,11 @@ class Context(context.AbstractContext):
                 counts.pop(what)
             else:
                 counts[what] = count
-        if counts:
-            print("Unreleased items:")
-            for item in sorted(counts):
-                print(" ", item)
-            raise AssertionError("unreleased items")
+
+        self.env.assertTrue(not counts,
+                            "\n  ".join(["unreleased items:"]
+                                        + [" " + item
+                                           for item in sorted(counts)]))
 
     def __logger(self, priority, filename, linenumber, function, msg):
         """Logging function for libi8x messages."""
@@ -198,7 +198,7 @@ class Context(context.AbstractContext):
     @translate_exceptions
     def import_note(self, ns):
         """Import one note."""
-        assert ns.start == 0 # or need to adjust srcoffset
+        self.env.assertEqual(ns.start, 0, "need to adjust srcoffset")
         srcoffset = ns.note.offset
 
         self.__upbcc = UnpackedBytecodeConsumer()
@@ -236,7 +236,7 @@ class Context(context.AbstractContext):
             kill_list = [func2
                          for func2 in self.__ctx.functions
                          if func2 is not func and func2.ref is ref]
-            assert kill_list
+            self.env.assertGreater(len(kill_list), 0)
             for func in kill_list:
                 self.__ctx.unregister(func)
         return ref
@@ -272,7 +272,7 @@ class Context(context.AbstractContext):
                 exception = e
                 continue
             return value
-        assert exception is not None
+        self.env.assertIsNotNone(exception)
         raise exception
 
     # Methods to convert between signed and unsigned integers.

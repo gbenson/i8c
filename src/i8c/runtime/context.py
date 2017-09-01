@@ -68,15 +68,15 @@ class AbstractContext(object):
     def __setup_platform(self, ns):
         """Initialize platform-specific stuff as per the first note."""
         if hasattr(self, "wordsize"):
-            assert ns.wordsize == self.wordsize
+            self.env.assertEqual(ns.wordsize, self.wordsize)
         else:
-            assert ns.wordsize is not None
+            self.env.assertIsNotNone(ns.wordsize)
             self.wordsize = ns.wordsize
 
         if hasattr(self, "byteorder"):
-            assert ns.byteorder == self.byteorder
+            self.env.assertEqual(ns.byteorder, self.byteorder)
         else:
-            assert ns.byteorder in b"<>"
+            self.env.assertIn(ns.byteorder, b"<>")
             self.byteorder = ns.byteorder
 
     def import_note(self, ns): # pragma: no cover
