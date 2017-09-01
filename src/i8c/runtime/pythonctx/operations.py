@@ -29,7 +29,27 @@ from . import leb128
 import operator
 import struct
 
-class Operation(context.AbstractOperation):
+class AbstractOperation(context.AbstractOperation):
+    def __init__(self, function, pc):
+        bytecode = getattr(function, "bytecode", None)
+        if bytecode is None:
+            assert pc == 0
+            self.src = function.src
+        else:
+            self.src = bytecode + pc
+        self.function = function
+
+    @property
+    def srcoffset(self):
+        return self.src.note.offset + self.src.start
+
+class FakeReturn(AbstractOperation):
+    fullname = "[return]"
+
+    def __init__(self, function):
+        super(FakeReturn, self).__init__(function, function.return_pc)
+
+class Operation(AbstractOperation):
     NAMES = {}
     for name in dir(constants):
         if name[2:6] == "_OP_":
@@ -130,36 +150,34 @@ class Operation(context.AbstractOperation):
         FIXEDSIZE[type] = size, code
     del code, size, type
 
-    def __init__(self, function, pc):
-        src = function.bytecode + pc
-        self.get_string = function.get_string
+    def __init__(self, *args):
+        super(Operation, self).__init__(*args)
+        self.get_string = self.function.get_string
         # Read the opcode
-        self.opcode = ord(src[0])
-        next = src + 1
+        self.opcode = ord(self.src[0])
+        next = self.src + 1
         if self.opcode == constants.DW_OP_GNU_wide_op:
             size, widecode = self.decode_uleb128(next)
             self.opcode = widecode + 0x100
             next += size
         if self.opcode not in self.NAMES:
-            raise UnhandledNoteError(src)
+            raise UnhandledNoteError(self.src)
         # Read the operands
         self.operands = []
         for type in self.OPERANDS.get(self.opcode, ()):
             sizecode = self.FIXEDSIZE.get(type, None)
             if sizecode is not None:
                 size, fmt = sizecode
-                fmt = src.byteorder + fmt
+                fmt = self.byteorder + fmt
                 value = struct.unpack(fmt, next[:size].bytes)[0]
             else:
                 size, value = getattr(self, "decode_" + type)(next)
             self.operands.append(value)
             next += size
-        # Store our source location for exceptions
-        self.function = function
-        self.src = src[:next.start - src.start]
         # Counter for coverage checks
         self.hitcount = 0
         # Tidy up
+        self.src = self.src[:next.start - self.src.start]
         del self.get_string
 
     @property
@@ -169,10 +187,6 @@ class Operation(context.AbstractOperation):
     @property
     def byteorder(self):
         return self.src.byteorder
-
-    @property
-    def srcoffset(self):
-        return self.src.note.offset + self.src.start
 
     @property
     def location(self):

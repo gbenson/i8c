@@ -88,6 +88,7 @@ class BytecodeFunction(Function):
         self.__unpack_codeinfo()
         self.__unpack_bytecode()
         self.__unpack_externals()
+        self.__setup_tracing()
 
     def __split_chunks(self):
         self.chunks, offset = {}, 0
@@ -162,6 +163,7 @@ class BytecodeFunction(Function):
 
     def __unpack_bytecode(self):
         self.ops = {}
+        self.return_pc = 0
 
         chunk = self.one_chunk(constants.I8_CHUNK_BYTECODE, 3, False)
         if chunk is None:
@@ -175,6 +177,7 @@ class BytecodeFunction(Function):
             pc += op.size
         if pc != limit:
             raise CorruptNoteError(self.bytecode + pc)
+        self.return_pc = pc
 
     def __unpack_externals(self):
         self.externals = []
@@ -189,6 +192,9 @@ class BytecodeFunction(Function):
             self.externals.append(extern)
             unterminated += len(extern.src)
 
+    def __setup_tracing(self):
+        self.return_op = operations.FakeReturn(self)
+
     @property
     def external_functions(self):
         return [str(ext)
@@ -198,8 +204,8 @@ class BytecodeFunction(Function):
     def execute(self, ctx, caller_stack):
         stack = ctx.new_stack()
         caller_stack.pop_multi_onto(reversed(self.ptypes), stack)
-        pc, return_pc = 0, len(self.bytecode)
-        while pc >= 0 and pc < return_pc:
+        pc = 0
+        while pc >= 0 and pc < self.return_pc:
             op = self.ops.get(pc, None)
             if op is None:
                 raise BadJumpError(stack.op)
@@ -209,11 +215,10 @@ class BytecodeFunction(Function):
             if pc_adjust is not None:
                 pc += pc_adjust
             last_op = op
-        if pc != return_pc:
+        if pc != self.return_pc:
             raise BadJumpError(stack.op)
-        ctx._trace(self.signature,
-                   self.bytecode.note.offset + self.bytecode.start + pc,
-                   "[return]", stack.trace())
+        ctx._trace(self.signature, self.return_op.srcoffset,
+                   self.return_op.fullname, stack.trace())
         stack.pop_multi_onto(self.rtypes, caller_stack)
 
     @property

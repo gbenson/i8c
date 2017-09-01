@@ -27,6 +27,7 @@ SOURCE = "define test::pretty_minimal"
 
 class TestEmptyFunction(TestCase):
     def test_empty_function(self):
-        """Check that empty functions can be compiled."""
+        """Check that empty functions can be compiled and executed."""
         tree, output = self.compile(SOURCE)
         self.assertEqual([], output.opnames)
+        output.call(output.note.signature)
