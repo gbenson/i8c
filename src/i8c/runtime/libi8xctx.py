@@ -341,17 +341,7 @@ class UnpackedBytecodeConsumer(object):
         else:
             return int(value)
 
-class Operation(object):
+class Operation(context.AbstractOperation):
     def __init__(self, fullname, operands):
         self.fullname = fullname
         self.operands = operands
-
-    @property
-    def name(self):
-        assert self.fullname[2:6] == "_OP_"
-        return self.fullname[6:]
-
-    @property
-    def operand(self):
-        assert len(self.operands) == 1
-        return self.operands[0]

@@ -133,3 +133,22 @@ class AbstractContext(object):
     def trace(self, msg): # pragma: no cover
         """Display a tracing message to the user."""
         print(msg, file=sys.stderr)
+
+class AbstractOperation(object):
+    def __eq__(self, other):
+        return not (self != other)
+
+    def __ne__(self, other):
+        return (self.fullname != other.fullname
+                or self.operands != other.operands)
+
+    @property
+    def name(self):
+        bits = self.fullname.split("_OP_", 1)
+        assert len(bits) == 2
+        return bits[1]
+
+    @property
+    def operand(self):
+        assert len(self.operands) == 1
+        return self.operands[0]

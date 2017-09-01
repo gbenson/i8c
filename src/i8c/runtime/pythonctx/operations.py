@@ -24,13 +24,12 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from ... import constants
-from .. import BadDerefError
-from .. import UnhandledNoteError
+from .. import *
 from . import leb128
 import operator
 import struct
 
-class Operation(object):
+class Operation(context.AbstractOperation):
     NAMES = {}
     for name in dir(constants):
         if name[2:6] == "_OP_":
@@ -196,10 +195,8 @@ class Operation(object):
         return size, self.get_string(index).text
 
     @property
-    def name(self):
-        result = self.NAMES[self.opcode]
-        assert result[2:6] == "_OP_"
-        return result[6:]
+    def fullname(self):
+        return self.NAMES[self.opcode]
 
     @property
     def operand(self):
@@ -209,7 +206,7 @@ class Operation(object):
     def execute(self, ctx, externals, stack):
         ctx._trace(self.function.signature,
                    self.srcoffset,
-                   self.NAMES[self.opcode],
+                   self.fullname,
                    stack.trace())
         self.hitcount += 1
         if (self.opcode >= constants.DW_OP_lit0
