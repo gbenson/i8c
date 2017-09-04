@@ -163,24 +163,18 @@ def main(args):
     if not result.wasSuccessful():
         return 1
 
-# XXX coverage code, doesn't work with per-TestCase contexts
-if False: # pragma: no cover
-    report = []
-    ops_hit = opcount = maxlen = 0
-    for sig, funclist in sorted(ctx.functions.items()):
-        for function in funclist:
-            hit, count = function.coverage
-            ops_hit += hit
-            opcount += count
-            maxlen = max(len(sig), maxlen)
-            report.append((sig, hit, count))
+    if ctxp.coverage.is_total:
+        return
 
-    if ops_hit != opcount:
-        if hasattr(result, "separator2"):
-            print(result.separator2)
-        print("Coverage:")
-        print()
+    report = ctxp.coverage.report
+    rowfmt = "%%-%ds %%3.0f%%%%" % max(map(len, report.keys()))
 
-        rowfmt = "%%-%ds %%3.0f%%%%" % maxlen
-        for sig, hit, count in report:
-            print(rowfmt % (sig, 100 * hit / count))
+    print()
+    if hasattr(result, "separator2"):
+        print(result.separator2)
+    print("Coverage:")
+    print()
+
+    for sig, counts in sorted(report.items()):
+        hit, missed = counts
+        print(rowfmt % (sig, 100 * hit / (hit + missed)))
