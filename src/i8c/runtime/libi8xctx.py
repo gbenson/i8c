@@ -327,7 +327,7 @@ class UnpackedBytecodeConsumer(object):
     @staticmethod
     def __str_to_int(value):
         if value.startswith("0x"):
-            return int(value[2:], 16)
+            return int(value, 16)
         else:
             return int(value)
 
