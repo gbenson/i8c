@@ -31,6 +31,7 @@ class ContextTests(object):
         self.ctx_ref = weakref.ref(self.ctx)
 
     def tearDown(self):
+        self.ctx.finalize()
         del self.ctx
         self.assertIsNone(self.ctx_ref())
 
@@ -56,6 +57,29 @@ class ContextTests(object):
         with self.assertRaises(AssertionError) as cm:
             self.ctx.env.runTest()
         self.assertEqual(cm.exception.args, ("should not call",))
+
+    def test_override(self):
+        """Test Context.override."""
+        class FuncWrap(object):
+            signature = "test::func(pi)"
+            def __init__(self, impl):
+                self.impl = impl
+
+        self.__override_testfunc_2_called = False
+        self.ctx.override(FuncWrap(self.__override_testfunc_1))
+        self.ctx.override(FuncWrap(self.__override_testfunc_2))
+        self.assertFalse(self.__override_testfunc_2_called)
+        self.ctx.call(FuncWrap.signature, *self.__override_testfunc_args)
+        self.assertTrue(self.__override_testfunc_2_called)
+
+    def __override_testfunc_1(self, *args):
+        self.fail("Context.override didn't replace the original")
+
+    def __override_testfunc_2(self, *args):
+        self.assertEqual(args, self.__override_testfunc_args)
+        self.__override_testfunc_2_called = True
+
+    __override_testfunc_args = (0x18273645, 0x71826354)
 
 class TestContext_EnvIsTestCase(ContextTests, TestCase):
     @property
