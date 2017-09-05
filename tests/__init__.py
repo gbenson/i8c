@@ -140,7 +140,9 @@ class TestOutput(runtime.Context):
 
 class TestCase(BaseTestCase):
     __i8c_testcase__ = True
-    _wordsize = target.guess_wordsize()
+
+    target_wordsize = target.guess_wordsize()
+    assert target_wordsize is not None
 
     def __locate_topdir(self):
         self.topdir = os.path.realpath(__file__)
@@ -161,7 +163,7 @@ class TestCase(BaseTestCase):
             if line.lstrip().startswith("wordsize "):
                 break
         else:
-            input = "wordsize %d\n%s" % (self._wordsize, input)
+            input = "wordsize %d\n%s" % (self.target_wordsize, input)
         input = SourceReader(b'# 1 "<testcase>"\n' + input.encode("utf-8"))
         output = io.BytesIO()
         tree = compiler.compile(input.readline, output.write)
