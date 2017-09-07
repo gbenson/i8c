@@ -56,9 +56,6 @@ class Function(object):
                                  types.encode(self.ptypes),
                                  types.encode(self.rtypes))
 
-    def __str__(self):
-        return self.signature
-
 class BuiltinFunction(Function):
     is_native = True
 
@@ -201,12 +198,6 @@ class BytecodeFunction(Function):
         ops.append(self.return_op)
         return dict((op.srcoffset, op) for op in ops)
 
-    @property
-    def external_functions(self):
-        return [str(ext)
-                for ext in self.externals
-                if isinstance(ext, UnresolvedFunction)]
-
     def execute(self, ctx, caller_stack):
         stack = ctx.new_stack()
         caller_stack.pop_multi_onto(reversed(self.ptypes), stack)
@@ -226,15 +217,6 @@ class BytecodeFunction(Function):
         ctx._trace(self.signature, self.return_op.srcoffset,
                    self.return_op.fullname, stack.trace())
         stack.pop_multi_onto(self.rtypes, caller_stack)
-
-    @property
-    def coverage(self):
-        ops_hit = opcount = 0
-        for op in self.ops.values():
-            if op.hitcount > 0:
-                ops_hit += 1
-            opcount += 1
-        return ops_hit, opcount
 
 class UnresolvedFunction(Function):
     def __init__(self, referrer, unterminated):
