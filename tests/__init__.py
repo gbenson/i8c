@@ -33,6 +33,7 @@ import os
 import struct
 import subprocess
 import sys
+import weakref
 
 class SourceReader(io.BytesIO):
     def readline(self):
@@ -43,11 +44,22 @@ class SourceReader(io.BytesIO):
         return line
 
 class TestOutput(runtime.Context):
-    def __init__(self, testcase, index, syntax_tree, asm):
+    def __init__(self, env, index):
+        self.__XXX_env = weakref.ref(env)
+        self._Context__ctx = None            # XXX
+        self._Context__extra_checks = False  # XXX
+        self.__set_fileprefix(env, index)
+
+    def add_variant(self, syntax_tree, asm):
+        testcase = self.__XXX_env()
+        del self.__XXX_env, self._Context__ctx, self._Context__extra_checks
         runtime.Context.__init__(self, testcase)
         testcase.addCleanup(self.finalize)
         self.syntax_tree = syntax_tree
-        self.__set_fileprefix(testcase, index)
+        # Ensure the directory we'll write to exists
+        outdir = os.path.dirname(self.fileprefix)
+        if not os.path.exists(outdir):
+            os.makedirs(outdir)
         # Store the assembly language we generated
         asmfile = self.fileprefix + ".S"
         with open(asmfile, "wb") as fp:
@@ -90,6 +102,10 @@ class TestOutput(runtime.Context):
         dir = os.path.dirname(self.fileprefix)
         if not os.path.exists(dir):
             os.makedirs(dir)
+
+    @property
+    def variants(self):
+        return (self,)
 
     # TestCase.compile historically returned a two-element tuple
     # of (AST, TestOutput).  Defining __iter__ like this allows
@@ -154,4 +170,6 @@ class TestCase(BaseTestCase):
         input = SourceReader(b'# 1 "<testcase>"\n' + input.encode("utf-8"))
         output = io.BytesIO()
         tree = compiler.compile(input.readline, output.write)
-        return TestOutput(self, self.compilecount, tree, output.getvalue())
+        result = TestOutput(self, self.compilecount)
+        result.add_variant(tree, output.getvalue())
+        return result
