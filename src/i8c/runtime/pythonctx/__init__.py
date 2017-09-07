@@ -29,6 +29,7 @@ from .. import context
 from . import functions
 from . import stack
 import ctypes
+import struct
 import sys
 
 class Context(context.AbstractContext):
@@ -85,6 +86,9 @@ class Context(context.AbstractContext):
         return funclist[0]
 
     def new_stack(self):
+        if not hasattr(self, "wordsize"):
+            self.wordsize = len(struct.pack("P", 0)) * 8
+            self.__setup_platform()
         return stack.Stack(self)
 
     # Methods to convert between signed and unsigned integers.
