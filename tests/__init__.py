@@ -142,6 +142,14 @@ class TestOutput(runtime.Context):
 class TestCase(BaseTestCase):
     __i8c_testcase__ = True
 
+    topdir = os.path.realpath(__file__)
+    topdir, check = os.path.split(topdir)
+    assert check.startswith("__init__.py")
+    topdir, check = os.path.split(topdir)
+    assert check == "tests"
+    assert os.path.exists(os.path.join(topdir, "setup.py"))
+    del check
+
     target_wordsize = target.guess_wordsize()
     assert target_wordsize is not None
 
@@ -149,16 +157,7 @@ class TestCase(BaseTestCase):
     print("using", backend, file=sys.stderr)
     backend = backend.split(None, 1)[0].lower()
 
-    def __locate_topdir(self):
-        self.topdir = os.path.realpath(__file__)
-        self.topdir, check = os.path.split(self.topdir)
-        assert check.startswith("__init__.py")
-        self.topdir, check = os.path.split(self.topdir)
-        assert check == "tests"
-        assert os.path.exists(os.path.join(self.topdir, "setup.py"))
-
     def run(self, *args, **kwargs):
-        self.__locate_topdir()
         self.compilecount = 0
         return BaseTestCase.run(self, *args, **kwargs)
 
