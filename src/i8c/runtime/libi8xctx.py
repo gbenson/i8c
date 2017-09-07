@@ -30,6 +30,7 @@ import libi8x
 import re
 import sys
 import syslog
+import weakref
 
 class Context(context.AbstractContext):
     INTERPRETER = "UNKNOWN"
@@ -87,10 +88,8 @@ class Context(context.AbstractContext):
 
     def finalize(self):
         """Release any resources held by this Context."""
-        while self.__imports:
-            func = self.__imports.pop()
-            del func.symbols_at
-            del func
+        if self.__ctx is not None:
+            self.__checked_unregister(self.__ctx.functions)
         self.__ctx = self.__inf = self.__xctx = None
 
         if not self.__extra_checks:
@@ -246,13 +245,28 @@ class Context(context.AbstractContext):
             # The function already existed; we've added another with the
             # same name and caused the funcref to become unresolved.  We
             # walk the list and unregister the ones that aren't ours.
-            kill_list = [func2
-                         for func2 in self.__ctx.functions
-                         if func2 is not func and func2.ref is ref]
-            self.env.assertGreater(len(kill_list), 0)
-            for func in kill_list:
-                self.__ctx.unregister(func)
+            self.__checked_unregister(func2
+                                      for func2 in self.__ctx.functions
+                                      if (func2 is not func
+                                          and func2.ref is ref))
+        self.env.assertTrue(ref.is_resolved)
         return ref
+
+    def __checked_unregister(self, functions):
+        """Unregister a sequence of functions."""
+        functions = list(functions)
+        while functions:
+            func = functions.pop()
+            if func in self.__imports:
+                self.__imports.remove(func)
+            self.__ctx.unregister(func)
+            if hasattr(func, "symbols_at"):
+                del func.symbols_at
+            if self.__extra_checks:
+                ref = weakref.ref(func)
+            del func
+            if self.__extra_checks:
+                self.env.assertIsNone(ref())
 
     # Methods for Infinity function execution.
 
