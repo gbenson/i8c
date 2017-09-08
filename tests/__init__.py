@@ -69,8 +69,7 @@ class TestOutput(runtime.Context):
         # Make sure we got at least one note
         testcase.assertGreaterEqual(len(self.notes), 1)
         # Setup for note execution
-        self.memory = testcase.memory
-        self.memory.env = self
+        testcase.memory.env = self
         self.register_symbol = testcase.register_symbol
         testcase._install_user_functions(self)
         testcase.to_signed = self.to_signed
