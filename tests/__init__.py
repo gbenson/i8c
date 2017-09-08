@@ -37,33 +37,41 @@ import sys
 import weakref
 
 class TestCompiler(TestObject):
-    def compile(self, input):
+    def compile(self, input, **kwargs):
         """See TestCase.compile.__doc__.
         """
         result = self.env._new_compilation()
-        fileprefix = result.fileprefix  # XXX remove
+        task = CompilerTask(result.fileprefix)
+        task._compile(self, input, **kwargs)
+        result.add_variant(task.ast, task.output_file)
+        return result
+
+class CompilerTask(object):
+    def __init__(self, fileprefix):
+        self.__fileprefix = fileprefix
+
+    def _compile(self, tc, input):
         for line in input.split("\n"):
             if line.lstrip().startswith("wordsize "):
                 break
         else:
-            input = "wordsize %d\n%s" % (self.env.target_wordsize, input)
+            input = "wordsize %d\n%s" % (tc.env.target_wordsize, input)
         input = SourceReader(b'# 1 "<testcase>"\n' + input.encode("utf-8"))
         output = io.BytesIO()
-        tree = compiler.compile(input.readline, output.write)
+        self.ast = compiler.compile(input.readline, output.write)
         # Ensure the directory we'll write to exists.
-        outdir = os.path.dirname(fileprefix)
+        outdir = os.path.dirname(self.__fileprefix)
         if not os.path.exists(outdir):
             os.makedirs(outdir)
         # Store the assembly language we generated
-        asmfile = fileprefix + ".S"
+        asmfile = self.__fileprefix + ".S"
         with open(asmfile, "wb") as fp:
             fp.write(output.getvalue())
         # Assemble it
-        objfile = fileprefix + ".o"
+        objfile = self.__fileprefix + ".o"
         subprocess.check_call(
             commands.I8C_CC + ["-c", asmfile, "-o", objfile])
-        result.add_variant(tree, objfile)
-        return result
+        self.output_file = objfile
 
 class SourceReader(io.BytesIO):
     def readline(self):
