@@ -46,6 +46,22 @@ class TestCompiler(TestObject):
         result.add_variant(task.ast, task.output_file)
         return result
 
+    def preprocess(self, task, input):
+        """Preprocess the I8Language input ready for I8C.
+        """
+        result = ['# 1 "%s"\n' % task.input_file]
+        while True:
+            start = input.find("//")
+            if start < 0:
+                break
+            result.append(input[:start])
+            limit = input.find("\n", start)
+            if limit < start:
+                break
+            input = input[limit:]
+        result.append(input)
+        return "".join(result)
+
 class CompilerTask(object):
     def __init__(self, fileprefix):
         self.__fileprefix = fileprefix
@@ -96,8 +112,9 @@ class CompilerTask(object):
     def _compile(self, tc, input):
         if self.__filenames:
             raise RuntimeError("compilation already started")
-        input = self.__add_wordsize(tc, input)
-        input = SourceReader(b'# 1 "<testcase>"\n' + input.encode("utf-8"))
+        i8c_src = self.__preprocess(tc, input)
+
+        input = io.BytesIO(i8c_src.encode("utf-8"))
         output = io.BytesIO()
         self.ast = compiler.compile(input.readline, output.write)
         output = output.getvalue().decode("utf-8")
@@ -119,13 +136,13 @@ class CompilerTask(object):
             input = "wordsize %d\n%s" % (tc.env.target_wordsize, input)
         return input
 
-class SourceReader(io.BytesIO):
-    def readline(self):
-        line = io.BytesIO.readline(self)
-        trim = line.find(b"//")
-        if trim >= 0:
-            line = line[:trim] + b"\n"
-        return line
+    def __preprocess(self, tc, input):
+        """Preprocess the I8Language input ready for I8C.
+        """
+        self.input_file = self.writable_filename(".i8")
+        result = tc.preprocess(self, self.__add_wordsize(tc, input))
+        self.write_file(result, self.input_file)
+        return result
 
 class TestOutput(runtime.Context):
     def __init__(self, env, fileprefix):

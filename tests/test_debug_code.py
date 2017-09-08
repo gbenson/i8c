@@ -74,7 +74,8 @@ class TestDebugCode(TestCase):
         func = tree.one_child(parser.Function)
         ops = func.one_child(parser.Operations)
         token = ops.children[0].tokens[0]
-        self.assertEqual(str(token), "<testcase>:5: 'dup'")
+        self.assertEqual(str(token),
+            "tests/output/test_debug_code/test_str_methods_0001.i8:5: 'dup'")
         # parser.TreeNode.__str__ with an annotated type
         load = list(ops.some_children(parser.LoadOp))[0]
         self.assertEqual(str(load), LAST_LOAD_NODE)

@@ -35,6 +35,14 @@ Testsuite changes
 * The testsuite output directory tests/output is now deleted at the
   start of every test run.
 
+* ELF files for I8C's unit tests are now generated using instances
+  of tests.TestCompiler, a new class with hook methods that may be
+  overridden to allow the generation of non-standard notes.
+
+* I8C's unit tests now write the preprocessed I8Language source of
+  each test compilation to files in the testsuite output directory.
+  Previously only the assembly language and ELF outputs were kept.
+
 
 Changes in I8C 0.0.5
 --------------------
