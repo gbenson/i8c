@@ -67,6 +67,11 @@ class TestCompiler(TestObject):
         """
         return self.env.i8compile(input, **kwargs)
 
+    def postprocess(self, task, output):
+        """Postprocess the output of I8C ready for assembly.
+        """
+        return output
+
 class CompilerTask(object):
     def __init__(self, fileprefix):
         self.__fileprefix = fileprefix
@@ -119,13 +124,12 @@ class CompilerTask(object):
             raise RuntimeError("compilation already started")
         i8c_src = self.__preprocess(tc, input)
         i8c_out = self.__i8compile(tc, i8c_src)
+        cc_srcfile = self.__postprocess(tc, i8c_out)
 
-        # Store the assembly language we generated
-        asmfile = self.write_file(i8c_out, ".S")
         # Assemble it
         objfile = self.readonly_filename(".o")
         subprocess.check_call(
-            commands.I8C_CC + ["-c", asmfile, "-o", objfile])
+            commands.I8C_CC + ["-c", cc_srcfile, "-o", objfile])
         self.output_file = objfile
 
     def __add_wordsize(self, tc, input):
@@ -151,6 +155,11 @@ class CompilerTask(object):
         """
         self.ast, result = tc.i8compile(input, **kwargs)
         return result
+
+    def __postprocess(self, tc, output):
+        """Postprocess the output of I8C ready for assembly.
+        """
+        return self.write_file(tc.postprocess(self, output), ".S")
 
 class TestOutput(runtime.Context):
     def __init__(self, env, fileprefix):
