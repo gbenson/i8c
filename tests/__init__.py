@@ -49,8 +49,53 @@ class TestCompiler(TestObject):
 class CompilerTask(object):
     def __init__(self, fileprefix):
         self.__fileprefix = fileprefix
+        self.__filenames = {}
+
+    def __unique_filename(self, ext, is_writable):
+        """Return a unique filename with the specified extension.
+        """
+        filename = self.__fileprefix + ext
+        assert filename not in self.__filenames
+        self.__filenames[filename] = is_writable
+        return filename
+
+    def readonly_filename(self, ext):
+        """Return a unique filename with the specified extension.
+
+        This method should be used to generate names for files that
+        will be created by external programs.
+        """
+        return self.__unique_filename(ext, False)
+
+    def writable_filename(self, ext):
+        """Return a unique filename with the specified extension.
+
+        This method should be used to generate names for files that
+        will be created using CompilerTask.write_file.
+        """
+        return self.__unique_filename(ext, True)
+
+    def write_file(self, text, filename_or_ext):
+        """Write data to a file with a unique filename.
+        """
+        if os.sep in filename_or_ext:
+            filename = filename_or_ext
+            assert self.__filenames.get(filename, False)
+        else:
+            filename = self.writable_filename(filename_or_ext)
+
+        outdir = os.path.dirname(filename)
+        if not os.path.exists(outdir):
+            os.makedirs(outdir)
+        with open(filename, "w") as fp:
+            fp.write(text)
+
+        self.__filenames[filename] = True
+        return filename
 
     def _compile(self, tc, input):
+        if self.__filenames:
+            raise RuntimeError("compilation already started")
         for line in input.split("\n"):
             if line.lstrip().startswith("wordsize "):
                 break
@@ -59,16 +104,11 @@ class CompilerTask(object):
         input = SourceReader(b'# 1 "<testcase>"\n' + input.encode("utf-8"))
         output = io.BytesIO()
         self.ast = compiler.compile(input.readline, output.write)
-        # Ensure the directory we'll write to exists.
-        outdir = os.path.dirname(self.__fileprefix)
-        if not os.path.exists(outdir):
-            os.makedirs(outdir)
+        output = output.getvalue().decode("utf-8")
         # Store the assembly language we generated
-        asmfile = self.__fileprefix + ".S"
-        with open(asmfile, "wb") as fp:
-            fp.write(output.getvalue())
+        asmfile = self.write_file(output, ".S")
         # Assemble it
-        objfile = self.__fileprefix + ".o"
+        objfile = self.readonly_filename(".o")
         subprocess.check_call(
             commands.I8C_CC + ["-c", asmfile, "-o", objfile])
         self.output_file = objfile
