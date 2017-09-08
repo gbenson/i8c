@@ -164,6 +164,12 @@ class TestCase(BaseTestCase):
         return BaseTestCase.run(self, *args, **kwargs)
 
     def compile(self, input):
+        """Compile I8Language to object code, then load resulting notes.
+
+        Returns a tuple, the first element of which is the syntax tree
+        after I8C has run, and the second element of which is a context
+        with all notes from the generated object code loaded.
+        """
         self.compilecount += 1
         for line in input.split("\n"):
             if line.lstrip().startswith("wordsize "):
