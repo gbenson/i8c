@@ -62,6 +62,11 @@ class TestCompiler(TestObject):
         result.append(input)
         return "".join(result)
 
+    def i8compile(self, input, **kwargs):
+        """See TestCase.i8compile.__doc__.
+        """
+        return self.env.i8compile(input, **kwargs)
+
 class CompilerTask(object):
     def __init__(self, fileprefix):
         self.__fileprefix = fileprefix
@@ -113,13 +118,10 @@ class CompilerTask(object):
         if self.__filenames:
             raise RuntimeError("compilation already started")
         i8c_src = self.__preprocess(tc, input)
+        i8c_out = self.__i8compile(tc, i8c_src)
 
-        input = io.BytesIO(i8c_src.encode("utf-8"))
-        output = io.BytesIO()
-        self.ast = compiler.compile(input.readline, output.write)
-        output = output.getvalue().decode("utf-8")
         # Store the assembly language we generated
-        asmfile = self.write_file(output, ".S")
+        asmfile = self.write_file(i8c_out, ".S")
         # Assemble it
         objfile = self.readonly_filename(".o")
         subprocess.check_call(
@@ -142,6 +144,12 @@ class CompilerTask(object):
         self.input_file = self.writable_filename(".i8")
         result = tc.preprocess(self, self.__add_wordsize(tc, input))
         self.write_file(result, self.input_file)
+        return result
+
+    def __i8compile(self, tc, input, **kwargs):
+        """Compile I8Language input to assembly language.
+        """
+        self.ast, result = tc.i8compile(input, **kwargs)
         return result
 
 class TestOutput(runtime.Context):
@@ -252,3 +260,15 @@ class TestCase(BaseTestCase):
         with all notes from the generated object code loaded.
         """
         return TestCompiler(self).compile(input, **kwargs)
+
+    def i8compile(self, input, **kwargs):
+        """Compile preprocessed I8Language to assembly language.
+
+        Returns a tuple, the first element of which is the AST after
+        I8C has run, and the second element of which is the generated
+        assemble language.
+        """
+        input = io.BytesIO(input.encode("utf-8"))
+        output = io.BytesIO()
+        tree = compiler.compile(input.readline, output.write)
+        return tree, output.getvalue().decode("utf-8")
