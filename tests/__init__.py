@@ -27,6 +27,7 @@ from i8c import runtime
 from i8c import version
 from i8c.compiler import target
 from i8c.runtime import coverage
+from i8c.runtime.core import TestObject
 from i8c.runtime.testcase import BaseTestCase
 import io
 import os
@@ -34,6 +35,35 @@ import struct
 import subprocess
 import sys
 import weakref
+
+class TestCompiler(TestObject):
+    def compile(self, input):
+        """See TestCase.compile.__doc__.
+        """
+        result = self.env._new_compilation()
+        fileprefix = result.fileprefix  # XXX remove
+        for line in input.split("\n"):
+            if line.lstrip().startswith("wordsize "):
+                break
+        else:
+            input = "wordsize %d\n%s" % (self.env.target_wordsize, input)
+        input = SourceReader(b'# 1 "<testcase>"\n' + input.encode("utf-8"))
+        output = io.BytesIO()
+        tree = compiler.compile(input.readline, output.write)
+        # Ensure the directory we'll write to exists.
+        outdir = os.path.dirname(fileprefix)
+        if not os.path.exists(outdir):
+            os.makedirs(outdir)
+        # Store the assembly language we generated
+        asmfile = fileprefix + ".S"
+        with open(asmfile, "wb") as fp:
+            fp.write(output.getvalue())
+        # Assemble it
+        objfile = fileprefix + ".o"
+        subprocess.check_call(
+            commands.I8C_CC + ["-c", asmfile, "-o", objfile])
+        result.add_variant(tree, objfile)
+        return result
 
 class SourceReader(io.BytesIO):
     def readline(self):
@@ -50,24 +80,12 @@ class TestOutput(runtime.Context):
         self._Context__extra_checks = False  # XXX
         self.fileprefix = fileprefix
 
-    def add_variant(self, syntax_tree, asm):
+    def add_variant(self, syntax_tree, objfile):
         testcase = self.__XXX_env()
         del self.__XXX_env, self._Context__ctx, self._Context__extra_checks
         runtime.Context.__init__(self, testcase)
         testcase.addCleanup(self.finalize)
         self.syntax_tree = syntax_tree
-        # Ensure the directory we'll write to exists
-        outdir = os.path.dirname(self.fileprefix)
-        if not os.path.exists(outdir):
-            os.makedirs(outdir)
-        # Store the assembly language we generated
-        asmfile = self.fileprefix + ".S"
-        with open(asmfile, "wb") as fp:
-            fp.write(asm)
-        # Assemble it
-        objfile = self.fileprefix + ".o"
-        subprocess.check_call(
-            commands.I8C_CC + ["-c", asmfile, "-o", objfile])
         # Load the notes from it
         self.coverage = coverage.Accumulator()
         self.import_error = None
@@ -155,21 +173,11 @@ class TestCase(BaseTestCase):
         fileprefix = os.path.join(*tmp) + "_%04d" % self.compilecount
         return TestOutput(self, fileprefix)
 
-    def compile(self, input):
+    def compile(self, input, **kwargs):
         """Compile I8Language to object code, then load resulting notes.
 
         Returns a tuple, the first element of which is the syntax tree
         after I8C has run, and the second element of which is a context
         with all notes from the generated object code loaded.
         """
-        result = self._new_compilation()
-        for line in input.split("\n"):
-            if line.lstrip().startswith("wordsize "):
-                break
-        else:
-            input = "wordsize %d\n%s" % (self.target_wordsize, input)
-        input = SourceReader(b'# 1 "<testcase>"\n' + input.encode("utf-8"))
-        output = io.BytesIO()
-        tree = compiler.compile(input.readline, output.write)
-        result.add_variant(tree, output.getvalue())
-        return result
+        return TestCompiler(self).compile(input, **kwargs)
