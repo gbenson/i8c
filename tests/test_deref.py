@@ -89,7 +89,7 @@ class TestDeref(TestCase):
                     rettype = rettype[1:]
                 rettype = rettype[3:-2]
                 if rettype == "ptr":
-                    sizecode = self.target_wordsize
+                    sizecode = output.wordsize
                 else:
                     sizecode = int(rettype)
                 self.assertNotEqual(sizecode, 0)
