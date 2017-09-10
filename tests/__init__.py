@@ -159,6 +159,8 @@ class TestCase(BaseTestCase):
 
     def run(self, *args, **kwargs):
         self.compilecount = 0
+        for logger in compiler.loggers.values():
+            logger.disable()
         return BaseTestCase.run(self, *args, **kwargs)
 
     def compile(self, input):
@@ -172,7 +174,3 @@ class TestCase(BaseTestCase):
         output = io.BytesIO()
         tree = compiler.compile(input.readline, output.write)
         return tree, TestOutput(self, self.compilecount, output.getvalue())
-
-    def disable_loggers(self):
-        for logger in compiler.loggers.values():
-            logger.disable()

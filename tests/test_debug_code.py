@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2015-16 Red Hat, Inc.
+# Copyright (C) 2015-17 Red Hat, Inc.
 # This file is part of the Infinity Note Compiler.
 #
 # The Infinity Note Compiler is free software: you can redistribute it
@@ -55,11 +55,9 @@ class TestDebugCode(TestCase):
     """Test various bits of debugging code."""
 
     def setUp(self):
-        self.disable_loggers()
         self.saved_stderr = sys.stderr
 
     def tearDown(self):
-        self.disable_loggers()
         sys.stderr = self.saved_stderr
 
     def test_loggers(self):

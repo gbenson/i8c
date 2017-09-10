@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2015-16 Red Hat, Inc.
+# Copyright (C) 2015-17 Red Hat, Inc.
 # This file is part of the Infinity Note Compiler.
 #
 # The Infinity Note Compiler is free software: you can redistribute it
@@ -27,12 +27,6 @@ from i8c.compiler.driver import CommandLine
 
 class TestCommandLineProcessor(TestCase):
     """Tests for the command line processor."""
-
-    def setUp(self):
-        self.disable_loggers()
-
-    def tearDown(self):
-        self.disable_loggers()
 
     def __process_command(self, cmd):
         return CommandLine(cmd.split())
