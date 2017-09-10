@@ -133,14 +133,9 @@ class CompilerTask(object):
         self.output_file = objfile
 
     def __add_wordsize(self, tc, input):
-        """Prepend input with a wordsize directive if necessary.
+        """Prepend I8Language input with a wordsize directive.
         """
-        for line in input.split("\n"):
-            if line.lstrip().startswith("wordsize "):
-                break
-        else:
-            input = "wordsize %d\n%s" % (tc.env.target_wordsize, input)
-        return input
+        return "wordsize %d\n%s" % (tc.env.target_wordsize, input)
 
     def __preprocess(self, tc, input):
         """Preprocess the I8Language input ready for I8C.

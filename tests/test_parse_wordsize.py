@@ -48,10 +48,10 @@ class TestParseWordsize(TestCase):
     def __one_test(self, source, maybe_valid):
         is_valid = maybe_valid and source.startswith("wordsize 32\n")
         if not is_valid:
-            self.assertRaises(ParserError, self.compile, source)
+            self.assertRaises(ParserError, self.i8compile, source)
         else:
             try:
-                self.compile(source)
+                self.i8compile(source)
             except ParserError as e:
                 self.fail("the parser should accept this")
             except:
