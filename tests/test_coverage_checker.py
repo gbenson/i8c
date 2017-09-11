@@ -112,22 +112,23 @@ class TestCoverageChecker(TestCase):
 
     def test_zero_coverage(self):
         """Test coverage accessors with 0% coverage."""
-        self.assertFalse(self.coverage.is_total)
-        self.assertEqual(self.coverage.report,
-                         {"test::coverage_me(p)i": (0, self.opcount)})
+        self.__check_report(True, False)
 
     def test_full_coverage(self):
         """Test coverage accessors with 100% coverage."""
         self.output.call("test::coverage_me(p)i", self.addr)
         self.output.call("test::coverage_me(p)i", self.addr + 1)
-        self.assertTrue(self.coverage.is_total)
-        self.assertEqual(self.coverage.report,
-                         {"test::coverage_me(p)i": (self.opcount, 0)})
+        self.__check_report(False, True)
 
     def test_intermediate_coverage(self):
         """Test coverage accessors with 0% < x < 100% coverage."""
         self.output.call("test::coverage_me(p)i", self.addr)
-        self.assertFalse(self.coverage.is_total)
+        self.__check_report(False, False)
+
+    def __check_report(self, expect_zero, expect_full):
+        self.assertFalse(expect_zero and expect_full)
+        self.assertEqual(self.coverage.is_total, expect_full)
+
         report = self.coverage.report
         self.assertEqual(len(report), 1)
         [sig] = report.keys()
@@ -136,5 +137,7 @@ class TestCoverageChecker(TestCase):
         self.assertEqual(len(counts), 2)
         hit, missed = counts
         self.assertEqual(hit + missed, self.opcount)
-        self.assertNotEqual(missed, 0)
-        self.assertGreater(hit, missed)
+        self.assertEqual(hit == 0, expect_zero)
+        self.assertEqual(hit == self.opcount, expect_full)
+        if not expect_zero:
+            self.assertGreater(hit, missed)

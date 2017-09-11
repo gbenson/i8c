@@ -51,15 +51,12 @@ class TestTracing(TestCase):
 
     def setUp(self):
         tree, self.output = self.compile(SOURCE)
+        self.addCleanup(delattr, self, "output")
         self.output.trace = self.__log_trace
         self.trace = []
         with self.memory.builder() as mem:
             self.addr = mem.alloc("sym1")
             self.addr.store_u32(0, self.NEGVALUE)
-
-    def tearDown(self):
-        del self.output.trace
-        del self.output
 
     def __log_trace(self, msg):
         self.trace.append(msg)

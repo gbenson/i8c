@@ -103,65 +103,67 @@ class TestLoadConstantOutput(TestCase):
         for value, opname in OUTPUT_TEST:
             tree, output = self.compile(
                 "define test::input_test\nload %d" % value)
+            self.__test_output(output, value, opname)
 
-            if output.import_error is None:
-                # The runtime handled the note successfully.
-                ops = output.ops
-                self.assertEqual(len(ops), 1)
-                op = ops[0]
-                self.assertEqual(op.name, opname)
-                if value < 0 or value > 31:
-                    self.assertEqual(op.operand, value)
+    def __test_output(self, output, value, opname):
+        if output.import_error is None:
+            # The runtime handled the note successfully.
+            ops = output.ops
+            self.assertEqual(len(ops), 1)
+            op = ops[0]
+            self.assertEqual(op.name, opname)
+            if value < 0 or value > 31:
+                self.assertEqual(op.operand, value)
+        else:
+            # The runtime failed to import the note, presumably
+            # because the constant overflowed.  We'll check the
+            # bytecode manually.
+            self.assertIsInstance(output.import_error, UnhandledNoteError)
+
+            # Get the filename and offset from the error message.
+            msg = output.import_error.args[0]
+            loc, msg = msg.split(": ", 1)
+            self.assertEqual(msg, "error: unhandled note")
+            filename, offset = loc.split("[0x", 1)
+            self.assertEqual(offset[-1], "]")
+            offset = int(offset[:-1], 16)
+
+            # Read the whole file from a byte previous to the
+            # error location (to include the opcode).
+            with open(filename, "rb") as fp:
+                fp.seek(offset - 1)
+                data = fp.read()
+            if sys.version_info >= (3,):
+                data = data.decode("latin-1")
+
+            # Check the opcode.
+            expect_opcode = getattr(constants, "DW_OP_" + opname)
+            actual_opcode = ord(data[0])
+            self.assertEqual(actual_opcode, expect_opcode)
+            data = data[1:]
+
+            # Check the value.
+            if opname == "constu":
+                size, actual_value = leb128.read_uleb128(data, 0)
+            elif opname == "consts":
+                size, actual_value = leb128.read_sleb128(data, 0)
             else:
-                # The runtime failed to import the note, presumably
-                # because the constant overflowed.  We'll check the
-                # bytecode manually.
-                self.assertIsInstance(output.import_error, UnhandledNoteError)
-
-                # Get the filename and offset from the error message.
-                msg = output.import_error.args[0]
-                loc, msg = msg.split(": ", 1)
-                self.assertEqual(msg, "error: unhandled note")
-                filename, offset = loc.split("[0x", 1)
-                self.assertEqual(offset[-1], "]")
-                offset = int(offset[:-1], 16)
-
-                # Read the whole file from a byte previous to the
-                # error location (to include the opcode).
-                with open(filename, "rb") as fp:
-                    fp.seek(offset - 1)
-                    data = fp.read()
+                format = output.byteorder + {
+                    "const8s": b"q",
+                    "const8u": b"Q"}[opname]
+                size = struct.calcsize(format)
+                packed = data[:size]
                 if sys.version_info >= (3,):
-                    data = data.decode("latin-1")
+                    packed = packed.encode("latin-1")
+                actual_value = struct.unpack(format, packed)[0]
+            self.assertEqual(actual_value, value)
+            data = data[size:]
 
-                # Check the opcode.
-                expect_opcode = getattr(constants, "DW_OP_" + opname)
-                actual_opcode = ord(data[0])
-                self.assertEqual(actual_opcode, expect_opcode)
-                data = data[1:]
-
-                # Check the value.
-                if opname == "constu":
-                    size, actual_value = leb128.read_uleb128(data, 0)
-                elif opname == "consts":
-                    size, actual_value = leb128.read_sleb128(data, 0)
-                else:
-                    format = output.byteorder + {
-                        "const8s": b"q",
-                        "const8u": b"Q"}[opname]
-                    size = struct.calcsize(format)
-                    packed = data[:size]
-                    if sys.version_info >= (3,):
-                        packed = packed.encode("latin-1")
-                    actual_value = struct.unpack(format, packed)[0]
-                self.assertEqual(actual_value, value)
-                data = data[size:]
-
-                # Check there's nothing unexpected following the encoded
-                # value.  This is a fragile check, and may need updating
-                # with compiler changes.
-                expect_rest = (b"\x01\x02\x04\x06\x00\n\n\x04\x01\x0bin"
-                               + b"put_test\x00")
-                if sys.version_info >= (3,):
-                    data = data.encode("latin-1")
-                self.assertTrue(data.startswith(expect_rest))
+            # Check there's nothing unexpected following the encoded
+            # value.  This is a fragile check, and may need updating
+            # with compiler changes.
+            expect_rest = (b"\x01\x02\x04\x06\x00\n\n\x04\x01\x0bin"
+                           + b"put_test\x00")
+            if sys.version_info >= (3,):
+                data = data.encode("latin-1")
+            self.assertTrue(data.startswith(expect_rest))

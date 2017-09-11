@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2016 Red Hat, Inc.
+# Copyright (C) 2016-17 Red Hat, Inc.
 # This file is part of the Infinity Note Compiler.
 #
 # The Infinity Note Compiler is free software: you can redistribute it
@@ -37,15 +37,16 @@ label:
 class TestWarn(TestCase):
     """Check warnings."""
 
-    def setUp(self):
-        self.warnings = []
-
     def warn_caller(self, *args):
         self.warnings.append(args)
 
     def test_warning(self):
         """Basic check of a warning."""
         tree, output = self.compile(SOURCE)
+        self.__test_warning(output)
+
+    def __test_warning(self, output):
+        self.warnings = []
         output.call("test::test_warn(p)p", 5)
         self.assertEqual(self.warnings, [])
         output.call("test::test_warn(p)p", 0)

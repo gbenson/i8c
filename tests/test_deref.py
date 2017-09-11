@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2015-16 Red Hat, Inc.
+# Copyright (C) 2015-17 Red Hat, Inc.
 # This file is part of the Infinity Note Compiler.
 #
 # The Infinity Note Compiler is free software: you can redistribute it
@@ -63,36 +63,40 @@ class TestDeref(TestCase):
                     exception = None
 
                 if exception is not None:
-                    self.assertRaises(exception, self.compile, source)
+                    source = "wordsize 32\n" + source
+                    self.assertRaises(exception, self.i8compile, source)
                     continue
 
                 tree, output = self.compile(source)
-                if output.import_error is not None:
-                    if (rettype.endswith("int64_t")
-                        and output.wordsize == 32
-                        and isinstance(output.import_error,
-                                       UnhandledNoteError)):
-                        continue
-                    raise output.import_error
+                self.__test_deref(output, rettype)
 
-                ops = output.ops
-                self.assertEqual(len(ops), 1)
-                op = ops[0]
+    def __test_deref(self, output, rettype):
+        if output.import_error is not None:
+            if (rettype.endswith("int64_t")
+                and output.wordsize == 32
+                and isinstance(output.import_error,
+                               UnhandledNoteError)):
+                return
+            raise output.import_error
 
-                if rettype in ("ptr", "ptr_alias"):
-                    self.assertEqual("deref", op.name)
-                    continue
+        ops = output.ops
+        self.assertEqual(len(ops), 1)
+        op = ops[0]
 
-                self.assertEqual("deref_int", op.name)
-                is_signed = rettype[0] != "u"
-                if not is_signed:
-                    rettype = rettype[1:]
-                rettype = rettype[3:-2]
-                if rettype == "ptr":
-                    sizecode = output.wordsize
-                else:
-                    sizecode = int(rettype)
-                self.assertNotEqual(sizecode, 0)
-                if is_signed:
-                    sizecode *= -1
-                self.assertEqual(op.operand, sizecode)
+        if rettype in ("ptr", "ptr_alias"):
+            self.assertEqual("deref", op.name)
+            return
+
+        self.assertEqual("deref_int", op.name)
+        is_signed = rettype[0] != "u"
+        if not is_signed:
+            rettype = rettype[1:]
+        rettype = rettype[3:-2]
+        if rettype == "ptr":
+            sizecode = output.wordsize
+        else:
+            sizecode = int(rettype)
+        self.assertNotEqual(sizecode, 0)
+        if is_signed:
+            sizecode *= -1
+        self.assertEqual(op.operand, sizecode)
