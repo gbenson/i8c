@@ -43,9 +43,10 @@ class SourceReader(io.BytesIO):
         return line
 
 class TestOutput(runtime.Context):
-    def __init__(self, testcase, index, asm):
+    def __init__(self, testcase, index, syntax_tree, asm):
         runtime.Context.__init__(self, testcase)
         testcase.addCleanup(self.finalize)
+        self.syntax_tree = syntax_tree
         self.__set_fileprefix(testcase, index)
         # Store the assembly language we generated
         asmfile = self.fileprefix + ".S"
@@ -89,6 +90,13 @@ class TestOutput(runtime.Context):
         dir = os.path.dirname(self.fileprefix)
         if not os.path.exists(dir):
             os.makedirs(dir)
+
+    # TestCase.compile historically returned a two-element tuple
+    # of (AST, TestOutput).  Defining __iter__ like this allows
+    # TestCase.compile to return just TestOutput without having
+    # to adjust all the tests.
+    def __iter__(self):
+        return iter((self.syntax_tree, self))
 
     @property
     def note(self):
@@ -146,4 +154,4 @@ class TestCase(BaseTestCase):
         input = SourceReader(b'# 1 "<testcase>"\n' + input.encode("utf-8"))
         output = io.BytesIO()
         tree = compiler.compile(input.readline, output.write)
-        return tree, TestOutput(self, self.compilecount, output.getvalue())
+        return TestOutput(self, self.compilecount, tree, output.getvalue())
