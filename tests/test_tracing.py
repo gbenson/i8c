@@ -46,8 +46,8 @@ class TestTracing(TestCase):
     def __native_func(self, arg):
         return arg, -self.to_signed(arg)
 
-    def warn_caller(self, msg):
-        self.assertEqual(msg, "it's negative")
+    def warn_caller(self, *args):
+        self.assertEqual(args, ("test::trace_me(p)i", "it's negative"))
 
     def setUp(self):
         tree, self.output = self.compile(SOURCE)

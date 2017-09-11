@@ -358,4 +358,4 @@ class Operation(AbstractOperation):
         stack.push_boxed(b)
 
     def exec_warn(self, ctx, externals, stack):
-        ctx.env.warn_caller(self.operand)
+        ctx.env.warn_caller(self.function.signature, self.operand)

@@ -57,9 +57,10 @@ class BaseTestCase(unittest.TestCase):
         """Hook method for reading bytes from memory."""
         return self.memory.read(addr, struct.calcsize(fmt))
 
-    def warn_caller(self, msg):
+    def warn_caller(self, signature, msg):
         """Hook method for warning the caller about something."""
-        self.fail("unexpected warning: " + msg)
+        self.fail("%s: unexpected warning: %s" % (signature,
+                                                  repr(msg).lstrip("u")))
 
     class provide(object):
         """Decorator for Infinity functions provided by the test."""

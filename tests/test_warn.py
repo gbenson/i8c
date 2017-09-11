@@ -40,8 +40,8 @@ class TestWarn(TestCase):
     def setUp(self):
         self.warnings = []
 
-    def warn_caller(self, msg):
-        self.warnings.append(msg)
+    def warn_caller(self, *args):
+        self.warnings.append(args)
 
     def test_warning(self):
         """Basic check of a warning."""
@@ -49,6 +49,7 @@ class TestWarn(TestCase):
         output.call("test::test_warn(p)p", 5)
         self.assertEqual(self.warnings, [])
         output.call("test::test_warn(p)p", 0)
-        self.assertEqual(self.warnings, ["hello world",
-                                         "",
-                                         'it\'s "NULL"'])
+        self.assertEqual(self.warnings, [
+            ("test::test_warn(p)p", "hello world"),
+            ("test::test_warn(p)p", ""),
+            ("test::test_warn(p)p", 'it\'s "NULL"')])

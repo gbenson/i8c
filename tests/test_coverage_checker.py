@@ -64,8 +64,8 @@ class TestCoverageChecker(TestCase):
     def coverage(self):
         return self.output.coverage
 
-    def warn_caller(self, msg):
-        self.assertEqual(msg, "it's negative")
+    def warn_caller(self, *args):
+        self.assertEqual(args, ("test::coverage_me(p)i", "it's negative"))
 
     def test_repeat_adds(self):
         """Test adding the same function a second time."""

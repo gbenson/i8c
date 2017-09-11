@@ -141,7 +141,7 @@ class Context(context.AbstractContext):
         if (priority == syslog.LOG_WARNING
               and function.startswith("i8x_xctx_call")
               and msg.endswith("\n")):
-            self.env.warn_caller(msg[:-1].split(": ", 1)[1])
+            self.env.warn_caller(*msg[:-1].split(": ", 1))
 
         # Funnel itable dump traces to the consumer.
         if (self.__bytecode_consumers is not None
