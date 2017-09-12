@@ -23,7 +23,32 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import weakref
 try:
     import unittest2 as unittest
 except ImportError: # pragma: no cover
     import unittest
+
+__all__ = ("unittest", "TestObject")
+
+class FallbackEnvironment(unittest.TestCase):
+    """Dummy environment so TestObject.env.assert* always works."""
+
+    def runTest(self):
+        self.fail("should not call")
+
+_fallback_env = FallbackEnvironment()
+
+class TestObject(object):
+    """An object weakly associated with a testcase."""
+
+    def __init__(self, env):
+        self.__env = weakref.ref(env or _fallback_env)
+
+    @property
+    def env(self):
+        return self.__env() or _fallback_env
+
+    @env.setter
+    def env(self, value):
+        raise RuntimeError

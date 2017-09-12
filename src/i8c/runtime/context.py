@@ -23,22 +23,13 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from .core import unittest
+from .core import TestObject
 from . import provider
 import sys
-import weakref
 
-class FallbackEnvironment(unittest.TestCase):
-    """Dummy environment; ensures self.env.assert* always works."""
-
-    def runTest(self):
-        self.fail("should not call")
-
-class AbstractContext(object):
-    __fallback_env = FallbackEnvironment()
-
+class AbstractContext(TestObject):
     def __init__(self, env=None):
-        self.__env = weakref.ref(env or self.__fallback_env)
+        super(AbstractContext, self).__init__(env)
         self.tracelevel = 0
 
     def __del__(self):
@@ -46,14 +37,6 @@ class AbstractContext(object):
 
     def finalize(self):
         """Release any resources held by this context."""
-
-    @property
-    def env(self):
-        return self.__env() or self.__fallback_env
-
-    @env.setter
-    def env(self, value):
-        raise RuntimeError
 
     def import_notes(self, filename):
         """Import notes from the specified file."""

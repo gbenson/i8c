@@ -24,7 +24,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from ..compat import strtoint_c
-from .core import unittest
+from .core import unittest, TestObject
 from . import *
 from . import memory
 import copy
@@ -32,7 +32,6 @@ import inspect
 import os
 import platform
 import struct
-import weakref
 
 class BaseTestCase(unittest.TestCase):
     def run(self, *args, **kwargs):
@@ -154,16 +153,15 @@ class UserFunction(object):
     def __call__(self, *args):
         raise RuntimeError(self.signature)
 
-    def bind_to(self, testcase):
-        return BoundUserFunction(testcase, self)
+    def bind_to(self, env):
+        return BoundUserFunction(env, self)
 
-class BoundUserFunction(object):
-    def __init__(self, testcase, unbound):
+class BoundUserFunction(TestObject):
+    def __init__(self, env, unbound):
+        super(BoundUserFunction, self).__init__(env)
         self.signature = unbound.signature
         self.__impl = unbound.impl
-        self.__testcase = weakref.ref(testcase)
 
     @property
     def impl(self, *args):
-        testcase = self.__testcase()
-        return self.__impl.__get__(testcase, self.__impl)
+        return self.__impl.__get__(self.env, self.__impl)
