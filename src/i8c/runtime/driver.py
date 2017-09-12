@@ -30,13 +30,10 @@ from . import Context
 from . import coverage
 from . import I8XError
 from . import TestCase
+from .core import unittest
 import getopt
 import os
 import sys
-try:
-    import unittest2 as unittest
-except ImportError: # pragma: no cover
-    import unittest
 
 USAGE = """\
 Usage: i8x [OPTION]... TESTFILE...

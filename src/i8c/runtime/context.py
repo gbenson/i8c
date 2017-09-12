@@ -23,13 +23,10 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from .core import unittest
 from . import provider
 import sys
 import weakref
-try:
-    import unittest2 as unittest
-except ImportError: # pragma: no cover
-    import unittest
 
 class FallbackEnvironment(unittest.TestCase):
     """Dummy environment; ensures self.env.assert* always works."""

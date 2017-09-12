@@ -24,6 +24,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from ..compat import strtoint_c
+from .core import unittest
 from . import *
 from . import memory
 import copy
@@ -32,10 +33,6 @@ import os
 import platform
 import struct
 import weakref
-try:
-    import unittest2 as unittest
-except ImportError: # pragma: no cover
-    import unittest
 
 class BaseTestCase(unittest.TestCase):
     def run(self, *args, **kwargs):
