@@ -42,16 +42,13 @@ class TestCoverageChecker(TestCase):
         tree, self.output = self.compile(SOURCE)
         self.addCleanup(delattr, self, "output")
         self.assertEqual(len(self.coverage.functions), 1)
+
+        # Sanity checks:
+        # - deref_int was chosen because libi8x rewrites it.
+        # - warn was chosen because its operand is a string.
         opnames = self.output.opnames
-        self.opcount = len(opnames)
-        self.assertGreater(self.opcount, 8)
-        if self.backend == "python":
-            self.opcount += 1 # fake return
-
-        # deref_int was chosen because libi8x rewrites it.
+        self.assertGreater(len(opnames), 8)
         self.assertEqual(opnames[0], "deref_int")
-
-        # warn was chosen because its operand is a string.
         self.assertEqual(opnames[8], "warn")
 
         with self.memory.builder() as mem:
@@ -63,6 +60,10 @@ class TestCoverageChecker(TestCase):
     @property
     def coverage(self):
         return self.output.coverage
+
+    @property
+    def opcount(self):
+        return len(self.output.note.coverage_ops)
 
     def warn_caller(self, *args):
         self.assertEqual(args, ("test::coverage_me(p)i", "it's negative"))
