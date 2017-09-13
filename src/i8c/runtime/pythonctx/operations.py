@@ -164,7 +164,7 @@ class Operation(AbstractOperation):
         if self.opcode not in self.NAMES:
             raise UnhandledNoteError(self.src)
         # Read the operands
-        self.operands = []
+        operands = []
         for type in self.OPERANDS.get(self.opcode, ()):
             sizecode = self.FIXEDSIZE.get(type, None)
             if sizecode is not None:
@@ -173,8 +173,9 @@ class Operation(AbstractOperation):
                 value = struct.unpack(fmt, next[:size].bytes)[0]
             else:
                 size, value = getattr(self, "decode_" + type)(next)
-            self.operands.append(value)
+            operands.append(value)
             next += size
+        self.operands = tuple(operands)
         # Tidy up
         self.src = self.src[:next.start - self.src.start]
         del self.get_string
