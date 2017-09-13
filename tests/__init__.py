@@ -157,6 +157,10 @@ class CompilerTask(object):
         return self.write_file(tc.postprocess(self, output), ".S")
 
 class TestOutput(runtime.Context):
+    backend = runtime.Context.INTERPRETER
+    print("using", backend, file=sys.stderr)
+    backend = backend.split(None, 1)[0].lower()
+
     def __init__(self, env, fileprefix):
         self.__XXX_env = weakref.ref(env)
         self._Context__ctx = None            # XXX
@@ -233,10 +237,6 @@ class TestCase(BaseTestCase):
 
     target_wordsize = target.guess_wordsize()
     assert target_wordsize is not None
-
-    backend = TestOutput.INTERPRETER
-    print("using", backend, file=sys.stderr)
-    backend = backend.split(None, 1)[0].lower()
 
     def run(self, *args, **kwargs):
         self.compilecount = 0

@@ -121,7 +121,7 @@ class TestTracing(TestCase):
 
         # deref
         start_pc, opname, stack_depth, stack = self.tpop()
-        self.assertEqual(opname, (self.backend == "libi8x"
+        self.assertEqual(opname, (self.output.backend == "libi8x"
                                   and "I8X_OP_deref_i32n"
                                   or "I8_OP_deref_int"))
         self.assertEqual(stack_depth, 1)
@@ -190,7 +190,7 @@ class TestTracing(TestCase):
         self.assertEqual(pc, start_pc + 22)
         self.assertEqual(opname,
                          {"libi8x": "I8X_OP_return",
-                          "python": "[return]"}[self.backend])
+                          "python": "[return]"}[self.output.backend])
         self.assertEqual(stack_depth, 1)
         self.assertEqual(stack, [self.POSVALUE])
 
