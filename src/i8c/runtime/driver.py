@@ -130,12 +130,15 @@ def main(args):
 
     if quickmode:
         ctx = Context()
-        ctxp.populate(ctx)
-        function = args.pop(0)
-        args = [strtoint_c(arg, I8XError) for arg in args]
-        result = map(str, ctx.call(function, *args))
-        fprint(sys.stdout, ", ".join(result))
-        return
+        try:
+            ctxp.populate(ctx)
+            function = args.pop(0)
+            args = [strtoint_c(arg, I8XError) for arg in args]
+            result = map(str, ctx.call(function, *args))
+            fprint(sys.stdout, ", ".join(result))
+        finally:
+            ctx.finalize()
+            return
 
     if not hasattr(TestCase, "assertIsInstance"):
         msg = ("unittest2 is required to run testcases"
