@@ -68,7 +68,6 @@ class Context(context.AbstractContext):
             cls.__components.insert(0, msg[len(PREFIX):].rstrip())
 
     def __init__(self, *args, **kwargs):
-        self.__imports = []
         super(Context, self).__init__(*args, **kwargs)
 
         # Enable extra checks if we're in the I8C testsuite.
@@ -79,6 +78,7 @@ class Context(context.AbstractContext):
         self.__bytecode_consumers = None
         flags = libi8x.DBG_MEM | libi8x.LOG_TRACE
         self.__ctx = libi8x.Context(flags, self.__logger)
+        self.__ctx.FUNCTION_CLASS = Function
 
         self.__inf = self.__ctx.new_inferior()
         self.__inf.read_memory = self.__read_memory
@@ -208,12 +208,6 @@ class Context(context.AbstractContext):
 
         func = self.__ctx.import_bytecode(ns.bytes, ns.filename,
                                           srcoffset)
-
-        # Retain a reference to func so we can add things to it.
-        # Without this the capsule wrapper will be collected as
-        # this method exits.
-        self.__imports.append(func)
-
         # Store the unpacked bytecode.
         ops = bcc_raw.ops
         if ops:
@@ -257,8 +251,7 @@ class Context(context.AbstractContext):
         functions = list(functions)
         while functions:
             func = functions.pop()
-            if func in self.__imports:
-                self.__imports.remove(func)
+            func.is_persistent = False
             self.__ctx.unregister(func)
             if self.__extra_checks:
                 ref = weakref.ref(func)
@@ -315,6 +308,9 @@ class Context(context.AbstractContext):
     @property
     def _i8ctest_functions(self):
         return self.__ctx.functions
+
+class Function(libi8x.Function):
+    __libi8x_persistent__ = True
 
 class FakeSlice(object):
     """libi8x.I8XError location, wrapped like a provider.NoteSlice."""
