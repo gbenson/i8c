@@ -224,13 +224,13 @@ class Context(context.AbstractContext):
         func.coverage_ops = bcc_cooked.ops
         self.__bytecode_consumers = None
 
-        # Store any relocations.  Note that this creates
-        # circular references that are cleared in __del__.
+        # Store any relocations.
         func.symbols_at = {}
         for reloc in func.relocations:
-            start = reloc.source_offset - srcoffset
+            offset = reloc.source_offset
+            start =  offset - srcoffset
             src = ns[start:start + 1]
-            func.symbols_at[reloc] = src.symbol_names
+            func.symbols_at[offset] = src.symbol_names
 
         return func
 
@@ -260,8 +260,6 @@ class Context(context.AbstractContext):
             if func in self.__imports:
                 self.__imports.remove(func)
             self.__ctx.unregister(func)
-            if hasattr(func, "symbols_at"):
-                del func.symbols_at
             if self.__extra_checks:
                 ref = weakref.ref(func)
             del func
@@ -292,7 +290,7 @@ class Context(context.AbstractContext):
 
     def __relocate(self, inf, reloc):
         """Address relocation function."""
-        for name in reloc.function.symbols_at[reloc]:
+        for name in reloc.function.symbols_at[reloc.source_offset]:
             try:
                 value = self.env.lookup_symbol(name)
             except KeyError as e:
