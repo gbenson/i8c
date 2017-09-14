@@ -220,6 +220,40 @@ class TestOutput(runtime.Context):
     def opnames(self):
         return [op.name for op in self.ops]
 
+def multiplexed(func):
+    """Run a TestCase method once per each output variant.
+
+    Some tests cannot be run against a multiplexed TestOutput, for
+    example tests for side effects such as printing.  This decorator
+    is used to cause a TestCase method to be invoked once per output
+    variant.
+
+    Modifies TestCase.output if set; modifies args[0] otherwise.
+    Sets TestCase.variant_index as it progresses.
+    """
+    def wrapper(self, *args, **kwargs):
+        mux = getattr(self, "output", None)
+        using_self_output = mux is not None
+        if not using_self_output:
+            args = list(args)
+            mux = args[0]
+        try:
+            for self.variant_index, variant in enumerate(mux.variants):
+                try:
+                    if using_self_output:
+                        self.output = variant
+                    else:
+                        args[0] = variant
+                    func(self, *args, **kwargs)
+                finally:
+                    del self.variant_index
+        finally:
+            if using_self_output:
+                self.output = mux
+
+    wrapper.__name__ = func.__name__
+    return wrapper
+
 class TestCase(BaseTestCase):
     __i8c_testcase__ = True
 
