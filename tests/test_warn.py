@@ -21,7 +21,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from tests import TestCase
+from tests import TestCase, multiplexed
 
 SOURCE = """\
 define test::test_warn returns ptr
@@ -45,6 +45,7 @@ class TestWarn(TestCase):
         tree, output = self.compile(SOURCE)
         self.__test_warning(output)
 
+    @multiplexed
     def __test_warning(self, output):
         self.warnings = []
         output.call("test::test_warn(p)p", 5)

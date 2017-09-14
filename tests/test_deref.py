@@ -21,7 +21,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from tests import TestCase
+from tests import TestCase, multiplexed
 from i8c.compiler import ParserError, ParsedError, StackTypeError
 from i8c.runtime import UnhandledNoteError
 
@@ -70,6 +70,7 @@ class TestDeref(TestCase):
                 tree, output = self.compile(source)
                 self.__test_deref(output, rettype)
 
+    @multiplexed
     def __test_deref(self, output, rettype):
         if output.import_error is not None:
             if (rettype.endswith("int64_t")

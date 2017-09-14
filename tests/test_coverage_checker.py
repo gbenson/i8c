@@ -21,7 +21,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from tests import TestCase
+from tests import TestCase, multiplexed
 
 SOURCE = """\
 define test::coverage_me returns int
@@ -68,6 +68,7 @@ class TestCoverageChecker(TestCase):
     def warn_caller(self, *args):
         self.assertEqual(args, ("test::coverage_me(p)i", "it's negative"))
 
+    @multiplexed
     def test_repeat_adds(self):
         """Test adding the same function a second time."""
         saved_ops = list(self.coverage.functions.values())[0].ops.copy()
@@ -101,6 +102,7 @@ class TestCoverageChecker(TestCase):
         for pc in saved_ops:
             self.assertIs(saved_ops[pc], check_ops[pc])
 
+    @multiplexed
     def test_bad_repeat_add(self):
         """Test adding a different function with the same signature."""
         func = self.output.note
@@ -125,6 +127,7 @@ class TestCoverageChecker(TestCase):
         self.output.call("test::coverage_me(p)i", self.addr)
         self.__check_report(False, False)
 
+    @multiplexed
     def __check_report(self, expect_zero, expect_full):
         self.assertFalse(expect_zero and expect_full)
         self.assertEqual(self.coverage.is_total, expect_full)

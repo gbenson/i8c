@@ -21,7 +21,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from tests import TestCase
+from tests import TestCase, multiplexed
 
 SOURCE = """\
 define test::trace_me returns int
@@ -109,6 +109,7 @@ class TestTracing(TestCase):
         self.__call_testfunc()
         self.assertEqual(self.trace, [])
 
+    @multiplexed
     def test_tracing(self):
         """Test with tracing enabled."""
         self.output.tracelevel = 1

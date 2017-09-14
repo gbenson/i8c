@@ -21,7 +21,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from tests import TestCase
+from tests import TestCase, multiplexed
 from i8c import constants
 from i8c.compiler import parser
 from i8c.compiler.types import INTTYPE, PTRTYPE, BOOLTYPE
@@ -105,6 +105,7 @@ class TestLoadConstantOutput(TestCase):
                 "define test::input_test\nload %d" % value)
             self.__test_output(output, value, opname)
 
+    @multiplexed
     def __test_output(self, output, value, opname):
         if output.import_error is None:
             # The runtime handled the note successfully.
