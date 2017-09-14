@@ -238,16 +238,17 @@ class Context(context.AbstractContext):
         if unbound is not None:
             func.bind_to(unbound)
         ref = func.ref
-        if not ref.is_resolved:
-            # The function already existed; we've added another with the
-            # same name and caused the funcref to become unresolved.  We
-            # walk the list and unregister the ones that aren't ours.
-            self.__checked_unregister(func2
-                                      for func2 in self.__ctx.functions
-                                      if (func2 is not func
-                                          and func2.ref is ref))
+        if ref.is_resolved:
+            return
+
+        # The function already existed; we've added another with the
+        # same name and caused the funcref to become unresolved.  We
+        # walk the list and unregister the ones that aren't ours.
+        self.__checked_unregister(func2
+                                  for func2 in self.__ctx.functions
+                                  if (func2 is not func
+                                      and func2.ref is ref))
         self.env.assertTrue(ref.is_resolved)
-        return ref
 
     def __checked_unregister(self, functions):
         """Unregister a sequence of functions."""
