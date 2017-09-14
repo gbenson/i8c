@@ -27,9 +27,11 @@ from i8c import runtime
 from i8c import version
 from i8c.compiler import target
 from i8c.runtime import coverage
+from i8c.runtime import pythonctx
 from i8c.runtime.core import TestObject
 from i8c.runtime.testcase import BaseTestCase
 import io
+import operator
 import os
 import struct
 import subprocess
@@ -156,21 +158,17 @@ class CompilerTask(object):
         """
         return self.write_file(tc.postprocess(self, output), ".S")
 
-class TestOutput(runtime.Context):
-    backend = runtime.Context.INTERPRETER
-    print("using", backend, file=sys.stderr)
-    backend = backend.split(None, 1)[0].lower()
+class TestContext(object):
+    @classmethod
+    def with_backend(cls, backend_cls):
+        backend = backend_cls.INTERPRETER.split(None, 1)[0].lower()
+        clsname = backend + "_TestContext"
+        if sys.version_info < (3,):
+            clsname = clsname.encode("utf-8")
+        return type(clsname, (cls, backend_cls), {"backend": backend})
 
-    def __init__(self, env, fileprefix):
-        self.__XXX_env = weakref.ref(env)
-        self._Context__ctx = None            # XXX
-        self._Context__extra_checks = False  # XXX
-        self.fileprefix = fileprefix
-
-    def add_variant(self, syntax_tree, objfile):
-        testcase = self.__XXX_env()
-        del self.__XXX_env, self._Context__ctx, self._Context__extra_checks
-        runtime.Context.__init__(self, testcase)
+    def __init__(self, testcase, syntax_tree, objfile):
+        super(TestContext, self).__init__(testcase)
         testcase.addCleanup(self.finalize)
         self.syntax_tree = syntax_tree
         # Load the notes from it
@@ -194,17 +192,6 @@ class TestOutput(runtime.Context):
         testcase.to_unsigned = self.to_unsigned
 
     @property
-    def variants(self):
-        return (self,)
-
-    # TestCase.compile historically returned a two-element tuple
-    # of (AST, TestOutput).  Defining __iter__ like this allows
-    # TestCase.compile to return just TestOutput without having
-    # to adjust all the tests.
-    def __iter__(self):
-        return iter((self.syntax_tree, self))
-
-    @property
     def note(self):
         if self.import_error is not None:
             raise self.import_error
@@ -219,6 +206,167 @@ class TestOutput(runtime.Context):
     @property
     def opnames(self):
         return [op.name for op in self.ops]
+
+class Multiplexer(TestObject):
+    def __init__(self, env):
+        super(Multiplexer, self).__init__(env)
+        for field in getattr(self, "MULTIPLEXED_FIELDS", ()):
+            self.add_multiplexed_field(field)
+
+    def add_multiplexed_field(self, fullname):
+        fullname = fullname.split(".")
+        parent = self
+        for attr in fullname[:-1]:
+            parent = getattr(parent, attr)
+        attr = fullname[-1]
+        assert not hasattr(parent, attr)
+        setattr(parent, attr, Multiplexed(self, fullname))
+
+    def assertHasVariants(self):
+        self.env.assertGreater(len(self.variants), 0)
+
+    def assertInVariants(self, variant):
+        for check in self.variants:
+            if variant == check:
+                return
+        self.env.fail("%s not in %s" % (variant, self.variants))
+
+    def all_values_of(self, field):
+        self.env.assertIs(field.mux, self)
+        self.assertHasVariants()
+        return (field.value_in(variant)
+                for variant in self.variants)
+
+    def map_call(self, func, *args, **kwargs):
+        self.env.assertIs(func.mux, self)
+        self.assertHasVariants()
+        return (func.call_in(variant, *args, **kwargs)
+                for variant in self.variants)
+
+class Multiplexed(TestObject):
+    def __init__(self, mux, fullname):
+        super(Multiplexed, self).__init__(mux.env)
+        self.__mux = weakref.ref(mux)
+        self.fullname = tuple(fullname)
+
+    @property
+    def mux(self):
+        return self.__mux()
+
+    def __demux(self, values):
+        self.mux.assertHasVariants()
+        values = list(values)
+        self.env.assertEqual(len(values), len(self.mux.variants))
+        result = values[0]
+        self.env.assertEqual(values, [result] * len(values))
+        return result
+
+    # Value accessors.
+
+    @property
+    def all_values(self):
+        return self.mux.all_values_of(self)
+
+    def value_in(self, variant):
+        self.mux.assertInVariants(variant)
+        for attr in self.fullname:
+            variant = getattr(variant, attr)
+        return variant
+
+    # Truth checking.
+
+    def __bool__(self):
+        return not self.__demux(map(operator.not_, self.all_values))
+
+    if sys.version_info < (3,):
+        __nonzero__ = __bool__
+        del __bool__
+
+    # Comparisons.
+
+    def __eq__(self, other):
+        return not (self != other)
+
+    def __ne__(self, other):
+        return self.__demux(self.all_values) != other
+
+    # Array access.
+
+    def __len__(self):
+        return self.__demux(map(len, self.all_values))
+
+    def __getitem__(self, key):
+        return self.__demux(value[key] for value in self.all_values)
+
+    # Method invocation.
+
+    def __call__(self, *args, **kwargs):
+        return self.__demux(self.mux.map_call(self, *args, **kwargs))
+
+    def call_in(self, variant, *args, **kwargs):
+        func = self.value_in(variant)
+        args = tuple(self.__resolve_in(variant, arg)
+                     for arg in args)
+        kwargs = dict((key, self.__resolve_in(variant, value))
+                      for key, value in kwargs.items())
+        return func(*args, **kwargs)
+
+    @staticmethod
+    def __resolve_in(variant, value):
+        if isinstance(value, Multiplexed):
+            value = value.value_in(variant)
+        return value
+
+class TestOutput(Multiplexer):
+    MULTIPLEXED_FIELDS = (
+        "call",
+        "note",
+        "note.signature",
+        "opnames",
+        "ops",
+        "to_signed",
+        "to_unsigned",
+    )
+
+    backends = []
+    for backend in (runtime.Context, pythonctx.Context):
+        if backend not in backends:
+            backends.append(backend)
+        del backend
+    backends = list(map(TestContext.with_backend, backends))
+
+    @classmethod
+    def announce(cls, file=sys.stderr):
+        backends = getattr(cls, "backends", ())
+        if len(backends) == 1:
+            format = "*** USING %s ONLY ***"
+            looksgood = False
+        else:
+            format = "using %s"
+            looksgood = "libi8x" in (cc.backend for cc in backends)
+        if hasattr(file, "isatty") and file.isatty():
+            colour = looksgood and 32 or "1;31"
+            format = "\x1B[%sm%s\x1B[0m" % (colour, format)
+        for cc in backends:
+            print(format % cc.INTERPRETER, file=file)
+
+    def __init__(self, env, fileprefix):
+        super(TestOutput, self).__init__(env)
+        self.fileprefix = fileprefix
+        self.variants = []
+
+    # TestCase.compile historically returned a two-element tuple
+    # of (AST, TestOutput).  Defining __iter__ like this allows
+    # TestCase.compile to return just TestOutput without having
+    # to adjust all the tests.  Note that the returned AST is NOT
+    # multiplexed.
+    def __iter__(self):
+        self.assertHasVariants()
+        return iter((self.variants[0].syntax_tree, self))
+
+    def add_variant(self, *args):
+        for backend in self.backends:
+            self.variants.append(backend(self.env, *args))
 
 def multiplexed(func):
     """Run a TestCase method once per each output variant.
@@ -271,6 +419,8 @@ class TestCase(BaseTestCase):
 
     target_wordsize = target.guess_wordsize()
     assert target_wordsize is not None
+
+    TestOutput.announce()
 
     def run(self, *args, **kwargs):
         self.compilecount = 0

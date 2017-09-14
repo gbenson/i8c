@@ -52,14 +52,26 @@ class TestTracing(TestCase):
     def setUp(self):
         tree, self.output = self.compile(SOURCE)
         self.addCleanup(delattr, self, "output")
-        self.output.trace = self.__log_trace
-        self.trace = []
+        self.output.add_multiplexed_field("tracelevel")
+
+        for output in self.output.variants:
+            output.trace = self.__log_trace
+            output.logged_trace = []
+        self.output.add_multiplexed_field("logged_trace")
+
         with self.memory.builder() as mem:
             self.addr = mem.alloc("sym1")
             self.addr.store_u32(0, self.NEGVALUE)
 
     def __log_trace(self, msg):
         self.trace.append(msg)
+
+    @property
+    def trace(self):
+        output = self.output
+        if not hasattr(output, "logged_trace"):
+            output = output.variant[self.variant_index]
+        return output.logged_trace
 
     def tpop(self, expect_result=None):
         """Pop and parse a trace message."""
