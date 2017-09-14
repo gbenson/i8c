@@ -234,6 +234,9 @@ class Context(context.AbstractContext):
         func = self.__ctx.import_native(
             function.signature,
             lambda xctx, inf, func, *args: function.impl(*args))
+        unbound = getattr(function, "unbound", None)
+        if unbound is not None:
+            func.bind_to(unbound)
         ref = func.ref
         if not ref.is_resolved:
             # The function already existed; we've added another with the
@@ -268,13 +271,30 @@ class Context(context.AbstractContext):
                                      self.__inf,
                                      *map(self.__process_value, args)))
 
-    def __process_value(self, maybe_func):
-        """Convert a Python value into something libi8x can use."""
-        handle = getattr(maybe_func, "_handle", None)
-        if handle is not None:
-            return handle
-        else:
-            return getattr(maybe_func, "signature", maybe_func)
+    def __process_value(self, value):
+        """Convert a Python value into something libi8x can use.
+        """
+        # If it's already an i8x_funcref then we're done.
+        if isinstance(value, libi8x.FunctionReference):
+            return value
+
+        # Ditto if it doesn't look like a function object.
+        signature = getattr(value, "signature", None)
+        if signature is None:
+            return value
+
+        # Is this a UserFunction?
+        unbound = getattr(value, "unbound", None)
+        if unbound is not None:
+            value = unbound
+        bound_to = [func
+                    for func in self.__ctx.functions
+                    if func.is_bound_to(value)]
+        if len(bound_to) == 1:
+            return bound_to[0].ref
+
+        # Just a regular function then.
+        return signature
 
     def __read_memory(self, inf, addr, len):
         """Memory reader function."""
@@ -311,6 +331,18 @@ class Context(context.AbstractContext):
 
 class Function(libi8x.Function):
     __libi8x_persistent__ = True
+
+    def __init__(self, *args, **kwargs):
+        super(Function, self).__init__(*args, **kwargs)
+        self.__bound_to = None
+
+    def bind_to(self, ref):
+        """Associate this function with an external reference."""
+        self.__bound_to = ref
+
+    def is_bound_to(self, ref):
+        """Is this function bound to the specified object?"""
+        return self.__bound_to is ref
 
 class FakeSlice(object):
     """libi8x.I8XError location, wrapped like a provider.NoteSlice."""
