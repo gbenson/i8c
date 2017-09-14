@@ -159,9 +159,12 @@ class UserFunction(object):
 class BoundUserFunction(TestObject):
     def __init__(self, env, unbound):
         super(BoundUserFunction, self).__init__(env)
-        self.signature = unbound.signature
-        self.__impl = unbound.impl
+        self.unbound = unbound
+
+    @property
+    def signature(self):
+        return self.unbound.signature
 
     @property
     def impl(self, *args):
-        return self.__impl.__get__(self.env, self.__impl)
+        return self.unbound.impl.__get__(self.env, self.unbound.impl)
