@@ -44,11 +44,11 @@ class SourceReader(io.BytesIO):
         return line
 
 class TestOutput(runtime.Context):
-    def __init__(self, env, index):
+    def __init__(self, env, fileprefix):
         self.__XXX_env = weakref.ref(env)
         self._Context__ctx = None            # XXX
         self._Context__extra_checks = False  # XXX
-        self.__set_fileprefix(env, index)
+        self.fileprefix = fileprefix
 
     def add_variant(self, syntax_tree, asm):
         testcase = self.__XXX_env()
@@ -88,21 +88,6 @@ class TestOutput(runtime.Context):
         testcase.to_signed = self.to_signed
         testcase.to_unsigned = self.to_unsigned
 
-    def __set_fileprefix(self, testcase, index):
-        test_id = testcase.id().split(".")
-        # Remove the common prefix and the name of the class
-        assert test_id[0] == "tests"
-        test_id.pop(0)
-        test_id.pop(-2)
-        # Build the result
-        index = "_%04d" % index
-        self.fileprefix = os.path.join(
-            testcase.topdir, "tests", "output", *test_id) + index
-        # Ensure the directory we'll write to exists
-        dir = os.path.dirname(self.fileprefix)
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-
     @property
     def variants(self):
         return (self,)
@@ -136,10 +121,10 @@ class TestCase(BaseTestCase):
     topdir = os.path.realpath(__file__)
     topdir, check = os.path.split(topdir)
     assert check.startswith("__init__.py")
-    topdir, check = os.path.split(topdir)
-    assert check == "tests"
+    topdir, module = os.path.split(topdir)
     assert os.path.exists(os.path.join(topdir, "setup.py"))
     del check
+    assert os.getcwd() == topdir
 
     target_wordsize = target.guess_wordsize()
     assert target_wordsize is not None
@@ -154,6 +139,18 @@ class TestCase(BaseTestCase):
             logger.disable()
         return BaseTestCase.run(self, *args, **kwargs)
 
+    def _new_compilation(self):
+        """Update compilation count and return a new TestOutput.
+        """
+        tmp = self.id().split(".")
+        self.assertEqual(tmp[0], self.module)
+        self.assertTrue(tmp.pop(-2).startswith("Test"))
+        tmp.insert(1, "output")
+
+        self.compilecount += 1
+        fileprefix = os.path.join(*tmp) + "_%04d" % self.compilecount
+        return TestOutput(self, fileprefix)
+
     def compile(self, input):
         """Compile I8Language to object code, then load resulting notes.
 
@@ -161,7 +158,7 @@ class TestCase(BaseTestCase):
         after I8C has run, and the second element of which is a context
         with all notes from the generated object code loaded.
         """
-        self.compilecount += 1
+        result = self._new_compilation()
         for line in input.split("\n"):
             if line.lstrip().startswith("wordsize "):
                 break
@@ -170,6 +167,5 @@ class TestCase(BaseTestCase):
         input = SourceReader(b'# 1 "<testcase>"\n' + input.encode("utf-8"))
         output = io.BytesIO()
         tree = compiler.compile(input.readline, output.write)
-        result = TestOutput(self, self.compilecount)
         result.add_variant(tree, output.getvalue())
         return result
