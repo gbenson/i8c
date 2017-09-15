@@ -126,6 +126,10 @@ class TestCase(BaseTestCase):
     del check
     assert os.getcwd() == topdir
 
+    outdir = os.path.join(topdir, module, "output")
+    subprocess.check_call(("rm", "-rf", outdir))
+    outdir = os.path.basename(outdir)
+
     target_wordsize = target.guess_wordsize()
     assert target_wordsize is not None
 
@@ -145,7 +149,7 @@ class TestCase(BaseTestCase):
         tmp = self.id().split(".")
         self.assertEqual(tmp[0], self.module)
         self.assertTrue(tmp.pop(-2).startswith("Test"))
-        tmp.insert(1, "output")
+        tmp.insert(1, self.outdir)
 
         self.compilecount += 1
         fileprefix = os.path.join(*tmp) + "_%04d" % self.compilecount

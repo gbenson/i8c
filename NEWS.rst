@@ -29,6 +29,12 @@ Testcase changes
   being the signature of the Infinity function emitting the warning
   and the second being the warning message as before.
 
+Testsuite changes
+~~~~~~~~~~~~~~~~~
+
+* The testsuite output directory tests/output is now deleted at the
+  start of every test run.
+
 
 Changes in I8C 0.0.5
 --------------------
