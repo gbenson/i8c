@@ -96,11 +96,7 @@ class CompilerTask(object):
     def _compile(self, tc, input):
         if self.__filenames:
             raise RuntimeError("compilation already started")
-        for line in input.split("\n"):
-            if line.lstrip().startswith("wordsize "):
-                break
-        else:
-            input = "wordsize %d\n%s" % (tc.env.target_wordsize, input)
+        input = self.__add_wordsize(tc, input)
         input = SourceReader(b'# 1 "<testcase>"\n' + input.encode("utf-8"))
         output = io.BytesIO()
         self.ast = compiler.compile(input.readline, output.write)
@@ -112,6 +108,16 @@ class CompilerTask(object):
         subprocess.check_call(
             commands.I8C_CC + ["-c", asmfile, "-o", objfile])
         self.output_file = objfile
+
+    def __add_wordsize(self, tc, input):
+        """Prepend input with a wordsize directive if necessary.
+        """
+        for line in input.split("\n"):
+            if line.lstrip().startswith("wordsize "):
+                break
+        else:
+            input = "wordsize %d\n%s" % (tc.env.target_wordsize, input)
+        return input
 
 class SourceReader(io.BytesIO):
     def readline(self):
