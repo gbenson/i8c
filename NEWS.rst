@@ -29,6 +29,14 @@ Testcase changes
   being the signature of the Infinity function emitting the warning
   and the second being the warning message as before.
 
+Bug fixes
+~~~~~~~~~
+
+* I8C now correctly respects the environment variable "I8C_AS" when
+  determining the word size of the target system.  Previously the
+  command specified by "I8C_CC" would be used even if "I8C_AS" was
+  set.
+
 Testsuite changes
 ~~~~~~~~~~~~~~~~~
 

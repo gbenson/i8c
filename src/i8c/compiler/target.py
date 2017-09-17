@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2016 Red Hat, Inc.
+# Copyright (C) 2016-17 Red Hat, Inc.
 # This file is part of the Infinity Note Compiler.
 #
 # The Infinity Note Compiler is free software: you can redistribute it
@@ -83,8 +83,8 @@ def guess_wordsize(args=None):
     hdrlen = struct.calcsize(hdrfmt)
     try:
         with tempfile.NamedTemporaryFile(suffix=".o") as of:
-            with tempfile.NamedTemporaryFile(suffix=".c") as cf:
-                command = (commands.I8C_CC
+            with tempfile.NamedTemporaryFile(suffix=".S") as cf:
+                command = (commands.I8C_AS
                            + args
                            + ["-c", cf.name, "-o", of.name])
                 subprocess.check_call(command)

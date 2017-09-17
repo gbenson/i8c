@@ -131,7 +131,7 @@ class CompilerTask(object):
         # Assemble it
         objfile = self.readonly_filename(".o")
         subprocess.check_call(
-            commands.I8C_CC + ["-c", cc_srcfile, "-o", objfile])
+            commands.I8C_AS + ["-c", cc_srcfile, "-o", objfile])
         self.output_file = objfile
 
     def __add_wordsize(self, tc, input):
