@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2015-16 Red Hat, Inc.
+# Copyright (C) 2015-17 Red Hat, Inc.
 # This file is part of the Infinity Note Compiler.
 #
 # The Infinity Note Compiler is free software: you can redistribute it
@@ -149,12 +149,21 @@ class CommandLine(object):
                 self.asm_args.append(arg)
                 self.outfile = arg[2:]
 
+            # -include <file>
+            #     Process file as if ‘#include "file"’ appeared
+            #     as the first line of the primary source file.
+            elif arg == "-include":
+                if not args:
+                    raise I8CError("missing filename after ‘-include’")
+
+                self.cpp_args.append(arg)
+                arg = args.pop(0)
+                self.infiles.append(arg)
+                self.cpp_args.append(arg)
+
             # Input filenames.  Not so easy to distinguish.
             elif (arg.endswith(".i8")
                   or arg.endswith(".i8p")) and not arg.startswith("-"):
-                if self.asm_args and self.asm_args[-1] == "-include":
-                    self.asm_args.pop()
-
                 self.infiles.append(arg)
                 self.cpp_args.append(arg)
 
