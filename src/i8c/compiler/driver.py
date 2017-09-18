@@ -187,7 +187,7 @@ class CommandLine(object):
 def setup_input(args):
     process = infile = None
     if args.with_cpp:
-        command = commands.I8C_CPP + ["-D__INFINITY__"] + args.cpp_args
+        command = commands.I8C_CPP + args.cpp_args
         process = subprocess.Popen(command, stdout=subprocess.PIPE)
         infile = process.stdout
     elif args.infiles in ([], ["-"]):

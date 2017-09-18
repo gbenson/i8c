@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2016 Red Hat, Inc.
+# Copyright (C) 2016-17 Red Hat, Inc.
 # This file is part of the Infinity Note Compiler.
 #
 # The Infinity Note Compiler is free software: you can redistribute it
@@ -40,7 +40,8 @@ class Variable(object):
 I8C_CC = Variable("I8C_CC", "gcc")
 
 # Program for running the C preprocessor, with results to standard output.
-I8C_CPP = Variable("I8C_CPP", "%s -E -x assembler-with-cpp" % I8C_CC)
+I8C_CPP = Variable("I8C_CPP",
+                   "%s -E -x assembler-with-cpp -D__INFINITY__" % I8C_CC)
 
 # Program for compiling assembly files.
 I8C_AS = Variable("I8C_AS", "%s -x assembler-with-cpp" % I8C_CC)
