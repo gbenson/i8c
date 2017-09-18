@@ -44,4 +44,4 @@ I8C_CPP = Variable("I8C_CPP",
                    "%s -E -x assembler-with-cpp -D__INFINITY__" % I8C_CC)
 
 # Program for compiling assembly files.
-I8C_AS = Variable("I8C_AS", "%s -x assembler-with-cpp" % I8C_CC)
+I8C_AS = Variable("I8C_AS", str(I8C_CC))

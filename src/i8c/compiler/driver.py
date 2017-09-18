@@ -215,7 +215,8 @@ def guess_outfile(args):
 
 def setup_output(args):
     if args.with_asm:
-        command = commands.I8C_AS + args.asm_args + ["-"]
+        command = (commands.I8C_AS + ["-x", "assembler-with-cpp"]
+                   + args.asm_args + ["-"])
         if args.outfile is None and "-c" in args.asm_args:
             command.extend(("-o", guess_outfile(args)))
         process = subprocess.Popen(command, stdin=subprocess.PIPE)
