@@ -126,13 +126,13 @@ class CompilerTask(object):
             raise RuntimeError("compilation already started")
         i8c_src = self.__preprocess(tc, input)
         i8c_out = self.__i8compile(tc, i8c_src)
-        cc_srcfile = self.__postprocess(tc, i8c_out)
+        asm_srcfile = self.__postprocess(tc, i8c_out)
 
         # Assemble it
-        objfile = self.readonly_filename(".o")
-        subprocess.check_call(
-            commands.I8C_AS + ["-c", cc_srcfile, "-o", objfile])
-        self.output_file = objfile
+        asm_outfile = self.readonly_filename(".o")
+        tc.env.assembler.check_call(("-c", asm_srcfile,
+                                     "-o", asm_outfile))
+        self.output_file = asm_outfile
 
     def __add_wordsize(self, tc, input):
         """Prepend I8Language input with a wordsize directive.
@@ -417,7 +417,8 @@ class TestCase(BaseTestCase):
     subprocess.check_call(("rm", "-rf", outdir))
     outdir = os.path.basename(outdir)
 
-    target_wordsize = target.guess_wordsize()
+    assembler = commands.Assembler()
+    target_wordsize = target.guess_wordsize(assembler)
     assert target_wordsize is not None
 
     TestOutput.announce()

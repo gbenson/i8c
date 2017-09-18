@@ -21,27 +21,45 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import copy
 import os
+import subprocess
 
-class Variable(object):
-    def __init__(self, name, default):
-        self.as_str = os.environ.get(name, default)
-        self.as_list = self.as_str.split()
+class CompilerCommand(object):
+    def __init__(self, args=None):
+        if args is None:
+            args = self.DEFAULT
+        self.args = copy.copy(args)
 
-    def __str__(self):
-        return self.as_str
+    def check_call(self, *args, **kwargs):
+        return self.__call(subprocess.check_call, *args, **kwargs)
 
-    def __add__(self, other):
-        assert isinstance(other, list)
-        return self.as_list + other
+    def Popen(self, *args, **kwargs):
+        return self.__call(subprocess.Popen, *args, **kwargs)
 
+    def __call(self, func, extra_args=(), **kwargs):
+        return func(self.args + list(extra_args), **kwargs)
+
+def _getenv(name, default):
+    result = os.environ.get(name, None)
+    if result is not None:
+        return result.split()
+    else:
+        return copy.copy(default)
 
 # Program for compiling C programs.
-I8C_CC = Variable("I8C_CC", "gcc")
+_I8C_CC = _getenv("I8C_CC", ["gcc"])
 
-# Program for running the C preprocessor, with results to standard output.
-I8C_CPP = Variable("I8C_CPP",
-                   "%s -E -x assembler-with-cpp -D__INFINITY__" % I8C_CC)
+class Preprocessor(CompilerCommand):
+    """Program for running the C preprocessor, with results
+    to standard output.
+    """
+    DEFAULT = _getenv("I8C_CPP",
+                      _I8C_CC + ["-E",
+                                 "-x", "assembler-with-cpp",
+                                 "-D__INFINITY__"])
 
-# Program for compiling assembly files.
-I8C_AS = Variable("I8C_AS", str(I8C_CC))
+class Assembler(CompilerCommand):
+    """Program for compiling assembly language files.
+    """
+    DEFAULT = _getenv("I8C_AS", _I8C_CC)

@@ -24,9 +24,7 @@ from __future__ import unicode_literals
 from . import commands
 from . import I8CError
 from . import warn
-import copy
 import struct
-import subprocess
 import tempfile
 
 class TargetAnnotator(object):
@@ -44,8 +42,7 @@ class TargetAnnotator(object):
         # have enough information to run the compiler then
         # we compile an empty file and look at the output.
         if (toplevel.wordsize is None and self.args is not None):
-            asmargs = self.__process_sco_args(self.args.asm_args)
-            toplevel.wordsize = guess_wordsize(asmargs)
+            toplevel.wordsize = guess_wordsize(self.args.asm_cmd)
             if toplevel.wordsize is not None:
                 if not self.args.with_asm:
                     warn("assuming ‘wordsize %d’" % toplevel.wordsize)
@@ -62,32 +59,13 @@ class TargetAnnotator(object):
         assert self.wordsize is None
         self.wordsize = constant.value
 
-    def __process_sco_args(self, src):
-        src = copy.copy(src)
-        dst = []
-        while src:
-            arg = src.pop(0)
-            if arg == "-o":
-                src.pop(0)
-            elif arg == "-c" or arg.startswith("-o"):
-                continue
-            else:
-                dst.append(arg)
-        return dst
-
-def guess_wordsize(args=None):
-    if args is None:
-        args = []
-
+def guess_wordsize(assembler):
     hdrfmt = b"4sB"
     hdrlen = struct.calcsize(hdrfmt)
     try:
         with tempfile.NamedTemporaryFile(suffix=".o") as of:
             with tempfile.NamedTemporaryFile(suffix=".S") as cf:
-                command = (commands.I8C_AS
-                           + args
-                           + ["-c", cf.name, "-o", of.name])
-                subprocess.check_call(command)
+                assembler.check_call(("-c", cf.name, "-o", of.name))
                 with open(of.name, "rb") as fp:
                     header = fp.read(hdrlen)
     except:

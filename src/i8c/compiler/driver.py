@@ -77,6 +77,9 @@ LICENSE = ("GPLv3+: GNU GPL version 3 or later",
 
 class CommandLine(object):
     def __init__(self, args):
+        self.cpp_cmd = commands.Preprocessor()
+        self.asm_cmd = commands.Assembler()
+
         self.showinfo = None
         self.with_cpp = True
         self.with_i8c = True
@@ -190,14 +193,14 @@ class CommandLine(object):
             # All other options get passed through to both the
             # preprocessor and the assembler, if they are used.
             else:
-                self.cpp_args.append(arg)
-                self.asm_args.append(arg)
+                self.cpp_cmd.args.append(arg)
+                self.asm_cmd.args.append(arg)
 
 def setup_input(args):
     process = infile = None
     if args.with_cpp:
-        command = commands.I8C_CPP + args.cpp_args
-        process = subprocess.Popen(command, stdout=subprocess.PIPE)
+        extra_args = args.cpp_args
+        process = args.cpp_cmd.Popen(extra_args, stdout=subprocess.PIPE)
         infile = process.stdout
     elif args.infiles in ([], ["-"]):
         infile = sys.stdin
@@ -224,11 +227,10 @@ def guess_outfile(args):
 
 def setup_output(args):
     if args.with_asm:
-        command = (commands.I8C_AS + ["-x", "assembler-with-cpp"]
-                   + args.asm_args + ["-"])
+        extra_args = ["-x", "assembler-with-cpp"] + args.asm_args + ["-"]
         if args.outfile is None and "-c" in args.asm_args:
-            command.extend(("-o", guess_outfile(args)))
-        process = subprocess.Popen(command, stdin=subprocess.PIPE)
+            extra_args.extend(("-o", guess_outfile(args)))
+        process = args.asm_cmd.Popen(extra_args, stdin=subprocess.PIPE)
         outfile = process.stdin
     else:
         process = None
