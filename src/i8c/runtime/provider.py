@@ -88,7 +88,7 @@ class Archive(Provider):
                     yield note
 
 class ELF(Provider):
-    MAGIC = b"\x7fELF"
+    MAGIC = constants.ELFMAG
 
     def __enter__(self):
         self.elf = elffile.ELFFile(self.fp)

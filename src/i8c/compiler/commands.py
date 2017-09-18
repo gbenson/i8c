@@ -21,6 +21,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from .. import constants
 import copy
 import os
 import struct
@@ -89,7 +90,9 @@ class Assembler(CompilerCommand):
                     header = fp.read(hdrlen)
 
         magic, elfclass = struct.unpack(hdrfmt, header)
-        assert magic == b"\x7fELF"
+        assert magic == constants.ELFMAG
 
-        self.__wordsize = {1: 32, 2: 64}[elfclass]
+        self.__wordsize = {constants.ELFCLASS32: 32,
+                           constants.ELFCLASS64: 64}[elfclass]
+
         self.__last_probed = current_args
