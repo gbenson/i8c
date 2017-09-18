@@ -23,7 +23,9 @@ from __future__ import unicode_literals
 
 import copy
 import os
+import struct
 import subprocess
+import tempfile
 
 class CompilerCommand(object):
     def __init__(self, args=None):
@@ -63,3 +65,31 @@ class Assembler(CompilerCommand):
     """Program for compiling assembly language files.
     """
     DEFAULT = _getenv("I8C_AS", _I8C_CC)
+
+    def __init__(self, *args, **kwargs):
+        super(Assembler, self).__init__(*args, **kwargs)
+        self.__last_probed = ()
+
+    @property
+    def output_wordsize(self):
+        self.__maybe_probe_output()
+        return self.__wordsize
+
+    def __maybe_probe_output(self):
+        current_args = tuple(self.args)
+        if current_args == self.__last_probed:
+            return
+
+        hdrfmt = b"4sB"
+        hdrlen = struct.calcsize(hdrfmt)
+        with tempfile.NamedTemporaryFile(suffix=".o") as of:
+            with tempfile.NamedTemporaryFile(suffix=".S") as cf:
+                self.check_call(("-c", cf.name, "-o", of.name))
+                with open(of.name, "rb") as fp:
+                    header = fp.read(hdrlen)
+
+        magic, elfclass = struct.unpack(hdrfmt, header)
+        assert magic == b"\x7fELF"
+
+        self.__wordsize = {1: 32, 2: 64}[elfclass]
+        self.__last_probed = current_args

@@ -25,7 +25,6 @@ from i8c.compiler import commands
 from i8c import compiler
 from i8c import runtime
 from i8c import version
-from i8c.compiler import target
 from i8c.runtime import coverage
 from i8c.runtime import pythonctx
 from i8c.runtime.core import TestObject
@@ -418,7 +417,7 @@ class TestCase(BaseTestCase):
     outdir = os.path.basename(outdir)
 
     assembler = commands.Assembler()
-    target_wordsize = target.guess_wordsize(assembler)
+    target_wordsize = assembler.output_wordsize
     assert target_wordsize is not None
 
     TestOutput.announce()

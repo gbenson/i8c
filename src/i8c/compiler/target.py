@@ -24,8 +24,6 @@ from __future__ import unicode_literals
 from . import commands
 from . import I8CError
 from . import warn
-import struct
-import tempfile
 
 class TargetAnnotator(object):
     def __init__(self, commandline):
@@ -42,7 +40,10 @@ class TargetAnnotator(object):
         # have enough information to run the compiler then
         # we compile an empty file and look at the output.
         if (toplevel.wordsize is None and self.args is not None):
-            toplevel.wordsize = guess_wordsize(self.args.asm_cmd)
+            try:
+                toplevel.wordsize = self.args.asm_cmd.output_wordsize
+            except:
+                pass
             if toplevel.wordsize is not None:
                 if not self.args.with_asm:
                     warn("assuming ‘wordsize %d’" % toplevel.wordsize)
@@ -58,19 +59,3 @@ class TargetAnnotator(object):
     def visit_constant(self, constant):
         assert self.wordsize is None
         self.wordsize = constant.value
-
-def guess_wordsize(assembler):
-    hdrfmt = b"4sB"
-    hdrlen = struct.calcsize(hdrfmt)
-    try:
-        with tempfile.NamedTemporaryFile(suffix=".o") as of:
-            with tempfile.NamedTemporaryFile(suffix=".S") as cf:
-                assembler.check_call(("-c", cf.name, "-o", of.name))
-                with open(of.name, "rb") as fp:
-                    header = fp.read(hdrlen)
-    except:
-        return
-
-    magic, elfclass = struct.unpack(hdrfmt, header)
-    if magic == b"\x7fELF":
-        return {1: 32, 2: 64}.get(elfclass, None)
