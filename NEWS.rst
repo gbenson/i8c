@@ -25,6 +25,10 @@ Testcase changes
   that Python functions in argument lists must now be decorated by
   @TestCase.provide.
 
+* TestCase.warn_caller is now called with two arguments, the first
+  being the signature of the Infinity function emitting the warning
+  and the second being the warning message as before.
+
 
 Changes in I8C 0.0.5
 --------------------
