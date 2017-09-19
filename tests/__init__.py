@@ -44,8 +44,7 @@ class TestCompiler(TestObject):
         """
         result = self.env._new_compilation()
         task = CompilerTask(result.fileprefix)
-        task._compile(self, input, **kwargs)
-        result.add_variant(task.ast, task.output_file)
+        task._compile(self, result, input, **kwargs)
         return result
 
     def preprocess(self, task, input):
@@ -121,7 +120,7 @@ class CompilerTask(object):
         self.__filenames[filename] = True
         return filename
 
-    def _compile(self, tc, input):
+    def _compile(self, tc, result, input):
         if self.__filenames:
             raise RuntimeError("compilation already started")
         i8c_src = self.__preprocess(tc, input)
@@ -132,7 +131,8 @@ class CompilerTask(object):
         asm_outfile = self.readonly_filename(".o")
         tc.env.assembler.check_call(("-c", asm_srcfile,
                                      "-o", asm_outfile))
-        self.output_file = asm_outfile
+
+        result.add_variant(self.ast, asm_outfile)
 
     def __add_wordsize(self, tc, input):
         """Prepend I8Language input with a wordsize directive.
