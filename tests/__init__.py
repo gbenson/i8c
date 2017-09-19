@@ -43,8 +43,9 @@ class TestCompiler(TestObject):
         """See TestCase.compile.__doc__.
         """
         result = self.env._new_compilation()
-        task = CompilerTask(result.fileprefix)
-        task._compile(self, result, input, **kwargs)
+        for ta in self.env.assemblers:
+            task = CompilerTask(result.fileprefix, ta.output_wordsize)
+            task._compile(self, ta, result, input, **kwargs)
         return result
 
     def preprocess(self, task, input):
@@ -74,8 +75,9 @@ class TestCompiler(TestObject):
         return output
 
 class CompilerTask(object):
-    def __init__(self, fileprefix):
-        self.__fileprefix = fileprefix
+    def __init__(self, fileprefix, wordsize):
+        self.wordsize = wordsize
+        self.__fileprefix = "%s_%d" % (fileprefix, wordsize)
         self.__filenames = {}
 
     def __unique_filename(self, ext, is_writable):
@@ -120,27 +122,27 @@ class CompilerTask(object):
         self.__filenames[filename] = True
         return filename
 
-    def _compile(self, tc, result, input):
+    def _compile(self, tc, ta, result, input):
         if self.__filenames:
             raise RuntimeError("compilation already started")
 
         i8c_src = self.__preprocess(tc, input)
         i8c_out = self.__i8compile(tc, i8c_src)
         asm_srcfile = self.__postprocess(tc, i8c_out)
-        asm_outfile = self.__assemble(tc.env.assembler, asm_srcfile)
+        asm_outfile = self.__assemble(ta, asm_srcfile)
 
         result.add_variant(self.ast, asm_outfile)
 
-    def __add_wordsize(self, tc, input):
+    def __add_wordsize(self, input):
         """Prepend I8Language input with a wordsize directive.
         """
-        return "wordsize %d\n%s" % (tc.env.target_wordsize, input)
+        return "wordsize %d\n%s" % (self.wordsize, input)
 
     def __preprocess(self, tc, input):
         """Preprocess the I8Language input ready for I8C.
         """
         self.input_file = self.writable_filename(".i8")
-        result = tc.preprocess(self, self.__add_wordsize(tc, input))
+        result = tc.preprocess(self, self.__add_wordsize(input))
         self.write_file(result, self.input_file)
         return result
 
@@ -158,6 +160,7 @@ class CompilerTask(object):
     def __assemble(self, ta, srcfile):
         """Assemble the postprocessed output of I8C.
         """
+        assert ta.output_wordsize == self.wordsize
         objfile = self.readonly_filename(".o")
         ta.check_call(("-c", srcfile, "-o", objfile))
         return objfile
@@ -484,9 +487,7 @@ class TestCase(BaseTestCase):
     subprocess.check_call(("rm", "-rf", outdir))
     outdir = os.path.basename(outdir)
 
-    assembler = commands.Assembler()
-    target_wordsize = assembler.output_wordsize
-    assert target_wordsize is not None
+    assemblers = [commands.Assembler()]
 
     TestOutput.announce()
 

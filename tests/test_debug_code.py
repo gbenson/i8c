@@ -25,6 +25,7 @@ from tests import TestCase
 from i8c.compiler import loggers
 from i8c.compiler import parser
 import io
+import os
 import sys
 
 SOURCE = """\
@@ -73,9 +74,13 @@ class TestDebugCode(TestCase):
         # lexer.Token.__str__
         func = tree.one_child(parser.Function)
         ops = func.one_child(parser.Operations)
-        token = ops.children[0].tokens[0]
-        self.assertEqual(str(token),
-            "tests/output/test_debug_code/test_str_methods_0001.i8:5: 'dup'")
+        token = str(ops.children[0].tokens[0])
+        prefix = os.path.join(self.module, self.outdir,
+                              "test_debug_code", "test_str_methods_0001_")
+        suffix = ".i8:5: 'dup'"
+        self.assertTrue(token.startswith(prefix))
+        self.assertTrue(token.endswith(suffix))
+        self.assertIn(token[len(prefix):-len(suffix)], ("32", "64"))
         # parser.TreeNode.__str__ with an annotated type
         load = list(ops.some_children(parser.LoadOp))[0]
         self.assertEqual(str(load), LAST_LOAD_NODE)
