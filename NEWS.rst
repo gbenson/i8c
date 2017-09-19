@@ -51,10 +51,11 @@ Testsuite changes
   each test compilation to files in the testsuite output directory.
   Previously only the assembly language and ELF outputs were kept.
 
-* I8C's unit tests are now multiplexed across both interpreters.  A
-  new decorator @tests.multiplexed is provided to mark test methods
-  which must be run individually per-interpreter (e.g. because they
-  test side-effects such as logging or tracing.)
+* I8C's unit tests are now multiplexed across both interpreters, with
+  both 32- and 64-bit notes.  A new decorator @tests.multiplexed is
+  provided to mark test methods which must be run individually per-
+  interpreter (e.g. because they test side-effects such as logging or
+  tracing.)
 
 
 Changes in I8C 0.0.5

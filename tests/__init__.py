@@ -165,6 +165,61 @@ class CompilerTask(object):
         ta.check_call(("-c", srcfile, "-o", objfile))
         return objfile
 
+class AssemblerManager(object):
+    def __init__(self):
+        self.__variants = {}
+        self.__machines = []
+        self.__add_principal()
+
+    def __len__(self):
+        return len(self.__variants)
+
+    def __iter__(self):
+        return (self.__variants[machine] for machine in self.__machines)
+
+    def announce(self, file=sys.stderr):
+        message = " and ".join(sorted(self.__machines)).replace("bit ", " ")
+        message = "testing %s output" % message
+        if len(self) == 1:
+            message = "*** %s only ***" % message
+        if hasattr(file, "isatty") and file.isatty():
+            colour = len(self) > 1 and 32 or 33
+            message = "\x1B[%sm%s\x1B[0m" % (colour, message)
+        print(message, file=file)
+
+    def __add_principal(self):
+        self.__add_variant()
+
+    def __try_add_variant(self, *args, **kwargs):
+        kwargs["probe_quietly"] = True
+        try:
+            return self.__add_variant(*args, **kwargs)
+        except:
+            pass
+
+    def __add_variant(self, *args, **kwargs):
+        is_alt_wordsize = kwargs.pop("is_alt_wordsize", False)
+
+        variant = commands.Assembler(*args, **kwargs)
+        machine = "%d-bit" % variant.output_wordsize
+        assert machine not in self.__variants
+        self.__variants[machine] = variant
+        self.__machines.append(machine)
+
+        if not is_alt_wordsize:
+            self.__try_add_alt_wordsize(variant)
+
+        return variant
+
+    def __try_add_alt_wordsize(self, main):
+        for try_wordsize in (64, 32, 31):
+            elf_wordsize = ((try_wordsize + 1) >> 1) << 1
+            if main.output_wordsize == elf_wordsize:
+                continue
+            try_args = main.args + ["-m%d" % try_wordsize]
+            if self.__try_add_variant(try_args, is_alt_wordsize=True):
+                return
+
 class TestContext(object):
     @classmethod
     def with_backend(cls, backend_cls):
@@ -487,9 +542,10 @@ class TestCase(BaseTestCase):
     subprocess.check_call(("rm", "-rf", outdir))
     outdir = os.path.basename(outdir)
 
-    assemblers = [commands.Assembler()]
+    assemblers = AssemblerManager()
 
     TestOutput.announce()
+    assemblers.announce()
 
     def run(self, *args, **kwargs):
         self.compilecount = 0
