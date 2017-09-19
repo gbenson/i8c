@@ -123,14 +123,11 @@ class CompilerTask(object):
     def _compile(self, tc, result, input):
         if self.__filenames:
             raise RuntimeError("compilation already started")
+
         i8c_src = self.__preprocess(tc, input)
         i8c_out = self.__i8compile(tc, i8c_src)
         asm_srcfile = self.__postprocess(tc, i8c_out)
-
-        # Assemble it
-        asm_outfile = self.readonly_filename(".o")
-        tc.env.assembler.check_call(("-c", asm_srcfile,
-                                     "-o", asm_outfile))
+        asm_outfile = self.__assemble(tc.env.assembler, asm_srcfile)
 
         result.add_variant(self.ast, asm_outfile)
 
@@ -157,6 +154,13 @@ class CompilerTask(object):
         """Postprocess the output of I8C ready for assembly.
         """
         return self.write_file(tc.postprocess(self, output), ".S")
+
+    def __assemble(self, ta, srcfile):
+        """Assemble the postprocessed output of I8C.
+        """
+        objfile = self.readonly_filename(".o")
+        ta.check_call(("-c", srcfile, "-o", objfile))
+        return objfile
 
 class TestContext(object):
     @classmethod
