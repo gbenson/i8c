@@ -77,6 +77,11 @@ class Assembler(CompilerCommand):
         self.__maybe_probe_output()
         return self.__wordsize
 
+    @property
+    def output_byteorder(self):
+        self.__maybe_probe_output()
+        return self.__byteorder
+
     def __maybe_probe_output(self):
         current_args = tuple(self.args)
         if current_args == self.__last_probed:
@@ -91,7 +96,7 @@ class Assembler(CompilerCommand):
         self.__last_probed = current_args
 
     def __probe_output(self, stderr=None):
-        hdrfmt = b"4sB"
+        hdrfmt = b"4sBB"
         hdrlen = struct.calcsize(hdrfmt)
         with tempfile.NamedTemporaryFile(suffix=".o") as of:
             with tempfile.NamedTemporaryFile(suffix=".S") as cf:
@@ -100,9 +105,11 @@ class Assembler(CompilerCommand):
                 with open(of.name, "rb") as fp:
                     header = fp.read(hdrlen)
 
-        magic, elfclass = struct.unpack(hdrfmt, header)
+        magic, elfclass, elfdata = struct.unpack(hdrfmt, header)
         assert magic == constants.ELFMAG
 
         self.__wordsize = {constants.ELFCLASS32: 32,
                            constants.ELFCLASS64: 64}[elfclass]
+        self.__byteorder = {constants.ELFDATA2LSB: b"<",
+                            constants.ELFDATA2MSB: b">"}[elfdata]
 

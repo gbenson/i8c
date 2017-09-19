@@ -178,12 +178,13 @@ class AssemblerManager(object):
         return (self.__variants[machine] for machine in self.__machines)
 
     def announce(self, file=sys.stderr):
-        message = " and ".join(sorted(self.__machines)).replace("bit ", " ")
-        message = "testing %s output" % message
-        if len(self) == 1:
+        message = ("testing %s output"
+                   % " and ".join(sorted(self.__machines)).replace("bit ",
+                                                                   " "))
+        if len(self) < 2:
             message = "*** %s only ***" % message
         if hasattr(file, "isatty") and file.isatty():
-            colour = len(self) > 1 and 32 or 33
+            colour = len(self) == 2 and 32 or 33
             message = "\x1B[%sm%s\x1B[0m" % (colour, message)
         print(message, file=file)
 
