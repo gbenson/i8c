@@ -68,6 +68,7 @@ class Assembler(CompilerCommand):
     DEFAULT = _getenv("I8C_AS", _I8C_CC)
 
     def __init__(self, *args, **kwargs):
+        self.__probe_quietly = kwargs.pop("probe_quietly", False)
         super(Assembler, self).__init__(*args, **kwargs)
         self.__last_probed = ()
 
@@ -81,11 +82,21 @@ class Assembler(CompilerCommand):
         if current_args == self.__last_probed:
             return
 
+        if self.__probe_quietly:
+            with open(os.devnull, "w") as fp:
+                self.__probe_output(stderr=fp)
+        else:
+            self.__probe_output()
+
+        self.__last_probed = current_args
+
+    def __probe_output(self, stderr=None):
         hdrfmt = b"4sB"
         hdrlen = struct.calcsize(hdrfmt)
         with tempfile.NamedTemporaryFile(suffix=".o") as of:
             with tempfile.NamedTemporaryFile(suffix=".S") as cf:
-                self.check_call(("-c", cf.name, "-o", of.name))
+                self.check_call(("-c", cf.name, "-o", of.name),
+                                stderr=stderr)
                 with open(of.name, "rb") as fp:
                     header = fp.read(hdrlen)
 
@@ -95,4 +106,3 @@ class Assembler(CompilerCommand):
         self.__wordsize = {constants.ELFCLASS32: 32,
                            constants.ELFCLASS64: 64}[elfclass]
 
-        self.__last_probed = current_args
