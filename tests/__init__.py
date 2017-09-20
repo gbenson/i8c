@@ -308,7 +308,8 @@ class Multiplexed(TestObject):
                      for arg in args)
         kwargs = dict((key, self.__resolve_in(variant, value))
                       for key, value in kwargs.items())
-        return func(*args, **kwargs)
+        with self.env._install_context(variant):
+            return func(*args, **kwargs)
 
     @staticmethod
     def __resolve_in(variant, value):
@@ -391,7 +392,8 @@ def multiplexed(func):
                         self.output = variant
                     else:
                         args[0] = variant
-                    func(self, *args, **kwargs)
+                    with self._install_context(variant):
+                        func(self, *args, **kwargs)
                 finally:
                     del self.variant_index
         finally:
@@ -426,7 +428,10 @@ class TestCase(BaseTestCase):
         self.compilecount = 0
         for logger in compiler.loggers.values():
             logger.disable()
-        return BaseTestCase.run(self, *args, **kwargs)
+        try:
+            return BaseTestCase.run(self, *args, **kwargs)
+        finally:
+            self._ctx = None
 
     def _new_compilation(self):
         """Update compilation count and return a new TestOutput.
@@ -438,7 +443,9 @@ class TestCase(BaseTestCase):
 
         self.compilecount += 1
         fileprefix = os.path.join(*tmp) + "_%04d" % self.compilecount
-        return TestOutput(self, fileprefix)
+        result = TestOutput(self, fileprefix)
+        self._ctx = result
+        return result
 
     def compile(self, input, **kwargs):
         """Compile I8Language to object code, then load resulting notes.
