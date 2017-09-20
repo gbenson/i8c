@@ -89,7 +89,9 @@ class Context(context.AbstractContext):
     def finalize(self):
         """Release any resources held by this Context."""
         if self.__ctx is not None:
-            self.__checked_unregister(self.__ctx.functions)
+            for func in self.__ctx.functions:
+                func.is_persistent = False
+                del func
         self.__ctx = self.__inf = self.__xctx = None
 
         if not self.__extra_checks:
@@ -244,24 +246,20 @@ class Context(context.AbstractContext):
         # The function already existed; we've added another with the
         # same name and caused the funcref to become unresolved.  We
         # walk the list and unregister the ones that aren't ours.
-        self.__checked_unregister(func2
-                                  for func2 in self.__ctx.functions
-                                  if (func2 is not func
-                                      and func2.ref is ref))
-        self.env.assertTrue(ref.is_resolved)
-
-    def __checked_unregister(self, functions):
-        """Unregister a sequence of functions."""
-        functions = list(functions)
-        while functions:
-            func = functions.pop()
+        kill_list = [func2
+                     for func2 in self.__ctx.functions
+                     if (func2 is not func and func2.ref is ref)]
+        while kill_list:
+            func = kill_list.pop()
             func.is_persistent = False
             self.__ctx.unregister(func)
             if self.__extra_checks:
-                ref = weakref.ref(func)
+                check = weakref.ref(func)
             del func
             if self.__extra_checks:
-                self.env.assertIsNone(ref())
+                self.env.assertIsNone(check())
+
+        self.env.assertTrue(ref.is_resolved)
 
     # Methods for Infinity function execution.
 
