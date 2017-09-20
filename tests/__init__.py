@@ -187,8 +187,6 @@ class TestContext(object):
         # Setup for note execution
         testcase._install_user_functions(self)
         self.memory = memory.Memory(testcase)
-        testcase.to_signed = self.to_signed
-        testcase.to_unsigned = self.to_unsigned
 
     @property
     def note(self):

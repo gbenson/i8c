@@ -79,6 +79,14 @@ class BaseTestCase(unittest.TestCase):
     def register_symbol(self):
         return self._ctx.register_symbol
 
+    @property
+    def to_signed(self):
+        return self._ctx.to_signed
+
+    @property
+    def to_unsigned(self):
+        return self._ctx.to_unsigned
+
 class TestCase(BaseTestCase):
     include_path = []
 
@@ -129,14 +137,6 @@ class TestCase(BaseTestCase):
     @property
     def call(self):
         return self._ctx.call
-
-    @property
-    def to_signed(self):
-        return self._ctx.to_signed
-
-    @property
-    def to_unsigned(self):
-        return self._ctx.to_unsigned
 
 class UserFunction(object):
     def __init__(self, signature, impl):
