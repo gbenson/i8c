@@ -49,7 +49,7 @@ class ContextTests(object):
 
     def __assert_ctx_env_immutable(self):
         saved_env = self.ctx.env
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(AttributeError):
             self.ctx.env = 14
         self.assertIs(self.ctx.env, saved_env)
 

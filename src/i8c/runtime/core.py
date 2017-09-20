@@ -48,7 +48,3 @@ class TestObject(object):
     @property
     def env(self):
         return self.__env() or _fallback_env
-
-    @env.setter
-    def env(self, value):
-        raise RuntimeError
