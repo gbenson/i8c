@@ -119,14 +119,11 @@ class TestCase(BaseTestCase):
                 raise HeaderFileError(filename, linenumber)
 
     def run(self, *args, **kwargs):
-        ctx = Context(self)
-        try:
+        with Context(self) as ctx:
             self.__ctxp.populate(ctx)
             self._install_user_functions(ctx)
             with self._install_context(ctx):
                 return BaseTestCase.run(self, *args, **kwargs)
-        finally:
-            ctx.finalize()
 
     @property
     def wordsize(self):

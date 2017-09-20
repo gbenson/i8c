@@ -32,6 +32,12 @@ class AbstractContext(TestObject):
         super(AbstractContext, self).__init__(env)
         self.tracelevel = 0
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.finalize()
+
     def __del__(self):
         self.finalize()
 
