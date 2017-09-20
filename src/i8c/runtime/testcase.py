@@ -24,7 +24,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from ..compat import strtoint_c
-from .core import unittest, TestObject
+from .core import unittest, TestObject, TempSetAttr
 from . import *
 from . import memory
 import copy
@@ -75,6 +75,10 @@ class BaseTestCase(unittest.TestCase):
             if isinstance(func, UserFunction):
                 ctx.override(func.bind_to(self))
 
+    def _install_context(self, ctx):
+        """Temporarily install the specified context."""
+        return TempSetAttr(self, "_ctx", ctx)
+
 class TestCase(BaseTestCase):
     include_path = []
 
@@ -115,34 +119,34 @@ class TestCase(BaseTestCase):
                 raise HeaderFileError(filename, linenumber)
 
     def run(self, *args, **kwargs):
-        self.__ctx = Context(self)
+        ctx = Context(self)
         try:
-            self.__ctxp.populate(self.__ctx)
-            self._install_user_functions(self.__ctx)
-            return BaseTestCase.run(self, *args, **kwargs)
+            self.__ctxp.populate(ctx)
+            self._install_user_functions(ctx)
+            with self._install_context(ctx):
+                return BaseTestCase.run(self, *args, **kwargs)
         finally:
-            self.__ctx.finalize()
-            del self.__ctx
+            ctx.finalize()
 
     @property
     def wordsize(self):
-        return self.__ctx.wordsize
+        return self._ctx.wordsize
 
     @property
     def byteorder(self):
-        return self.__ctx.byteorder
+        return self._ctx.byteorder
 
     @property
     def call(self):
-        return self.__ctx.call
+        return self._ctx.call
 
     @property
     def to_signed(self):
-        return self.__ctx.to_signed
+        return self._ctx.to_signed
 
     @property
     def to_unsigned(self):
-        return self.__ctx.to_unsigned
+        return self._ctx.to_unsigned
 
 class UserFunction(object):
     def __init__(self, signature, impl):
