@@ -48,3 +48,24 @@ class TestObject(object):
     @property
     def env(self):
         return self.__env() or _fallback_env
+
+class TempSetAttr(object):
+    """Context manager to temporarily set an attribute in an object."""
+
+    __unset = object()
+
+    def __init__(self, object, name, value):
+        self.object = object
+        self.name = name
+        self.value = value
+
+    def __enter__(self):
+        self.__saved = getattr(self.object, self.name, self.__unset)
+        setattr(self.object, self.name, self.value)
+
+    def __exit__(self, type, value, traceback):
+        if type is None:
+            if self.__saved is self.__unset:
+                delattr(self.object, self.name)
+            else:
+                setattr(self.object, self.name, self.__saved)
