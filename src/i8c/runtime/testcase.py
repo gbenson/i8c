@@ -35,19 +35,7 @@ import struct
 
 class BaseTestCase(unittest.TestCase):
     def run(self, *args, **kwargs):
-        self.memory = memory.Memory(self)
-        self.addCleanup(delattr, self, "memory")
-        self.__symbols = {}
         return unittest.TestCase.run(self, *args, **kwargs)
-
-    def register_symbol(self, name, value):
-        """Hook method for registering a symbol."""
-        assert not name in self.__symbols
-        self.__symbols[name] = value
-
-    def lookup_symbol(self, name):
-        """Hook method for resolving a symbol name to an address."""
-        return self.__symbols[name]
 
     def read_memory(self, fmt, addr):
         """Hook method for reading bytes from memory."""
@@ -78,6 +66,18 @@ class BaseTestCase(unittest.TestCase):
     def _install_context(self, ctx):
         """Temporarily install the specified context."""
         return TempSetAttr(self, "_ctx", ctx)
+
+    @property
+    def wordsize(self):
+        return self._ctx.wordsize
+
+    @property
+    def byteorder(self):
+        return self._ctx.byteorder
+
+    @property
+    def register_symbol(self):
+        return self._ctx.register_symbol
 
 class TestCase(BaseTestCase):
     include_path = []
@@ -123,15 +123,8 @@ class TestCase(BaseTestCase):
             self.__ctxp.populate(ctx)
             self._install_user_functions(ctx)
             with self._install_context(ctx):
+                self.memory = memory.Memory(self)
                 return BaseTestCase.run(self, *args, **kwargs)
-
-    @property
-    def wordsize(self):
-        return self._ctx.wordsize
-
-    @property
-    def byteorder(self):
-        return self._ctx.byteorder
 
     @property
     def call(self):

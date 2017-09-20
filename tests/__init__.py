@@ -26,6 +26,7 @@ from i8c import compiler
 from i8c import runtime
 from i8c import version
 from i8c.runtime import coverage
+from i8c.runtime import memory
 from i8c.runtime import pythonctx
 from i8c.runtime.core import TestObject
 from i8c.runtime.testcase import BaseTestCase
@@ -184,9 +185,8 @@ class TestContext(object):
         # Make sure we got at least one note
         testcase.assertGreaterEqual(len(self.notes), 1)
         # Setup for note execution
-        testcase.memory.env = self
-        self.register_symbol = testcase.register_symbol
         testcase._install_user_functions(self)
+        self.memory = memory.Memory(testcase)
         testcase.to_signed = self.to_signed
         testcase.to_unsigned = self.to_unsigned
 
@@ -432,6 +432,10 @@ class TestCase(BaseTestCase):
             return BaseTestCase.run(self, *args, **kwargs)
         finally:
             self._ctx = None
+
+    @property
+    def memory(self):
+        return self._ctx.memory
 
     def _new_compilation(self):
         """Update compilation count and return a new TestOutput.

@@ -53,6 +53,10 @@ class TestCoverageChecker(TestCase):
         self.assertEqual(opnames[0], "deref_int")
         self.assertEqual(opnames[8], "warn")
 
+        self.__setup_memory()
+
+    @multiplexed
+    def __setup_memory(self):
         with self.memory.builder() as mem:
             addr = mem.alloc()
             addr.store_i8(0, 1)

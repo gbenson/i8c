@@ -304,7 +304,7 @@ class Context(context.AbstractContext):
         """Address relocation function."""
         for name in reloc.function.symbols_at[reloc.source_offset]:
             try:
-                value = self.env.lookup_symbol(name)
+                value = self.lookup_symbol(name)
             except KeyError as e:
                 exception = e
                 continue

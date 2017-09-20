@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2016 Red Hat, Inc.
+# Copyright (C) 2016-17 Red Hat, Inc.
 # This file is part of the Infinity Note Compiler.
 #
 # The Infinity Note Compiler is free software: you can redistribute it
@@ -21,9 +21,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from tests import TestCase
+from tests import TestCase, multiplexed
 
-# XXX what?
+# memory.Memory.read didn't work with Python 2.x
 
 SOURCE = """\
 define test::i8xfail_0002 returns int
@@ -35,6 +35,10 @@ class TestI8XFail0002(TestCase):
     def test_i8xfail_0002(self):
         """Miscellaneous I8X failure #0002 check"""
         tree, output = self.compile(SOURCE)
+        self.__test_i8xfail_0002(output)
+
+    @multiplexed
+    def __test_i8xfail_0002(self, output):
         EXPECT = 0xdeadbeef
         with self.memory.builder() as mem:
             sym1 = mem.alloc("sym1")

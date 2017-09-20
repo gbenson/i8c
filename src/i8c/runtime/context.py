@@ -31,6 +31,7 @@ class AbstractContext(TestObject):
     def __init__(self, env=None):
         super(AbstractContext, self).__init__(env)
         self.tracelevel = 0
+        self.__symbols = {}
 
     def __enter__(self):
         return self
@@ -84,6 +85,15 @@ class AbstractContext(TestObject):
     def to_unsigned(self, value): # pragma: no cover
         """Convert a signed integer to the interpreter's representation."""
         raise NotImplementedError
+
+    def register_symbol(self, name, addr):
+        """Associate a symbol name with an address."""
+        assert not name in self.__symbols
+        self.__symbols[name] = addr
+
+    def lookup_symbol(self, name):
+        """Return the address associated with the specified symbol name."""
+        return self.__symbols[name]
 
     @property
     def _i8ctest_functions(self): # pragma: no cover

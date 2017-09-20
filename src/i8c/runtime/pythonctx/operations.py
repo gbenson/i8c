@@ -258,7 +258,7 @@ class Operation(AbstractOperation):
         exception = None
         for name in self.operand:
             try:
-                value = ctx.env.lookup_symbol(name)
+                value = ctx.lookup_symbol(name)
             except KeyError as e:
                 exception = e
                 continue

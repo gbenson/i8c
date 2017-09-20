@@ -59,6 +59,10 @@ class TestTracing(TestCase):
             output.logged_trace = []
         self.output.add_multiplexed_field("logged_trace")
 
+        self.__setup_memory()
+
+    @multiplexed
+    def __setup_memory(self):
         with self.memory.builder() as mem:
             self.addr = mem.alloc("sym1")
             self.addr.store_u32(0, self.NEGVALUE)
