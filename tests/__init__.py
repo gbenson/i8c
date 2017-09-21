@@ -207,11 +207,11 @@ class TestContext(object):
 class Multiplexer(TestObject):
     def __init__(self, env):
         super(Multiplexer, self).__init__(env)
-        for field in getattr(self, "MULTIPLEXED_FIELDS", ()):
-            self.add_multiplexed_field(field)
+        for name in getattr(self, "MULTIPLEXED_FIELDS", ()):
+            self.add_multiplexed_property(name)
 
-    def add_multiplexed_field(self, fullname):
-        fullname = fullname.split(".")
+    def add_multiplexed_property(self, name):
+        fullname = name.split(".")
         parent = self
         for attr in fullname[:-1]:
             parent = getattr(parent, attr)
@@ -228,10 +228,10 @@ class Multiplexer(TestObject):
                 return
         self.env.fail("%s not in %s" % (variant, self.variants))
 
-    def all_values_of(self, field):
-        self.env.assertIs(field.mux, self)
+    def all_values_of(self, multiplexed):
+        self.env.assertIs(multiplexed.mux, self)
         self.assertHasVariants()
-        return (field.value_in(variant)
+        return (multiplexed.value_in(variant)
                 for variant in self.variants)
 
     def map_call(self, func, *args, **kwargs):

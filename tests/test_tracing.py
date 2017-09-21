@@ -56,7 +56,7 @@ class TestTracing(TestCase):
         for output in self.output.variants:
             output.trace = self.__log_trace
             output.logged_trace = []
-        self.output.add_multiplexed_field("logged_trace")
+        self.output.add_multiplexed_property("logged_trace")
 
         self.__setup_memory()
 
