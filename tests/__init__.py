@@ -170,6 +170,7 @@ class AssemblerManager(object):
         self.__variants = {}
         self.__machines = []
         self.__add_principal()
+        self.__try_add_alternate()
 
     def __len__(self):
         return len(self.__variants)
@@ -178,18 +179,21 @@ class AssemblerManager(object):
         return (self.__variants[machine] for machine in self.__machines)
 
     def announce(self, file=sys.stderr):
-        message = ("testing %s output"
-                   % " and ".join(sorted(self.__machines)).replace("bit ",
-                                                                   " "))
-        if len(self) < 2:
+        message = "testing %s output" % ", ".join(self.__machines)
+        if len(self) < 4:
             message = "*** %s only ***" % message
         if hasattr(file, "isatty") and file.isatty():
-            colour = len(self) == 2 and 32 or 33
+            colour = len(self) == 4 and 32 or 33
             message = "\x1B[%sm%s\x1B[0m" % (colour, message)
         print(message, file=file)
 
     def __add_principal(self):
         self.__add_variant()
+
+    def __try_add_alternate(self):
+        args = os.environ.get("I8CTEST_ALT_AS", None)
+        if args is not None:
+            self.__try_add_variant(args.split())
 
     def __try_add_variant(self, *args, **kwargs):
         kwargs["probe_quietly"] = True
@@ -202,7 +206,9 @@ class AssemblerManager(object):
         is_alt_wordsize = kwargs.pop("is_alt_wordsize", False)
 
         variant = commands.Assembler(*args, **kwargs)
-        machine = "%d-bit" % variant.output_wordsize
+        machine = "%d%s" % (variant.output_wordsize,
+                            {b"<": "el",
+                             b">": "be"}[variant.output_byteorder])
         assert machine not in self.__variants
         self.__variants[machine] = variant
         self.__machines.append(machine)
@@ -547,6 +553,8 @@ class TestCase(BaseTestCase):
 
     TestOutput.announce()
     assemblers.announce()
+
+    system_byteorder = {"little": b"<", "big": b">"}[sys.byteorder]
 
     def run(self, *args, **kwargs):
         self.compilecount = 0

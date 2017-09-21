@@ -135,7 +135,10 @@ class TestTracing(TestCase):
         # deref
         start_pc, opname, stack_depth, stack = self.tpop()
         self.assertEqual(opname, (self.output.backend == "libi8x"
-                                  and "I8X_OP_deref_i32n"
+                                  and (self.output.byteorder
+                                       == self.system_byteorder
+                                       and "I8X_OP_deref_i32n"
+                                       or "I8X_OP_deref_i32r")
                                   or "I8_OP_deref_int"))
         self.assertEqual(stack_depth, 1)
         self.assertEqual(stack, [self.addr.location])
