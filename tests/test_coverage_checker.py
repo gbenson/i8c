@@ -41,8 +41,6 @@ class TestCoverageChecker(TestCase):
     def setUp(self):
         tree, self.output = self.compile(SOURCE)
         self.addCleanup(delattr, self, "output")
-        self.output.add_multiplexed_field("coverage")
-        self.output.add_multiplexed_field("coverage.functions")
         self.assertEqual(len(self.coverage.functions), 1)
 
         # Sanity checks:

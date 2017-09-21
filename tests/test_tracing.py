@@ -52,7 +52,6 @@ class TestTracing(TestCase):
     def setUp(self):
         tree, self.output = self.compile(SOURCE)
         self.addCleanup(delattr, self, "output")
-        self.output.add_multiplexed_field("tracelevel")
 
         for output in self.output.variants:
             output.trace = self.__log_trace

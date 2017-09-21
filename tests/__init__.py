@@ -319,12 +319,15 @@ class Multiplexed(TestObject):
 class TestOutput(Multiplexer):
     MULTIPLEXED_FIELDS = (
         "call",
+        "coverage",
+        "coverage.functions",
         "note",
         "note.signature",
         "opnames",
         "ops",
         "to_signed",
         "to_unsigned",
+        "tracelevel",
     )
 
     backends = []
