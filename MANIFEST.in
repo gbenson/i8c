@@ -2,4 +2,4 @@ include COPYING COPYING.LESSER NEWS.rst
 recursive-include src *.py
 recursive-include tests *.py
 recursive-include examples *.i8 *.py
-recursive-include contrib *.el *.py
+recursive-include contrib *.el
