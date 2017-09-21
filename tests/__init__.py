@@ -211,13 +211,13 @@ class Multiplexer(TestObject):
             self.add_multiplexed_property(name)
 
     def add_multiplexed_property(self, name):
-        fullname = name.split(".")
+        splitname = name.split(".")
         parent = self
-        for attr in fullname[:-1]:
+        for attr in splitname[:-1]:
             parent = getattr(parent, attr)
-        attr = fullname[-1]
+        attr = splitname[-1]
         assert not hasattr(parent, attr)
-        setattr(parent, attr, Multiplexed(self, fullname))
+        setattr(parent, attr, MultiplexedProperty(self, splitname))
 
     def assertHasVariants(self):
         self.env.assertGreater(len(self.variants), 0)
@@ -242,10 +242,9 @@ class Multiplexer(TestObject):
                 for variant in self.variants)
 
 class Multiplexed(TestObject):
-    def __init__(self, mux, fullname):
+    def __init__(self, mux):
         super(Multiplexed, self).__init__(mux.env)
         self.__mux = weakref.ref(mux)
-        self.fullname = tuple(fullname)
 
     @property
     def mux(self):
@@ -264,12 +263,6 @@ class Multiplexed(TestObject):
     @property
     def all_values(self):
         return self.mux.all_values_of(self)
-
-    def value_in(self, variant):
-        self.mux.assertInVariants(variant)
-        for attr in self.fullname:
-            variant = getattr(variant, attr)
-        return variant
 
     # Truth checking.
 
@@ -315,6 +308,32 @@ class Multiplexed(TestObject):
         if isinstance(value, Multiplexed):
             value = value.value_in(variant)
         return value
+
+class MultiplexedProperty(Multiplexed):
+    def __init__(self, mux, splitname):
+        super(MultiplexedProperty, self).__init__(mux)
+        self.__splitname = tuple(splitname)
+
+    @property
+    def display_name(self):
+        return ".".join(self.__splitname)
+
+    def value_in(self, variant):
+        self.mux.assertInVariants(variant)
+        for attr in self.__splitname:
+            variant = getattr(variant, attr)
+        return variant
+
+class MultiplexedValue(Multiplexed):
+    def __init__(self, mux, name, values):
+        super(MultiplexedValue, self).__init__(mux)
+        self.env.assertEqual(len(values), len(self.mux.variants))
+        self.display_name = name
+        self.__values = values
+
+    def value_in(self, variant):
+        self.mux.assertInVariants(variant)
+        return self.__values[self.mux.variants.index(variant)]
 
 class TestOutput(Multiplexer):
     MULTIPLEXED_FIELDS = (
