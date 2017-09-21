@@ -235,6 +235,7 @@ class Multiplexer(TestObject):
                 for variant in self.variants)
 
     def map_call(self, func, *args, **kwargs):
+        self.env.assertTrue(isinstance(func, Multiplexed))
         self.env.assertIs(func.mux, self)
         self.assertHasVariants()
         return (func.call_in(variant, *args, **kwargs)
