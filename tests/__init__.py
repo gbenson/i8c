@@ -283,6 +283,17 @@ class Multiplexed(TestObject):
     # Comparisons.
 
     def __eq__(self, other):
+        # Compare values individually if possible.
+        if isinstance(other, Multiplexed):
+            svalues = list(self.all_values)
+            ovalues = list(other.all_values)
+            if len(ovalues) == len(svalues):
+                for sval, oval in zip(svalues, ovalues):
+                    if oval != sval:
+                        return False
+                return True
+
+        # Demultiplex and compare if not.
         return not (self != other)
 
     def __ne__(self, other):
