@@ -250,12 +250,19 @@ class Multiplexed(TestObject):
     def mux(self):
         return self.__mux()
 
-    def __demux(self, values):
+    def __demux(self, values, name=None):
         self.mux.assertHasVariants()
         values = list(values)
         self.env.assertEqual(len(values), len(self.mux.variants))
         result = values[0]
-        self.env.assertEqual(values, [result] * len(values))
+        all_equal = [result] * len(values)
+        if name is None:
+            # Caller expects a single value.
+            self.env.assertEqual(values, all_equal)
+        elif values != all_equal:
+            # Return multiplexed result.
+            result = self.__maybe_unwrap(MultiplexedValue(self.mux,
+                                                          name, values))
         return result
 
     # Value accessors.
@@ -281,18 +288,41 @@ class Multiplexed(TestObject):
     def __ne__(self, other):
         return self.__demux(self.all_values) != other
 
-    # Array access.
+    # Sequence access.
 
     def __len__(self):
         return self.__demux(map(len, self.all_values))
 
     def __getitem__(self, key):
-        return self.__demux(value[key] for value in self.all_values)
+        return self.__demux((value[key] for value in self.all_values),
+                            "%s[%s]" % (self.display_name, key))
+
+    @staticmethod
+    def __maybe_unwrap(ob):
+        """Attempt to unwrap multiplexed sequences into regular ones.
+
+        If ob is a multiplexed value, and all its values are sequences
+        with the same length, then return a regular sequence (a list
+        to be specific) in which some or all values will be
+        multiplexed values.  Note that this is recursive; the result
+        will never contain multiplexed sequences.
+
+        If ob is not a multiplexed sequence then return ob unchanged.
+        """
+        if not isinstance(ob, Multiplexed):
+            return ob
+        try:
+            length = len(ob)
+        except:
+            return ob
+        return [Multiplexed.__maybe_unwrap(ob[i])
+                for i in range(length)]
 
     # Method invocation.
 
     def __call__(self, *args, **kwargs):
-        return self.__demux(self.mux.map_call(self, *args, **kwargs))
+        return self.__demux(self.mux.map_call(self, *args, **kwargs),
+                            "<%s() result>" % self.display_name)
 
     def call_in(self, variant, *args, **kwargs):
         func = self.value_in(variant)
