@@ -24,6 +24,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from ..compat import join_bytes
+from .core import TestObject
 import struct
 
 class Builder(object):
@@ -175,9 +176,9 @@ class Value(object):
         bytes = struct.pack(mem.env.byteorder + self.format, value)
         mem.write(location, bytes)
 
-class Memory(object):
+class Memory(TestObject):
     def __init__(self, env):
-        self.env = env
+        super(Memory, self).__init__(env)
         self.cells = {}
 
     def builder(self):
