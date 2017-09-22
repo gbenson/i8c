@@ -29,6 +29,7 @@ import sys
 
 class AbstractContext(TestObject):
     INTERPRETER = "UNKNOWN"
+    MAX_WORDSIZE = 0
 
     def __init__(self, env=None):
         super(AbstractContext, self).__init__(env)

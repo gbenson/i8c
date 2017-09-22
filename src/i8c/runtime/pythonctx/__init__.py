@@ -34,6 +34,7 @@ import sys
 
 class Context(context.AbstractContext):
     INTERPRETER = "Python interpreter (deprecated)"
+    MAX_WORDSIZE = None  # No maximum.
 
     def __init__(self, *args, **kwargs):
         super(Context, self).__init__(*args, **kwargs)

@@ -46,7 +46,12 @@ class Context(context.AbstractContext):
 
     @classmethod
     def _class_init(cls):
-        """Probe libi8x for component versions and log priority."""
+        """Probe libi8x for wordsize, component versions, and
+        default logging priority."""
+        x = libi8x.to_unsigned(-1)
+        while x:
+            cls.MAX_WORDSIZE += 1
+            x >>= 1
         cls.__components = []
         cls.__log_pri = libi8x.Context(0, cls.__clinit_logger).log_priority
         if not cls.__components:
