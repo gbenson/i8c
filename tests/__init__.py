@@ -261,6 +261,12 @@ class TestContext(object):
             clsname = clsname.encode("utf-8")
         return type(clsname, (cls, backend_cls), {"backend": backend})
 
+    @property
+    def _i8ctest_bad_wordsize_msg(self):
+        """Called by import_notes if self.MAX_WORDSIZE too small."""
+        self.is_testable = False
+        return "unsupported wordsize (%d bits max)" % self.MAX_WORDSIZE
+
     def __init__(self, testcase, syntax_tree, objfile):
         super(TestContext, self).__init__(testcase)
         testcase.addCleanup(self.finalize)
@@ -268,6 +274,7 @@ class TestContext(object):
         # Load the notes from it
         self.coverage = coverage.Accumulator()
         self.import_error = None
+        self.is_testable = True
         testcase.addCleanup(delattr, self, "import_error")
         try:
             self.import_notes(objfile)
@@ -522,7 +529,9 @@ class TestOutput(Multiplexer):
 
     def add_variant(self, *args):
         for backend in self.backends:
-            self.variants.append(backend(self.env, *args))
+            variant = backend(self.env, *args)
+            if variant.is_testable:
+                self.variants.append(variant)
 
 def multiplexed(func):
     """Run a TestCase method once per each output variant.

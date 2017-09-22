@@ -64,7 +64,8 @@ class AbstractContext(TestObject):
             self.env.assertIsNotNone(ns.wordsize)
             if (self.MAX_WORDSIZE is not None
                   and self.MAX_WORDSIZE < ns.wordsize):
-                raise UnhandledNoteError(ns)
+                msg = getattr(self, "_i8ctest_bad_wordsize_msg", None)
+                raise UnhandledNoteError(ns, msg)
             self.wordsize = ns.wordsize
 
         if hasattr(self, "byteorder"):
