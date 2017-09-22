@@ -25,6 +25,7 @@ from __future__ import unicode_literals
 
 from .core import TestObject
 from . import provider
+from . import UnhandledNoteError
 import sys
 
 class AbstractContext(TestObject):
@@ -61,6 +62,9 @@ class AbstractContext(TestObject):
             self.env.assertEqual(ns.wordsize, self.wordsize)
         else:
             self.env.assertIsNotNone(ns.wordsize)
+            if (self.MAX_WORDSIZE is not None
+                  and self.MAX_WORDSIZE < ns.wordsize):
+                raise UnhandledNoteError(ns)
             self.wordsize = ns.wordsize
 
         if hasattr(self, "byteorder"):
