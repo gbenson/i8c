@@ -33,8 +33,6 @@ import syslog
 import weakref
 
 class Context(context.AbstractContext):
-    INTERPRETER = "UNKNOWN"
-
     def translate_exceptions(func):
         """Decorator to translate libi8x exceptions into ours."""
         def _func(self, *args, **kwargs):

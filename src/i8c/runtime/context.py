@@ -28,6 +28,8 @@ from . import provider
 import sys
 
 class AbstractContext(TestObject):
+    INTERPRETER = "UNKNOWN"
+
     def __init__(self, env=None):
         super(AbstractContext, self).__init__(env)
         self.tracelevel = 0
