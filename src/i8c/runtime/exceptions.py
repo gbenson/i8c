@@ -65,14 +65,18 @@ class NoteError(I8XError):
 class CorruptNoteError(NoteError):
     """A corrupt note was detected.
     """
-    def __init__(self, elfslice):
-        NoteError.__init__(self, elfslice, "corrupt note")
+    def __init__(self, elfslice, msg=None):
+        if msg is None:
+            msg="corrupt note"
+        NoteError.__init__(self, elfslice, msg)
 
 class UnhandledNoteError(NoteError):
     """An unhandled note was detected.
     """
-    def __init__(self, elfslice):
-        NoteError.__init__(self, elfslice, "unhandled note")
+    def __init__(self, elfslice, msg=None):
+        if msg is None:
+            msg="unhandled note"
+        NoteError.__init__(self, elfslice, msg)
 
 class UnresolvedFunctionError(NoteError):
     """The requested function is not present.
