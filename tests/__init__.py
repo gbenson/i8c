@@ -44,9 +44,9 @@ class TestCompiler(TestObject):
         """See TestCase.compile.__doc__.
         """
         result = self.env._new_compilation()
-        for ta in self.env.assemblers:
-            task = CompilerTask(result.fileprefix, ta.output_wordsize)
-            task._compile(self, ta, result, input, **kwargs)
+        for wordsize, assemblers in self.env.assemblers.by_wordsize:
+            task = CompilerTask(result.fileprefix, wordsize)
+            task._compile(self, assemblers, result, input, **kwargs)
         return result
 
     def preprocess(self, task, input):
@@ -78,13 +78,17 @@ class TestCompiler(TestObject):
 class CompilerTask(object):
     def __init__(self, fileprefix, wordsize):
         self.wordsize = wordsize
+        self.byteorder = None
         self.__fileprefix = "%s_%d" % (fileprefix, wordsize)
         self.__filenames = {}
 
     def __unique_filename(self, ext, is_writable):
         """Return a unique filename with the specified extension.
         """
-        filename = self.__fileprefix + ext
+        filename = self.__fileprefix
+        if self.byteorder is not None:
+            filename += self.byteorder
+        filename += ext
         assert filename not in self.__filenames
         self.__filenames[filename] = is_writable
         return filename
@@ -123,16 +127,17 @@ class CompilerTask(object):
         self.__filenames[filename] = True
         return filename
 
-    def _compile(self, tc, ta, result, input):
+    def _compile(self, tc, assemblers, result, input):
         if self.__filenames:
             raise RuntimeError("compilation already started")
 
         i8c_src = self.__preprocess(tc, input)
         i8c_out = self.__i8compile(tc, i8c_src)
         asm_srcfile = self.__postprocess(tc, i8c_out)
-        asm_outfile = self.__assemble(ta, asm_srcfile)
 
-        result.add_variant(self.ast, asm_outfile)
+        for ta in assemblers:
+            asm_outfile = self.__assemble(ta, asm_srcfile)
+            result.add_variant(self.ast, asm_outfile)
 
     def __add_wordsize(self, input):
         """Prepend I8Language input with a wordsize directive.
@@ -162,6 +167,7 @@ class CompilerTask(object):
         """Assemble the postprocessed output of I8C.
         """
         assert ta.output_wordsize == self.wordsize
+        self.byteorder = {b"<": "el", b">": "be"}[ta.output_byteorder]
         objfile = self.readonly_filename(".o")
         ta.check_call(("-c", srcfile, "-o", objfile))
         return objfile
@@ -185,23 +191,21 @@ class AssemblerManager(object):
         assert check is self.__principal
         del self.__principal
 
-    def __len__(self):
-        return len(self.__variants)
-
-    def __iter__(self):
+    @property
+    def by_wordsize(self):
         for wordsize, machines in self.__by_wordsize:
-            for machine in machines:
-                yield self.__variants[machine]
+            yield wordsize, (self.__variants[machine]
+                             for machine in machines)
 
     def announce(self, file=sys.stderr):
         machines = reduce(operator.add,
                           (machines
                            for wordsize, machines in self.__by_wordsize))
         message = "testing %s output" % ", ".join(machines)
-        if len(self) < 4:
+        if len(self.__variants) < 4:
             message = "*** %s only ***" % message
         if hasattr(file, "isatty") and file.isatty():
-            colour = len(self) == 4 and 32 or 33
+            colour = len(self.__variants) == 4 and 32 or 33
             message = "\x1B[%sm%s\x1B[0m" % (colour, message)
         print(message, file=file)
 
