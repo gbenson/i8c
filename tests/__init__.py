@@ -37,6 +37,7 @@ import struct
 import subprocess
 import sys
 import weakref
+from functools import reduce
 
 class TestCompiler(TestObject):
     def compile(self, input, **kwargs):
@@ -168,18 +169,35 @@ class CompilerTask(object):
 class AssemblerManager(object):
     def __init__(self):
         self.__variants = {}
-        self.__machines = []
+        self.__by_wordsize = {}
+
         self.__add_principal()
         self.__try_add_alternate()
+
+        # Sort self.__by_wordsize such that the first machine of
+        # the first wordsize is the principal (i.e. I8C_AS with no
+        # alternate wordsize.)
+        tmp = sorted((ws != self.__principal.output_wordsize,
+                      ws, tuple(machs))
+                     for ws, machs in self.__by_wordsize.items())
+        self.__by_wordsize = tuple((ws, machs) for sk, ws, machs in tmp)
+        check = self.__variants[self.__by_wordsize[0][1][0]]
+        assert check is self.__principal
+        del self.__principal
 
     def __len__(self):
         return len(self.__variants)
 
     def __iter__(self):
-        return (self.__variants[machine] for machine in self.__machines)
+        for wordsize, machines in self.__by_wordsize:
+            for machine in machines:
+                yield self.__variants[machine]
 
     def announce(self, file=sys.stderr):
-        message = "testing %s output" % ", ".join(self.__machines)
+        machines = reduce(operator.add,
+                          (machines
+                           for wordsize, machines in self.__by_wordsize))
+        message = "testing %s output" % ", ".join(machines)
         if len(self) < 4:
             message = "*** %s only ***" % message
         if hasattr(file, "isatty") and file.isatty():
@@ -188,7 +206,7 @@ class AssemblerManager(object):
         print(message, file=file)
 
     def __add_principal(self):
-        self.__add_variant()
+        self.__principal = self.__add_variant()
 
     def __try_add_alternate(self):
         args = os.environ.get("I8CTEST_ALT_AS", None)
@@ -206,12 +224,15 @@ class AssemblerManager(object):
         is_alt_wordsize = kwargs.pop("is_alt_wordsize", False)
 
         variant = commands.Assembler(*args, **kwargs)
-        machine = "%d%s" % (variant.output_wordsize,
+        wordsize = variant.output_wordsize
+        machine = "%d%s" % (wordsize,
                             {b"<": "el",
                              b">": "be"}[variant.output_byteorder])
         assert machine not in self.__variants
         self.__variants[machine] = variant
-        self.__machines.append(machine)
+        if wordsize not in self.__by_wordsize:
+            self.__by_wordsize[wordsize] = []
+        self.__by_wordsize[wordsize].append(machine)
 
         if not is_alt_wordsize:
             self.__try_add_alt_wordsize(variant)
