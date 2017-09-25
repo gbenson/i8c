@@ -30,6 +30,8 @@ from i8c.runtime import memory
 from i8c.runtime import pythonctx
 from i8c.runtime.core import TestObject
 from i8c.runtime.testcase import BaseTestCase
+import collections
+import copy
 import io
 import operator
 import os
@@ -40,19 +42,20 @@ import weakref
 from functools import reduce
 
 class TestCompiler(TestObject):
-    def compile(self, input, **kwargs):
+    def compile(self, *args, **kwargs):
         """See TestCase.compile.__doc__.
         """
         result = self.env._new_compilation()
-        for wordsize, assemblers in self.env.assemblers.by_wordsize:
-            task = CompilerTask(result.fileprefix, wordsize)
-            task._compile(self, assemblers, result, input, **kwargs)
+        runner = CompilerTask(result.fileprefix)
+        for variant in runner.run(self, *args, **kwargs):
+            result.add_variant(variant)
         return result
 
     def preprocess(self, task, input):
         """Preprocess the I8Language input ready for I8C.
         """
-        result = ['# 1 "%s"\n' % task.input_file]
+        result = ['# 1 "%s"\n' % task.i8c_input_file,
+                  "wordsize %d\n" % task.wordsize]
         while True:
             start = input.find("//")
             if start < 0:
@@ -78,18 +81,14 @@ class TestCompiler(TestObject):
 class CompilerTask(object):
     __filenames = {}
 
-    def __init__(self, fileprefix, wordsize):
-        self.wordsize = wordsize
-        self.byteorder = None
-        self.__fileprefix = "%s_%d" % (fileprefix, wordsize)
+    def __init__(self, fileprefix):
+        self.__fileprefix = fileprefix
+        self.__started = False
 
     def __unique_filename(self, ext, is_writable):
         """Return a unique filename with the specified extension.
         """
-        filename = self.__fileprefix
-        if self.byteorder is not None:
-            filename += self.byteorder
-        filename += ext
+        filename = self.__fileprefix + ext
         assert filename not in self.__filenames
         self.__filenames[filename] = is_writable
         return filename
@@ -128,50 +127,51 @@ class CompilerTask(object):
         self.__filenames[filename] = True
         return filename
 
-    def _compile(self, tc, assemblers, result, input):
-        if hasattr(self, "input_file"):
+    def __fork(self, func, variants, *args, **kwargs):
+        """Call func once per variant with a copy of self.
+        """
+        results = []
+        for variant in variants:
+            if not isinstance(variant, collections.Sequence):
+                variant = (variant,)
+            results.extend(func(copy.copy(self),
+                                *(args + variant), **kwargs))
+        return results
+
+    def run(self, tc, *args, **kwargs):
+        if self.__started:
             raise RuntimeError("compilation already started")
+        self.__started = True
+        return self.__fork(CompilerTask.__stage_1,
+                           tc.env.assemblers.by_wordsize,
+                           tc, *args, **kwargs)
 
-        i8c_src = self.__preprocess(tc, input)
-        i8c_out = self.__i8compile(tc, i8c_src)
-        asm_srcfile = self.__postprocess(tc, i8c_out)
+    def __stage_1(self, tc, input, wordsize, assemblers):
+        assert not hasattr(self, "wordsize")
+        self.wordsize = wordsize
+        self.__fileprefix += "_%d" % self.wordsize
 
-        for ta in assemblers:
-            asm_outfile = self.__assemble(ta, asm_srcfile)
-            result.add_variant(self.ast, asm_outfile)
+        self.i8c_input_file = self.writable_filename(".i8")
+        i8c_input = tc.preprocess(self, input)
+        self.write_file(i8c_input, self.i8c_input_file)
 
-    def __add_wordsize(self, input):
-        """Prepend I8Language input with a wordsize directive.
-        """
-        return "wordsize %d\n%s" % (self.wordsize, input)
+        self.syntax_tree, i8c_output = tc.i8compile(i8c_input)
 
-    def __preprocess(self, tc, input):
-        """Preprocess the I8Language input ready for I8C.
-        """
-        self.input_file = self.writable_filename(".i8")
-        result = tc.preprocess(self, self.__add_wordsize(input))
-        self.write_file(result, self.input_file)
-        return result
+        self.asm_input_file = self.writable_filename(".S")
+        asm_input = tc.postprocess(self, i8c_output)
+        self.write_file(asm_input, self.asm_input_file)
 
-    def __i8compile(self, tc, input, **kwargs):
-        """Compile I8Language input to assembly language.
-        """
-        self.ast, result = tc.i8compile(input, **kwargs)
-        return result
+        return self.__fork(CompilerTask.__stage_2, assemblers)
 
-    def __postprocess(self, tc, output):
-        """Postprocess the output of I8C ready for assembly.
-        """
-        return self.write_file(tc.postprocess(self, output), ".S")
+    def __stage_2(self, assembler):
+        assert not hasattr(self, "byteorder")
+        self.byteorder = assembler.output_byteorder
+        self.__fileprefix += {b"<": "el", b">": "be"}[self.byteorder]
 
-    def __assemble(self, ta, srcfile):
-        """Assemble the postprocessed output of I8C.
-        """
-        assert ta.output_wordsize == self.wordsize
-        self.byteorder = {b"<": "el", b">": "be"}[ta.output_byteorder]
-        objfile = self.readonly_filename(".o")
-        ta.check_call(("-c", srcfile, "-o", objfile))
-        return objfile
+        self.asm_output_file = self.readonly_filename(".o")
+        assembler.check_call(("-c", self.asm_input_file,
+                              "-o", self.asm_output_file))
+        return (self,)
 
 class AssemblerManager(object):
     def __init__(self):
@@ -278,17 +278,17 @@ class TestContext(object):
         self.is_testable = False
         return "unsupported wordsize (%d bits max)" % self.MAX_WORDSIZE
 
-    def __init__(self, testcase, syntax_tree, objfile):
+    def __init__(self, testcase, compilertask):
         super(TestContext, self).__init__(testcase)
         testcase.addCleanup(self.finalize)
-        self.syntax_tree = syntax_tree
+        self.build = compilertask
         # Load the notes from it
         self.coverage = coverage.Accumulator()
         self.import_error = None
         self.is_testable = True
         testcase.addCleanup(delattr, self, "import_error")
         try:
-            self.import_notes(objfile)
+            self.import_notes(self.build.asm_output_file)
         except runtime.UnhandledNoteError as e:
             self.import_error = e
             return
@@ -536,7 +536,7 @@ class TestOutput(Multiplexer):
     # multiplexed.
     def __iter__(self):
         self.assertHasVariants()
-        return iter((self.variants[0].syntax_tree, self))
+        return iter((self.variants[0].build.syntax_tree, self))
 
     def add_variant(self, *args):
         for backend in self.backends:
