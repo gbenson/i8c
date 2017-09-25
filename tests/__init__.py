@@ -578,7 +578,6 @@ class TestCase(BaseTestCase):
     topdir, module = os.path.split(topdir)
     assert os.path.exists(os.path.join(topdir, "setup.py"))
     del check
-    assert os.getcwd() == topdir
 
     outdir = os.path.join(topdir, module, "output")
     subprocess.check_call(("rm", "-rf", outdir))
@@ -608,6 +607,7 @@ class TestCase(BaseTestCase):
     def _new_compilation(self):
         """Update compilation count and return a new TestOutput.
         """
+        self.assertEqual(os.getcwd(), self.topdir)
         tmp = self.id().split(".")
         self.assertEqual(tmp[0], self.module)
         self.assertTrue(tmp.pop(-2).startswith("Test"))
