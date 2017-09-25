@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2015-16 Red Hat, Inc.
+# Copyright (C) 2015-17 Red Hat, Inc.
 # This file is part of the Infinity Note Compiler.
 #
 # The Infinity Note Compiler is free software: you can redistribute it
@@ -63,8 +63,8 @@ class TestCompilerDriver(TestCase):
         with open(self.infile, "w") as fp:
             fp.write(SOURCE)
         # Pipe stderr to a file
-        tmpfile = os.path.join(self.workdir, "stderr")
-        self.stderr_fd = os.open(tmpfile,
+        self.errfile = os.path.join(self.workdir, "stderr")
+        self.stderr_fd = os.open(self.errfile,
                                  os.O_RDWR | os.O_CREAT | os.O_EXCL,
                                  0o600)
         sys.stderr.flush()
@@ -91,6 +91,18 @@ class TestCompilerDriver(TestCase):
         self.assertTrue(os.path.isfile(self.outfile))
         junk = os.path.join(self.workdir, "-.o")
         self.assertFalse(os.path.exists(junk))
+        self.__check_stderr(args)
+
+    def __check_stderr(self, args):
+        sys.stderr.flush()
+        expect = []
+        if "-S" in args:
+            expect.append("i8c: warning: assuming ‘wordsize %d’\n"
+                          % self.assemblers[0].output_wordsize)
+        expect = [line.encode("utf-8") for line in expect]
+        with open(self.errfile, "rb") as fp:
+            actual = fp.readlines()
+        self.assertEqual(actual, expect)
 
     def test_do_nothing(self):
         """Check that -E -fpreprocessed is rejected."""

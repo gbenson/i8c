@@ -188,9 +188,19 @@ class AssemblerManager(object):
                       ws, tuple(machs))
                      for ws, machs in self.__by_wordsize.items())
         self.__by_wordsize = tuple((ws, machs) for sk, ws, machs in tmp)
-        check = self.__variants[self.__by_wordsize[0][1][0]]
-        assert check is self.__principal
+        assert self[0] is self.__principal
         del self.__principal
+
+    def __len__(self):
+         return len(self.__variants)
+
+    def __iter__(self):
+        for wordsize, machines in self.__by_wordsize:
+            for machine in machines:
+                yield self.__variants[machine]
+
+    def __getitem__(self, key):
+        return tuple(self)[key]
 
     @property
     def by_wordsize(self):

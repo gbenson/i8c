@@ -207,7 +207,8 @@ def setup_input(args):
     else:
         infile = io.BytesIO()
         for filename in args.infiles:
-            infile.write(open(filename, "rb").read())
+            with open(filename, "rb") as fp:
+                infile.write(fp.read())
         infile.seek(0)
     return process, infile
 
@@ -296,8 +297,9 @@ def main(args):
             data = data.decode("utf-8")
         outfile.write(data)
     finally:
-        if process is not None:
+        if outfile is not sys.stdout:
             outfile.close()
+        if process is not None:
             process.wait()
             if process.returncode != 0:
                 return process.returncode
