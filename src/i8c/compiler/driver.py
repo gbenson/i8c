@@ -204,6 +204,8 @@ def setup_input(args):
         infile = process.stdout
     elif args.infiles in ([], ["-"]):
         infile = sys.stdin
+    elif len(args.infiles) == 1:
+        infile = open(args.infiles[0], "rb")
     else:
         infile = io.BytesIO()
         for filename in args.infiles:
@@ -280,10 +282,10 @@ def main(args):
             compile(infile.readline, outfile.write, args)
         else:
             outfile.write(infile.read())
-
     finally:
-        if process is not None:
+        if infile is not sys.stdin:
             infile.close()
+        if process is not None:
             process.wait()
             if process.returncode != 0:
                 return process.returncode
