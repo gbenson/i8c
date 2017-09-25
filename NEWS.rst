@@ -63,6 +63,9 @@ Testsuite changes
   to "I8C_AS" then tests will be multiplexed across both assemblers to
   test both big- and little-endian notes.
 
+* A new environment variable "I8CTEST_PARALLEL" is provided.  If set
+  to "1" then test note compilation will be parallelized.
+
 
 Changes in I8C 0.0.5
 --------------------

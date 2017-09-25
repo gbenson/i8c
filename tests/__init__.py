@@ -83,6 +83,8 @@ class CompilerTask(object):
     __filenames = {}
     __filenames_lock = threading.Lock()
 
+    __parallelize = os.environ.get("I8CTEST_PARALLEL", "") == "1"
+
     def __init__(self, fileprefix):
         self.__fileprefix = fileprefix
         self.__result = None
@@ -138,13 +140,24 @@ class CompilerTask(object):
     def __fork(self, func, variants, *args, **kwargs):
         """Call func once per variant with a copy of self.
         """
-        children = []
+        children, threads = [], []
         for variant in variants:
             if not isinstance(variant, collections.Sequence):
                 variant = (variant,)
             child = copy.copy(self)
             children.append(child)
-            child.__fork_child(*((func,) + args + variant), **kwargs)
+            thread = threading.Thread(None, child.__fork_child, None,
+                                      (func,) + args + variant, kwargs)
+            threads.append(thread)
+
+        if self.__parallelize:
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join()
+        else:
+            for thread in threads:
+                thread.run()
 
         results = []
         for child in children:
