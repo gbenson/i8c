@@ -38,6 +38,7 @@ import os
 import struct
 import subprocess
 import sys
+import threading
 import weakref
 from functools import reduce
 
@@ -80,6 +81,7 @@ class TestCompiler(TestObject):
 
 class CompilerTask(object):
     __filenames = {}
+    __filenames_lock = threading.Lock()
 
     def __init__(self, fileprefix):
         self.__fileprefix = fileprefix
@@ -90,8 +92,9 @@ class CompilerTask(object):
         """Return a unique filename with the specified extension.
         """
         filename = self.__fileprefix + ext
-        assert filename not in self.__filenames
-        self.__filenames[filename] = is_writable
+        with self.__filenames_lock:
+            assert filename not in self.__filenames
+            self.__filenames[filename] = is_writable
         return filename
 
     def readonly_filename(self, ext):
@@ -115,17 +118,21 @@ class CompilerTask(object):
         """
         if os.sep in filename_or_ext:
             filename = filename_or_ext
-            assert self.__filenames.get(filename, False)
+            with self.__filenames_lock:
+                assert self.__filenames.get(filename, False)
         else:
             filename = self.writable_filename(filename_or_ext)
 
         outdir = os.path.dirname(filename)
-        if not os.path.exists(outdir):
+        try:
             os.makedirs(outdir)
+        except OSError:
+            pass
         with open(filename, "w") as fp:
             fp.write(text)
 
-        self.__filenames[filename] = True
+        with self.__filenames_lock:
+            self.__filenames[filename] = True
         return filename
 
     def __fork(self, func, variants, *args, **kwargs):
