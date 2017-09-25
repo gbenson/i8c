@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2015-16 Red Hat, Inc.
+# Copyright (C) 2015-17 Red Hat, Inc.
 # This file is part of the Infinity Note Compiler.
 #
 # The Infinity Note Compiler is free software: you can redistribute it
@@ -29,9 +29,9 @@ import sys
 if sys.version_info < (3,):
     str = unicode
 
-def compile(readline, write):
+def compile(readline, write, **kwargs):
     from .driver import compile
-    return compile(readline, write)
+    return compile(readline, write, **kwargs)
 
 def main():
     from .driver import main

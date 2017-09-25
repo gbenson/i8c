@@ -249,7 +249,10 @@ def setup_output(args):
             outfile = open(filename, "wb")
     return process, outfile
 
-def compile(readline, write, commandline=None):
+def compile(readline, write, commandline=None, wrap_asm=None):
+    if wrap_asm is None:
+        wrap_asm = getattr(commandline, "wrap_asm", False)
+
     tree = parser.build_tree(lexer.generate_tokens(readline))
     tree.accept(target.TargetAnnotator(commandline))
     tree.accept(types.TypeAnnotator())
@@ -261,7 +264,7 @@ def compile(readline, write, commandline=None):
     tree.accept(optimizer.BlockOptimizer())
     tree.accept(serializer.Serializer())
     tree.accept(optimizer.StreamOptimizer())
-    tree.accept(emitter.Emitter(write, commandline))
+    tree.accept(emitter.Emitter(write, wrap_asm))
     return tree
 
 def main(args):
