@@ -76,11 +76,12 @@ class TestCompiler(TestObject):
         return output
 
 class CompilerTask(object):
+    __filenames = {}
+
     def __init__(self, fileprefix, wordsize):
         self.wordsize = wordsize
         self.byteorder = None
         self.__fileprefix = "%s_%d" % (fileprefix, wordsize)
-        self.__filenames = {}
 
     def __unique_filename(self, ext, is_writable):
         """Return a unique filename with the specified extension.
@@ -128,7 +129,7 @@ class CompilerTask(object):
         return filename
 
     def _compile(self, tc, assemblers, result, input):
-        if self.__filenames:
+        if hasattr(self, "input_file"):
             raise RuntimeError("compilation already started")
 
         i8c_src = self.__preprocess(tc, input)
@@ -590,8 +591,9 @@ class TestCase(BaseTestCase):
 
     system_byteorder = {"little": b"<", "big": b">"}[sys.byteorder]
 
+    __compilecounts = {}
+
     def run(self, *args, **kwargs):
-        self.compilecount = 0
         for logger in compiler.loggers.values():
             logger.disable()
         try:
@@ -610,9 +612,12 @@ class TestCase(BaseTestCase):
         self.assertEqual(tmp[0], self.module)
         self.assertTrue(tmp.pop(-2).startswith("Test"))
         tmp.insert(1, self.outdir)
+        fileprefix = os.path.join(*tmp)
 
-        self.compilecount += 1
-        fileprefix = os.path.join(*tmp) + "_%04d" % self.compilecount
+        index = self.__compilecounts.get(fileprefix, 0) + 1
+        self.__compilecounts[fileprefix] = index
+        fileprefix += "_%04d" % index
+
         result = TestOutput(self, fileprefix)
         self._ctx = result
         return result
