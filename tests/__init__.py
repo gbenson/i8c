@@ -83,7 +83,8 @@ class CompilerTask(object):
 
     def __init__(self, fileprefix):
         self.__fileprefix = fileprefix
-        self.__started = False
+        self.__result = None
+        self.__exception = None
 
     def __unique_filename(self, ext, is_writable):
         """Return a unique filename with the specified extension.
@@ -130,18 +131,30 @@ class CompilerTask(object):
     def __fork(self, func, variants, *args, **kwargs):
         """Call func once per variant with a copy of self.
         """
-        results = []
+        children = []
         for variant in variants:
             if not isinstance(variant, collections.Sequence):
                 variant = (variant,)
-            results.extend(func(copy.copy(self),
-                                *(args + variant), **kwargs))
+            child = copy.copy(self)
+            children.append(child)
+            child.__fork_child(*((func,) + args + variant), **kwargs)
+
+        results = []
+        for child in children:
+            if child.__exception is not None:
+                raise child.__exception
+            results.extend(child.__result)
         return results
 
+    def __fork_child(self, func, *args, **kwargs):
+        assert self.__result is None
+        assert self.__exception is None
+        try:
+            self.__result = func(self, *args, **kwargs)
+        except Exception as e:
+            self.__exception = e
+
     def run(self, tc, *args, **kwargs):
-        if self.__started:
-            raise RuntimeError("compilation already started")
-        self.__started = True
         return self.__fork(CompilerTask.__stage_1,
                            tc.env.assemblers.by_wordsize,
                            tc, *args, **kwargs)
