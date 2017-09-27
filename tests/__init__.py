@@ -52,11 +52,11 @@ class TestCompiler(TestObject):
             result.add_variant(variant)
         return result
 
-    def preprocess(self, task, input):
+    def preprocess(self, build, input):
         """Preprocess the I8Language input ready for I8C.
         """
-        result = ['# 1 "%s"\n' % task.i8c_input_file,
-                  "wordsize %d\n" % task.wordsize]
+        result = ['# 1 "%s"\n' % build.i8c_input_file,
+                  "wordsize %d\n" % build.wordsize]
         while True:
             start = input.find("//")
             if start < 0:
@@ -69,12 +69,12 @@ class TestCompiler(TestObject):
         result.append(input)
         return "".join(result)
 
-    def i8compile(self, input, **kwargs):
+    def i8compile(self, build, input, **kwargs):
         """See TestCase.i8compile.__doc__.
         """
         return self.env.i8compile(input, **kwargs)
 
-    def postprocess(self, task, output):
+    def postprocess(self, build, output):
         """Postprocess the output of I8C ready for assembly.
         """
         return output
@@ -188,7 +188,7 @@ class CompilerTask(object):
         i8c_input = tc.preprocess(self, input)
         self.write_file(i8c_input, self.i8c_input_file)
 
-        self.syntax_tree, i8c_output = tc.i8compile(i8c_input)
+        self.syntax_tree, i8c_output = tc.i8compile(self, i8c_input)
 
         self.asm_input_file = self.writable_filename(".S")
         asm_input = tc.postprocess(self, i8c_output)
