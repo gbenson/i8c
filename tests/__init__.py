@@ -115,15 +115,11 @@ class CompilerTask(object):
         """
         return self.__unique_filename(ext, True)
 
-    def write_file(self, text, filename_or_ext):
+    def write_file(self, text, filename):
         """Write data to a file with a unique filename.
         """
-        if os.sep in filename_or_ext:
-            filename = filename_or_ext
-            with self.__filenames_lock:
-                assert self.__filenames.get(filename, False)
-        else:
-            filename = self.writable_filename(filename_or_ext)
+        with self.__filenames_lock:
+            assert self.__filenames.get(filename, False)
 
         outdir = os.path.dirname(filename)
         try:
@@ -135,7 +131,6 @@ class CompilerTask(object):
 
         with self.__filenames_lock:
             self.__filenames[filename] = True
-        return filename
 
     def __fork(self, func, variants, *args, **kwargs):
         """Call func once per variant with a copy of self.
