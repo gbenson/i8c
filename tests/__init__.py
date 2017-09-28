@@ -52,6 +52,10 @@ class TestCompiler(TestObject):
             result.add_variant(variant)
         return result
 
+    def setup_build(self, build):
+        """Setup the build prior to compilation.
+        """
+
     def preprocess(self, build, input):
         """Preprocess the I8Language input ready for I8C.
         """
@@ -78,6 +82,12 @@ class TestCompiler(TestObject):
         """Postprocess the output of I8C ready for assembly.
         """
         return output
+
+    def link(self, build, assembler, objfiles):
+        """Link the assembler output into the final format.
+        """
+        assert len(objfiles) == 1
+        return objfiles[0]
 
 class CompilerTask(object):
     __filenames = {}
@@ -170,6 +180,7 @@ class CompilerTask(object):
             self.__exception = e
 
     def run(self, tc, *args, **kwargs):
+        tc.setup_build(self)
         return self.__fork(CompilerTask.__stage_1,
                            tc.env.assemblers.by_wordsize,
                            tc, *args, **kwargs)
@@ -189,16 +200,19 @@ class CompilerTask(object):
         asm_input = tc.postprocess(self, i8c_output)
         self.write_file(asm_input, self.asm_input_file)
 
-        return self.__fork(CompilerTask.__stage_2, assemblers)
+        return self.__fork(CompilerTask.__stage_2, assemblers, tc)
 
-    def __stage_2(self, assembler):
+    def __stage_2(self, tc, assembler):
         assert not hasattr(self, "byteorder")
         self.byteorder = assembler.output_byteorder
         self.__fileprefix += {b"<": "el", b">": "be"}[self.byteorder]
 
-        self.asm_output_file = self.readonly_filename(".o")
+        asm_output_file = self.readonly_filename(".o")
         assembler.check_call(("-c", self.asm_input_file,
-                              "-o", self.asm_output_file))
+                              "-o", asm_output_file))
+
+        self.asm_output_file = tc.link(self, assembler, [asm_output_file])
+
         return (self,)
 
 class AssemblerManager(object):
