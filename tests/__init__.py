@@ -43,6 +43,8 @@ import weakref
 from functools import reduce
 
 class TestCompiler(TestObject):
+    I8C_KWARGS = {}
+
     def compile(self, *args, **kwargs):
         """See TestCase.compile.__doc__.
         """
@@ -194,7 +196,8 @@ class CompilerTask(object):
         i8c_input = tc.preprocess(self, input)
         self.write_file(i8c_input, self.i8c_input_file)
 
-        self.syntax_tree, i8c_output = tc.i8compile(self, i8c_input)
+        self.syntax_tree, i8c_output = tc.i8compile(self, i8c_input,
+                                                    **tc.I8C_KWARGS)
 
         self.asm_input_file = self.writable_filename(".S")
         asm_input = tc.postprocess(self, i8c_output)
@@ -693,5 +696,5 @@ class TestCase(BaseTestCase):
         """
         input = io.BytesIO(input.encode("utf-8"))
         output = io.BytesIO()
-        tree = compiler.compile(input.readline, output.write)
+        tree = compiler.compile(input.readline, output.write, **kwargs)
         return tree, output.getvalue().decode("utf-8")
