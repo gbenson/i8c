@@ -101,6 +101,7 @@ class CompilerTask(object):
         self.__fileprefix = fileprefix
         self.__result = None
         self.__exception = None
+        self.__extra_sources = ()
 
     def __unique_filename(self, ext, is_writable):
         """Return a unique filename with the specified extension.
@@ -143,6 +144,25 @@ class CompilerTask(object):
 
         with self.__filenames_lock:
             self.__filenames[filename] = True
+
+    def add_sourcefile(self, filename):
+        """Add an extra input file for the assembler.
+        """
+        self.__extra_sources += (filename,)
+
+    def __objfile_filename_for(self, srcfile):
+        """Return the object filename for an assembler input file.
+        """
+        outdir = os.path.dirname(self.__fileprefix)
+        srcdir, srcbase = os.path.split(srcfile)
+        if srcdir == outdir:
+            prefix = os.path.commonprefix((self.__fileprefix, srcfile))
+            prefix = ".".join(srcfile[len(prefix):].split(".")[:-1])
+            if prefix and prefix[0] not in "-_.":
+                prefix = "_" + prefix
+        else:
+            prefix = self.__fileprefix + os.path.splitext(srcbase)[0]
+        return self.readonly_filename(prefix + ".o")
 
     def __fork(self, func, variants, *args, **kwargs):
         """Call func once per variant with a copy of self.
@@ -211,11 +231,14 @@ class CompilerTask(object):
         self.byteorder = assembler.output_byteorder
         self.__fileprefix += {b"<": "el", b">": "be"}[self.byteorder]
 
-        asm_output_file = self.readonly_filename(".o")
-        assembler.check_call(("-c", self.asm_input_file,
-                              "-o", asm_output_file))
+        srcfiles = (self.asm_input_file,) + self.__extra_sources
+        objfiles = []
+        for srcfile in srcfiles:
+            objfile = self.__objfile_filename_for(srcfile)
+            assembler.check_call(("-c", srcfile, "-o", objfile))
+            objfiles.append(objfile)
 
-        self.asm_output_file = tc.link(self, assembler, [asm_output_file])
+        self.asm_output_file = tc.link(self, assembler, objfiles)
 
         return (self,)
 
