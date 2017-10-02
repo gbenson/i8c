@@ -305,6 +305,7 @@ class Context(context.AbstractContext):
 
     def __relocate(self, inf, reloc):
         """Address relocation function."""
+        exception = None
         for name in reloc.function.symbols_at[reloc.source_offset]:
             try:
                 value = self.lookup_symbol(name)
