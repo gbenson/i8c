@@ -628,6 +628,7 @@ class TestCase(BaseTestCase):
 
     assemblers = AssemblerManager()
 
+    print("using Python", sys.version.split("\n", 1)[0], file=sys.stderr)
     TestOutput.announce()
     assemblers.announce()
 
