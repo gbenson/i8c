@@ -199,7 +199,8 @@ class CompilerTask(object):
         self.syntax_tree, i8c_output = tc.i8compile(self, i8c_input,
                                                     **tc.I8C_KWARGS)
 
-        self.asm_input_file = self.writable_filename(".S")
+        ext = i8c_output.startswith("__asm__") and ".c" or ".S"
+        self.asm_input_file = self.writable_filename(ext)
         asm_input = tc.postprocess(self, i8c_output)
         self.write_file(asm_input, self.asm_input_file)
 
