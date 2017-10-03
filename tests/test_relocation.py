@@ -23,6 +23,7 @@ from __future__ import unicode_literals
 
 from tests import TestCase, TestCompiler, multiplexed
 from i8c.compiler import commands
+from i8c.runtime import SymbolError
 import os
 import sys
 
@@ -180,10 +181,6 @@ class TestRelocation(TestCase):
         if linker is None and symloc is SymInOwnObjfile:
             return
 
-        # XXX Solib with undefined symbol will fail.
-        if linker is LinkSolib and symdef is None:
-            return
-
         # GCC's linker includes code on a per-object-file basis when
         # linking statically.  This means the Infinity notes will be
         # omitted unless they're in a file with something else that's
@@ -193,6 +190,11 @@ class TestRelocation(TestCase):
 
         compiler = self.__make_compiler(symdef, symloc, linker)
         tree, output = compiler.compile(SOURCE)
+
+        # Solib with undefined symbol results in SymbolError.
+        if linker is LinkSolib and symdef is None:
+            self.assertImportRaised(output, SymbolError)
+            return
 
         # Running with no symbol registered should fail.
         self.__check_call_testfunc(output, None, False)
@@ -255,3 +257,7 @@ class TestRelocation(TestCase):
 
     def __classname(self, cls):
         return eval(str(cls).rstrip(">").split()[1]).split(".")[-1]
+
+    @multiplexed
+    def assertImportRaised(self, output, exc_cls):
+        self.assertTrue(isinstance(output.import_error, exc_cls))

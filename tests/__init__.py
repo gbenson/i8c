@@ -358,7 +358,7 @@ class TestContext(object):
         testcase.addCleanup(delattr, self, "import_error")
         try:
             self.import_notes(self.build.asm_output_file)
-        except runtime.UnhandledNoteError as e:
+        except runtime.NoteError as e:
             self.import_error = e
             return
         self.notes = list(self._i8ctest_functions)

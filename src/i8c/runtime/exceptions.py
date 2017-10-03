@@ -78,6 +78,14 @@ class UnhandledNoteError(NoteError):
             msg="unhandled note"
         NoteError.__init__(self, elfslice, msg)
 
+class SymbolError(NoteError):
+    """No symbols match the referenced address.
+    """
+    def __init__(self, elfslice, msg=None):
+        if msg is None:
+            msg = "no matching symbols found"
+        NoteError.__init__(self, elfslice, msg)
+
 class UnresolvedFunctionError(NoteError):
     """The requested function is not present.
     """

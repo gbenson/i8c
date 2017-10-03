@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2015-16 Red Hat, Inc.
+# Copyright (C) 2015-17 Red Hat, Inc.
 # This file is part of the Infinity Note Execution Environment.
 #
 # The Infinity Note Execution Environment is free software; you can
@@ -25,7 +25,7 @@ from __future__ import unicode_literals
 
 from ..compat import integer
 from .. import constants
-from . import ProviderError
+from . import ProviderError, SymbolError
 import arpy
 from elftools.elf import elffile
 from elftools.elf import relocation
@@ -171,6 +171,8 @@ class ELF(Provider):
             relocs = self.__relocs[sect.name] = {}
             reloc_handler = relocation.RelocationHandler(self.elf)
             reloc_sect = reloc_handler.find_relocations_for_section(sect)
+            if reloc_sect is None:
+                return relocs
             symtab = self.elf.get_section(reloc_sect["sh_link"])
             for reloc in reloc_sect.iter_relocations():
                 symbol = self.__get_named_symbol(symtab, reloc["r_info_sym"])
@@ -179,7 +181,9 @@ class ELF(Provider):
 
     def symbol_names_at(self, section, offset, addr):
         if addr == 0:
-            return [self.relocations_for(section)[offset]]
+            name = self.relocations_for(section).get(offset, None)
+            if name is not None:
+                return [name]
         else:
             return self.symbols[addr]
 
@@ -278,4 +282,7 @@ class NoteSlice(object):
 
     @property
     def symbol_names(self):
-        return self.note.symbol_names_at(self.start)
+        names = self.note.symbol_names_at(self.start)
+        if names is None:
+            raise SymbolError(self)
+        return names
