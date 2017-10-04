@@ -35,7 +35,7 @@ class AbstractContext(TestObject):
     def __init__(self, env=None):
         super(AbstractContext, self).__init__(env)
         self.tracelevel = 0
-        self.__symbols = {}
+        self._i8ctest_reset_symbols()
 
     def __enter__(self):
         return self
@@ -102,6 +102,10 @@ class AbstractContext(TestObject):
     def lookup_symbol(self, name):
         """Return the address associated with the specified symbol name."""
         return self.__symbols[name]
+
+    def _i8ctest_reset_symbols(self):
+        """Clear all registered symbols."""
+        self.__symbols = {}
 
     @property
     def _i8ctest_functions(self): # pragma: no cover
