@@ -226,7 +226,7 @@ class Context(context.AbstractContext):
         # Store any relocations.
         func.symbols_at = {}
         for reloc in func.relocations:
-            offset = reloc.source_offset
+            offset = reloc.srcoffset
             start =  offset - srcoffset
             src = ns[start:start + 1]
             func.symbols_at[offset] = src.symbol_names
@@ -306,7 +306,7 @@ class Context(context.AbstractContext):
     def __relocate(self, inf, reloc):
         """Address relocation function."""
         exception = None
-        for name in reloc.function.symbols_at[reloc.source_offset]:
+        for name in reloc.function.symbols_at[reloc.srcoffset]:
             try:
                 value = self.lookup_symbol(name)
             except KeyError as e:
