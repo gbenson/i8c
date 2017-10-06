@@ -41,7 +41,7 @@ class AbstractOperation(context.AbstractOperation):
 
     @property
     def srcoffset(self):
-        return self.src.note.offset + self.src.start
+        return self.src.offset
 
 class FakeReturn(AbstractOperation):
     fullname = "[return]"

@@ -79,7 +79,7 @@ BADENC = (
 
 class FakeSlice(object):
     filename = "<testcase>"
-    start = 0
+    offset = 0
 
     def __init__(self, bytes):
         self.bytes = bytes

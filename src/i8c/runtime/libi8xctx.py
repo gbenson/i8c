@@ -205,15 +205,13 @@ class Context(context.AbstractContext):
     @translate_exceptions
     def import_note(self, ns):
         """Import one note."""
-        self.env.assertEqual(ns.start, 0, "need to adjust srcoffset")
-        srcoffset = ns.note.offset
-
         bcc_raw = UnpackedBytecodeConsumer("i8x_code_unpack_bytecode")
         bcc_cooked = UnpackedBytecodeConsumer("i8x_code_setup_dispatch")
         self.__bytecode_consumers = (bcc_raw, bcc_cooked)
 
         func = self.__ctx.import_bytecode(ns.bytes, ns.filename,
-                                          srcoffset)
+                                          ns.offset)
+
         # Store the unpacked bytecode.
         ops = bcc_raw.ops
         if ops:
@@ -226,7 +224,7 @@ class Context(context.AbstractContext):
 
         # Store any relocations.
         for reloc in func.relocations:
-            start =  reloc.srcoffset - srcoffset
+            start = reloc.srcoffset - ns.offset
             src = ns[start:start + 1]
             reloc.operation.operands = (src.symbol_names,)
 
@@ -358,7 +356,7 @@ class FakeSlice(object):
 
     def __init__(self, libi8x_exception):
         self.filename = libi8x_exception.srcname
-        self.start = libi8x_exception.srcoffset
+        self.offset = libi8x_exception.srcoffset
 
 Context._class_init()
 

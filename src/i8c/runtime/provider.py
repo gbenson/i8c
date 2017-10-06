@@ -264,6 +264,10 @@ class NoteSlice(object):
         return self.note.filename
 
     @property
+    def offset(self):
+        return self.note.offset + self.start
+
+    @property
     def wordsize(self):
         return self.note.wordsize
 
