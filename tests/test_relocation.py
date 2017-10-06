@@ -222,7 +222,8 @@ class TestRelocation(TestCase):
         else:
             with self.assertRaises(KeyError) as cm:
                 output.call(output.note.signature)
-            self.assertEqual(cm.exception.args[0], MAIN_SYMBOL)
+            self.assertIn(cm.exception.args[0], (MAIN_SYMBOL,
+                                                 ALIAS_SYMBOL))
 
     def __make_compiler(self, symdef, addsym_mixin, linker_mixin):
         name = ["RelocTestCompiler"]

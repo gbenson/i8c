@@ -143,11 +143,14 @@ class ELF(Provider):
                 if not isinstance(sect, sections.SymbolTableSection):
                     continue
                 for sym in sect.iter_symbols():
+                    name = sym.name
+                    if not name:
+                        continue
                     addr = sym["st_value"]
                     if addr not in self.__symbols:
-                        self.__symbols[addr] = [sym.name]
-                    else:
-                        self.__symbols[addr].append(sym.name)
+                        self.__symbols[addr] = []
+                    if name not in self.__symbols[addr]:
+                        self.__symbols[addr].append(name)
         return self.__symbols
 
     def __get_named_symbol(self, symtab, index):
