@@ -82,9 +82,13 @@ class UnhandledNoteError(NoteError):
 class SymbolError(NoteError):
     """No symbols match the referenced address.
     """
-    def __init__(self, elfslice, msg=None):
+    def __init__(self, elfslice, names=None, msg=None):
         if msg is None:
-            msg = "no matching symbols found"
+            if names is None:
+                msg = "no matching symbols found"
+            else:
+                msg = ("unresolved symbol %s"
+                       % ", ".join("‘%s’" % name for name in names))
         NoteError.__init__(self, elfslice, msg)
 
 class UnresolvedFunctionError(NoteError):

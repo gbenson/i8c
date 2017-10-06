@@ -302,16 +302,8 @@ class Context(context.AbstractContext):
 
     def __relocate(self, inf, reloc):
         """Address relocation function."""
-        exception = None
-        for name in reloc.operation.operand:
-            try:
-                value = self.lookup_symbol(name)
-            except KeyError as e:
-                exception = e
-                continue
-            return value
-        self.env.assertIsNotNone(exception)
-        raise exception
+        return self.lookup_symbol(reloc.operation.operand,
+                                  FakeSlice(reloc))
 
     # Methods to convert between signed and unsigned integers.
 

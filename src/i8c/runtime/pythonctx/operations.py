@@ -255,17 +255,7 @@ class Operation(AbstractOperation):
         stack.push_intptr(func(a, b))
 
     def exec_addr(self, ctx, externals, stack):
-        exception = None
-        for name in self.operand:
-            try:
-                value = ctx.lookup_symbol(name)
-            except KeyError as e:
-                exception = e
-                continue
-            stack.push_intptr(value)
-            return
-        assert exception is not None
-        raise exception
+        stack.push_intptr(ctx.lookup_symbol(self.operand, self.src + 1))
 
     def __exec_constX(self, ctx, externals, stack):
         stack.push_intptr(self.operand)

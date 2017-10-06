@@ -25,7 +25,7 @@ from __future__ import unicode_literals
 
 from .core import TestObject
 from . import provider
-from . import UnhandledNoteError
+from . import SymbolError, UnhandledNoteError
 import sys
 
 class AbstractContext(TestObject):
@@ -96,12 +96,17 @@ class AbstractContext(TestObject):
 
     def register_symbol(self, name, addr):
         """Associate a symbol name with an address."""
-        assert not name in self.__symbols
+        self.env.assertNotIn(name, self.__symbols)
+        self.env.assertIsNotNone(addr)
         self.__symbols[name] = addr
 
-    def lookup_symbol(self, name):
+    def lookup_symbol(self, names, error_location):
         """Return the address associated with the specified symbol name."""
-        return self.__symbols[name]
+        for name in names:
+            addr = self.__symbols.get(name, None)
+            if addr is not None:
+                return addr
+        raise SymbolError(error_location, names)
 
     def _i8ctest_reset_symbols(self):
         """Clear all registered symbols."""

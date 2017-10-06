@@ -22,6 +22,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from tests import TestCase, TestCompiler, multiplexed
+from i8c import constants
 from i8c.compiler import commands
 from i8c.runtime import SymbolError
 import os
@@ -231,9 +232,9 @@ class TestRelocation(TestCase):
                 return
 
         # It should fail.
-        with self.assertRaises(KeyError) as cm:
+        with self.assertRaises(SymbolError) as cm:
             output.call(output.note.signature)
-        self.assertEqual(cm.exception.args[0], lookup_symbols[-1])
+        self.__check_symbolerror(cm.exception, lookup_symbols)
 
     def __make_compiler(self, symdef, addsym_mixin, linker_mixin):
         name = ["RelocTestCompiler"]
@@ -272,3 +273,41 @@ class TestRelocation(TestCase):
     @multiplexed
     def assertImportRaised(self, output, exc_cls):
         self.assertTrue(isinstance(output.import_error, exc_cls))
+        self.__check_symbolerror(output.import_error)
+
+    def __check_symbolerror(self, exc, expect_names=None):
+        location, msg = exc.args[0].split("]: error: ", 1)
+        self.__check_symbolerror_msg(msg, expect_names)
+        filename, offset = self.__parse_symbolerror_location(location)
+        self.assertGreater(offset, 0)
+        with open(filename, "rb") as fp:
+            fp.seek(offset - 1)
+            opcode = fp.read(1)
+            if sys.version_info >= (3,):
+                [opcode] = opcode
+            else:
+                opcode = ord(opcode)
+        self.assertEqual(opcode, constants.DW_OP_addr)
+
+    def __check_symbolerror_msg(self, msg, expect_names):
+        if expect_names is None:
+            self.assertEqual(msg, "no matching symbols found")
+            return
+
+        prefix = "unresolved symbol "
+        self.assertTrue(msg.startswith(prefix))
+        expect_names = ["‘%s’" % name for name in expect_names]
+        actual_names = msg[len(prefix):].split(", ")
+        self.assertEqual(expect_names, actual_names)
+
+    def __parse_symbolerror_location(self, location):
+        location = location.split("[")
+        offset = int(location.pop(), 16)
+        filename = location.pop(0)
+        if location:
+            self.assertTrue(filename.endswith(".a"))
+            [objfile] = location
+            self.assertTrue(objfile.endswith(".o]"))
+            filename = os.path.join(os.path.dirname(filename),
+                                    objfile[:-1])
+        return filename, offset
