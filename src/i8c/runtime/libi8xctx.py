@@ -82,6 +82,7 @@ class Context(context.AbstractContext):
         flags = libi8x.DBG_MEM | libi8x.LOG_TRACE
         self.__ctx = libi8x.Context(flags, self.__logger)
         self.__ctx.FUNCTION_CLASS = Function
+        self.__ctx.RELOCATION_CLASS = Relocation
 
         self.__inf = self.__ctx.new_inferior()
         self.__inf.read_memory = self.__read_memory
@@ -224,12 +225,10 @@ class Context(context.AbstractContext):
         self.__bytecode_consumers = None
 
         # Store any relocations.
-        func.symbols_at = {}
         for reloc in func.relocations:
-            offset = reloc.srcoffset
-            start =  offset - srcoffset
+            start =  reloc.srcoffset - srcoffset
             src = ns[start:start + 1]
-            func.symbols_at[offset] = src.symbol_names
+            reloc.operation.operands = (src.symbol_names,)
 
         return func
 
@@ -306,7 +305,7 @@ class Context(context.AbstractContext):
     def __relocate(self, inf, reloc):
         """Address relocation function."""
         exception = None
-        for name in reloc.function.symbols_at[reloc.srcoffset]:
+        for name in reloc.operation.operand:
             try:
                 value = self.lookup_symbol(name)
             except KeyError as e:
@@ -346,6 +345,13 @@ class Function(libi8x.Function):
     def is_bound_to(self, ref):
         """Is this function bound to the specified object?"""
         return self.__bound_to is ref
+
+class Relocation(libi8x.Relocation):
+    @property
+    def operation(self):
+        result = self.function.ops[self.srcoffset - 1]
+        assert result.fullname == "DW_OP_addr"
+        return result
 
 class FakeSlice(object):
     """libi8x.I8XError location, wrapped like a provider.NoteSlice."""

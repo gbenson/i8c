@@ -196,34 +196,44 @@ class TestRelocation(TestCase):
             self.assertImportRaised(output, SymbolError)
             return
 
-        # Running with no symbol registered should fail.
-        self.__check_call_testfunc(output, None, False)
+        # Check the decoded bytecode looks right.
+        expect_symbols = [MAIN_SYMBOL]
+        if symdef is ALIAS_SYMDEF and linker in (LinkSolib, LinkExe):
+            expect_symbols.append(ALIAS_SYMBOL)
+        self.assertEqual(output.opnames, ["addr"])
+        actual_symbols = output.ops[0].operand
+        self.assertEqual(sorted(expect_symbols), sorted(actual_symbols))
 
-        # Running with the alias symbol registered should
-        # succeed only for cases with it defined.
-        self.__check_call_testfunc(output, ALIAS_SYMBOL,
-                                   symdef is ALIAS_SYMDEF
-                                   and linker in (LinkSolib, LinkExe))
-
-        # Running with the symbol registered should succeed.
-        self.__check_call_testfunc(output, MAIN_SYMBOL, True)
+        # Call the function with all combinations of the two
+        # symbols being registered or not.
+        for register_main in ([], [MAIN_SYMBOL]):
+            for register_alias in ([], [ALIAS_SYMBOL]):
+                register_symbols = register_main + register_alias
+                self.__check_call_testfunc(output,
+                                           register_symbols,
+                                           actual_symbols)
 
     @multiplexed
-    def __check_call_testfunc(self, output, symname, expect_success):
-        print(" ", output.build.asm_output_file, repr(symname).lstrip("u"))
+    def __check_call_testfunc(self, output, register_symbols,
+                              lookup_symbols):
         output._i8ctest_reset_symbols()
-        if symname is not None:
+        if register_symbols:
             expect_result = id(self) & ((1 << output.wordsize) - 1)
-            output.register_symbol(symname, expect_result)
+            for symbol in register_symbols:
+                output.register_symbol(symbol, expect_result)
             expect_result = [expect_result]
-        if expect_success:
-            self.assertEqual(output.call(output.note.signature),
-                             expect_result)
-        else:
-            with self.assertRaises(KeyError) as cm:
-                output.call(output.note.signature)
-            self.assertIn(cm.exception.args[0], (MAIN_SYMBOL,
-                                                 ALIAS_SYMBOL))
+
+        for symbol in lookup_symbols:
+            if symbol in register_symbols:
+                # It should work.
+                self.assertEqual(output.call(output.note.signature),
+                                 expect_result)
+                return
+
+        # It should fail.
+        with self.assertRaises(KeyError) as cm:
+            output.call(output.note.signature)
+        self.assertEqual(cm.exception.args[0], lookup_symbols[-1])
 
     def __make_compiler(self, symdef, addsym_mixin, linker_mixin):
         name = ["RelocTestCompiler"]
