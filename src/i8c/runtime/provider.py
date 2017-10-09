@@ -149,10 +149,11 @@ class ELF(Provider):
                     addr = sym["st_value"]
                     if addr == 0 and sym.entry.st_info.bind != "STB_GLOBAL":
                         continue
-                    if addr not in self.__symbols:
-                        self.__symbols[addr] = []
-                    if name not in self.__symbols[addr]:
-                        self.__symbols[addr].append(name)
+                    orig = self.__symbols.get(addr, [])
+                    if name not in (sym2.name for sym2 in orig):
+                        if not addr in self.__symbols:
+                            self.__symbols[addr] = orig
+                        orig.append(sym)
         return self.__symbols
 
     def __get_named_symbol(self, symtab, index):
@@ -181,15 +182,18 @@ class ELF(Provider):
             symtab = self.elf.get_section(reloc_sect["sh_link"])
             for reloc in reloc_sect.iter_relocations():
                 symbol = self.__get_named_symbol(symtab, reloc["r_info_sym"])
-                relocs[reloc["r_offset"]] = symbol.name
+                offset = reloc["r_offset"]
+                if offset not in relocs:
+                    relocs[offset] = []
+                relocs[offset].append(symbol)
         return relocs
 
-    def symbol_names_at(self, section, offset, addr):
+    def symbols_at(self, section, offset, addr):
         if addr == 0:
-            name = self.relocations_for(section).get(offset, None)
-            if name is not None:
-                return [name]
-        return self.symbols.get(addr, None)
+            result = self.relocations_for(section).get(offset, None)
+            if result is not None:
+                return result
+        return self.symbols.get(addr, [])
 
 Provider.CLASSES = [Archive, ELF]
 open = Provider.open
@@ -213,12 +217,12 @@ class Note(object):
     def byteorder(self):
         return self.elf.byteorder
 
-    def symbol_names_at(self, offset):
+    def symbols_at(self, offset):
         fmt = self.byteorder + {32: b"I", 64: b"Q"}[self.wordsize]
         size = struct.calcsize(fmt)
         addr = struct.unpack(fmt, self.data[offset:offset + size])[0]
         offset = self.offset + offset - self.section["sh_offset"]
-        return self.elf.symbol_names_at(self.section, offset, addr)
+        return self.elf.symbols_at(self.section, offset, addr)
 
 class NoteSlice(object):
     def __init__(self, note, key):
@@ -290,7 +294,7 @@ class NoteSlice(object):
 
     @property
     def symbol_names(self):
-        names = self.note.symbol_names_at(self.start)
-        if names is None:
+        symbols = self.note.symbols_at(self.start)
+        if not symbols:
             raise SymbolError(self)
-        return names
+        return [symbol.name for symbol in symbols]
