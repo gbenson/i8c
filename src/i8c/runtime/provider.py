@@ -32,6 +32,7 @@ from elftools.elf import relocation
 from elftools.elf import sections
 import struct
 import sys
+import weakref
 try:
     import builtins
 except ImportError: # pragma: no cover
@@ -103,37 +104,16 @@ class ELF(Provider):
         del self.__relocs, self.__symbols, self.elf
 
     @property
-    def infinity_notes(self):
+    def note_sections(self):
         for sect in self.elf.iter_sections():
-            if not isinstance(sect, sections.NoteSection):
-                continue
-            for note in sect.iter_notes():
-                # pyelftools thinks n_name is "GNU", but I think
-                # it should really be "GNU\0".  We'll allow both.
-                if note["n_name"] not in ("GNU", "GNU\0"):
-                    continue
-                # Currently pyelftools returns the numeric value,
-                # but at some point the constant will be added in
-                # which case it's going to return a string.
-                if note["n_type"] not in (constants.NT_GNU_INFINITY,
-                                          "NT_GNU_INFINITY"):
-                    continue
-                # The inner-format part (the actual Infinity note)
-                # is in the desc field.  Work out where that is in
-                # relation to the containing ELF.
-                elf_note_hdr_size = 12 # n_namesz, n_descsz, n_type
-                elf_note_namesz_pad = ((note["n_namesz"] - 1) | 3) + 1
-                i8_note_offset = (note["n_offset"]
-                                  + elf_note_hdr_size
-                                  + elf_note_namesz_pad)
-                i8_note_bytes = note["n_desc"]
-                if sys.version_info >= (3,):
-                    # pyelftools converts to string, but we want bytes
-                    i8_note_bytes = i8_note_bytes.encode("latin-1")
-                assert len(i8_note_bytes) == note["n_descsz"]
-                yield NoteSlice(Note(self, sect, i8_note_offset,
-                                     i8_note_bytes),
-                                slice(0, note["n_descsz"]))
+            if isinstance(sect, sections.NoteSection):
+                yield NoteSection(self, sect)
+
+    @property
+    def infinity_notes(self):
+        for sect in self.note_sections:
+            for note in sect.infinity_notes:
+                yield note
 
     @property
     def symbols(self):
@@ -198,41 +178,48 @@ class ELF(Provider):
 Provider.CLASSES = [Archive, ELF]
 open = Provider.open
 
-class Note(object):
-    def __init__(self, elf, section, offset, data):
-        self.elf = elf
-        self.section = section
-        self.offset = offset # of first byte of n_desc in ELF
-        self.data = data
+class NoteSection(object):
+    def __init__(self, elf, section):
+        self.__elf = elf
+        self.__sect = weakref.ref(section)
+        self.offset = section["sh_offset"]
+        self.data = section.data()
 
     @property
     def filename(self):
-        return self.elf.filename
+        return self.__elf.filename
 
     @property
     def wordsize(self):
-        return self.elf.wordsize
+        return self.__elf.wordsize
 
     @property
     def byteorder(self):
-        return self.elf.byteorder
+        return self.__elf.byteorder
+
+    @property
+    def infinity_notes(self):
+        for note in self.__sect().iter_notes():
+            if (note.n_name in ("GNU", "GNU\0")
+                and note.n_type in (constants.NT_GNU_INFINITY,
+                                    "NT_GNU_INFINITY")):
+                yield Note(self, note)
 
     def symbols_at(self, offset):
         fmt = self.byteorder + {32: b"I", 64: b"Q"}[self.wordsize]
         size = struct.calcsize(fmt)
         addr = struct.unpack(fmt, self.data[offset:offset + size])[0]
-        offset = self.offset + offset - self.section["sh_offset"]
-        return self.elf.symbols_at(self.section, offset, addr)
+        return self.__elf.symbols_at(self.__sect(), offset, addr)
 
 class NoteSlice(object):
-    def __init__(self, note, key):
+    def __init__(self, section, key):
         assert isinstance(key, slice)
         assert key.step in (None, 1)
-        self.note = note
+        self.__sect = section
 
         assert key.start >= 0
         self.start = key.start
-        assert key.stop <= len(note.data)
+        assert key.stop <= len(section.data)
         self.limit = key.stop
 
     def __len__(self):
@@ -257,32 +244,32 @@ class NoteSlice(object):
             assert limit <= self.limit
         else:
             limit = self.limit
-        return NoteSlice(self.note, slice(start, limit))
+        return NoteSlice(self.__sect, slice(start, limit))
 
     def __add__(self, offset):
         start = self.start + offset
         assert start <= self.limit
-        return NoteSlice(self.note, slice(start, self.limit))
+        return NoteSlice(self.__sect, slice(start, self.limit))
 
     @property
     def filename(self):
-        return self.note.filename
+        return self.__sect.filename
 
     @property
     def offset(self):
-        return self.note.offset + self.start
+        return self.__sect.offset + self.start
 
     @property
     def wordsize(self):
-        return self.note.wordsize
+        return self.__sect.wordsize
 
     @property
     def byteorder(self):
-        return self.note.byteorder
+        return self.__sect.byteorder
 
     @property
     def data(self):
-        return self.note.data[self.start:self.limit]
+        return self.__sect.data[self.start:self.limit]
 
     @property
     def text(self):
@@ -294,7 +281,16 @@ class NoteSlice(object):
 
     @property
     def symbol_names(self):
-        symbols = self.note.symbols_at(self.start)
+        symbols = self.__sect.symbols_at(self.start)
         if not symbols:
             raise SymbolError(self)
         return [symbol.name for symbol in symbols]
+
+class Note(NoteSlice):
+    def __init__(self, section, note):
+        start = (note.n_offset
+                 - section.offset  # Convert to section offset.
+                 + 12              # n_namesz, n_descsz, n_type.
+                 + (((note.n_namesz - 1) | 3) + 1))  # n_name + padding.
+        limit = start + note.n_descsz
+        super(Note, self).__init__(section, slice(start, limit))
