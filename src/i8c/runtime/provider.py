@@ -195,11 +195,11 @@ Provider.CLASSES = [Archive, ELF]
 open = Provider.open
 
 class Note(object):
-    def __init__(self, elf, section, offset, bytes):
+    def __init__(self, elf, section, offset, data):
         self.elf = elf
         self.section = section
         self.offset = offset # of first byte of n_desc in ELF
-        self.bytes = bytes
+        self.data = data
 
     @property
     def filename(self):
@@ -216,7 +216,7 @@ class Note(object):
     def symbol_names_at(self, offset):
         fmt = self.byteorder + {32: b"I", 64: b"Q"}[self.wordsize]
         size = struct.calcsize(fmt)
-        addr = struct.unpack(fmt, self.bytes[offset:offset + size])[0]
+        addr = struct.unpack(fmt, self.data[offset:offset + size])[0]
         offset = self.offset + offset - self.section["sh_offset"]
         return self.elf.symbol_names_at(self.section, offset, addr)
 
@@ -228,7 +228,7 @@ class NoteSlice(object):
 
         assert key.start >= 0
         self.start = key.start
-        assert key.stop <= len(note.bytes)
+        assert key.stop <= len(note.data)
         self.limit = key.stop
 
     def __len__(self):
@@ -236,7 +236,7 @@ class NoteSlice(object):
 
     def __getitem__(self, key):
         if isinstance(key, integer):
-            result = self.bytes[key]
+            result = self.data[key]
             if isinstance(result, int):
                 result = chr(result)
             return result
@@ -277,12 +277,12 @@ class NoteSlice(object):
         return self.note.byteorder
 
     @property
-    def bytes(self):
-        return self.note.bytes[self.start:self.limit]
+    def data(self):
+        return self.note.data[self.start:self.limit]
 
     @property
     def text(self):
-        text = self.bytes
+        text = self.data
         if sys.version_info >= (3,):
             text = "".join(map(chr, text))
         assert isinstance(text, str)

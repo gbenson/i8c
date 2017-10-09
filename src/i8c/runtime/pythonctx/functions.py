@@ -123,7 +123,7 @@ class BytecodeFunction(Function):
     def get_string(self, start):
         chunk = self.one_chunk(constants.I8_CHUNK_STRINGS, 1, True)
         unterminated = chunk + start
-        limit = unterminated.bytes.find(b"\0")
+        limit = unterminated.data.find(b"\0")
         if limit < 0:
             raise CorruptNoteError(unterminated)
         return unterminated[:limit]
@@ -152,7 +152,7 @@ class BytecodeFunction(Function):
         expect = archspec.encode(chunk.wordsize)
         format = self.byteorder + b"H"
         offset = struct.calcsize(format)
-        actual = struct.unpack(format, chunk[:offset].bytes)[0]
+        actual = struct.unpack(format, chunk[:offset].data)[0]
         if actual != expect:
             raise UnhandledNoteError(chunk)
 

@@ -209,7 +209,7 @@ class Context(context.AbstractContext):
         bcc_cooked = UnpackedBytecodeConsumer("i8x_code_setup_dispatch")
         self.__bytecode_consumers = (bcc_raw, bcc_cooked)
 
-        func = self.__ctx.import_bytecode(ns.bytes, ns.filename,
+        func = self.__ctx.import_bytecode(ns.data, ns.filename,
                                           ns.offset)
 
         # Store the unpacked bytecode.

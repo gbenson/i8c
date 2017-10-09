@@ -170,7 +170,7 @@ class Operation(AbstractOperation):
             if sizecode is not None:
                 size, fmt = sizecode
                 fmt = self.byteorder + fmt
-                value = struct.unpack(fmt, next[:size].bytes)[0]
+                value = struct.unpack(fmt, next[:size].data)[0]
             else:
                 size, value = getattr(self, "decode_" + type)(next)
             operands.append(value)
