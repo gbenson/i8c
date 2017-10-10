@@ -39,6 +39,16 @@ define test::relocation_test returns ptr
 
 BASIC_SYMDEF = 'const char *%s = "Hello World";' % MAIN_SYMBOL
 
+LOCAL_SYMDEF = """\
+static %s
+
+const char *
+a_function (void)
+{
+  return %s;
+}
+""" % (BASIC_SYMDEF, MAIN_SYMBOL)
+
 ALIAS_SYMDEF = """\
 // glibc/src/include/list.h
 
@@ -137,7 +147,7 @@ class LinkStatic(object):
 class LinkExe(LinkStatic):
     def setup_build(self, build):
         self.__main_c = build.writable_filename("-main.c")
-        build.write_file(MAIN_C, self.__main_c)
+        build.write_file(self.MAIN_C, self.__main_c)
 
     def link(self, build, assembler, objfiles):
         library = LinkStatic.link(self, build, assembler, objfiles)
@@ -148,10 +158,11 @@ class LinkExe(LinkStatic):
 class TestRelocation(TestCase):
     def test_relocation(self):
         """Test relocation."""
-        for symdef in (None, BASIC_SYMDEF, ALIAS_SYMDEF):
+        for symdef in (None, BASIC_SYMDEF, ALIAS_SYMDEF, LOCAL_SYMDEF):
             # None: the symbol is undefined.
             # Basic: the symbol is defined.
             # Alias: the symbol is defined, with an alias.
+            # Local: the symbol is defined static.
 
             if symdef is None:
                 symlocs = (None,)
@@ -193,7 +204,10 @@ class TestRelocation(TestCase):
         tree, output = compiler.compile(SOURCE)
 
         # Solib with undefined symbol results in SymbolError.
-        if linker is LinkSolib and symdef is None:
+        if (linker is LinkSolib
+            and (symdef is None
+                 or (symdef is LOCAL_SYMDEF
+                     and symloc is SymInOwnObjfile))):
             self.assertImportRaised(output, SymbolError)
             return
 
@@ -248,6 +262,7 @@ class TestRelocation(TestCase):
             self.assertIsNotNone(addsym_mixin)
             cname = self.__classname(addsym_mixin)
             name.append({BASIC_SYMDEF: "Basic",
+                         LOCAL_SYMDEF: "Local",
                          ALIAS_SYMDEF: "Alias"}[symdef] + cname[:3])
             name.append(cname[3:])
             bases.append(addsym_mixin)
@@ -259,6 +274,12 @@ class TestRelocation(TestCase):
             cname = self.__classname(linker_mixin)
             name.append(cname[4:] + cname[:4])
             bases.append(linker_mixin)
+
+        if linker_mixin is LinkExe:
+            main_c = MAIN_C
+            if symdef is LOCAL_SYMDEF:
+                main_c = main_c.replace(MAIN_SYMBOL, "a_function ()")
+            _dict["MAIN_C"] = main_c
 
         print("Testing", ", ".join(name[1:]))
 
