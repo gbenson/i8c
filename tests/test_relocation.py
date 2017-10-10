@@ -155,6 +155,15 @@ class LinkExe(LinkStatic):
         assembler.check_call([self.__main_c, library, "-o", filename])
         return filename
 
+class StripResult(object):
+    def postlink(self, build, assembler, linked):
+        strip = commands._getenv("I8CTEST_STRIP", None)
+        if strip is None:
+            strip = ["-".join(assembler.args[0].split("-")[:-1] + ["strip"])]
+        strip = commands.CompilerCommand(strip)
+        strip.check_call([linked])
+        return linked
+
 class TestRelocation(TestCase):
     def test_relocation(self):
         """Test relocation."""
@@ -182,9 +191,13 @@ class TestRelocation(TestCase):
                     # Static: I8X is testing .a
                     # Exe: I8X is testing a static exe
 
-                    self.__test_relocation(symdef, symloc, linker)
+                    for post in (None, StripResult):
+                        # None: Linker output is not stripped
+                        # StripResult: Linker output is stripped
 
-    def __test_relocation(self, symdef, symloc, linker):
+                        self.__test_relocation(symdef, symloc, linker, post)
+
+    def __test_relocation(self, symdef, symloc, linker, post):
         # Should have a definition and a location, or neither.
         self.assertEqual(symdef is None, symloc is None)
 
@@ -200,8 +213,17 @@ class TestRelocation(TestCase):
         if linker is LinkExe and symloc is not SymInNoteObjfile:
             return
 
-        compiler = self.__make_compiler(symdef, symloc, linker)
+        compiler = self.__make_compiler(symdef, symloc, linker, post)
         tree, output = compiler.compile(SOURCE)
+
+        # Stripped results result in SymbolErrors except for shared
+        # libraries with defined global symbols.
+        if (post is StripResult
+            and (symdef is None
+                 or linker is not LinkSolib
+                 or symdef is LOCAL_SYMDEF)):
+            self.assertImportRaised(output, SymbolError)
+            return
 
         # Solib with undefined symbol results in SymbolError.
         if (linker is LinkSolib
@@ -213,7 +235,9 @@ class TestRelocation(TestCase):
 
         # Check the decoded bytecode looks right.
         expect_symbols = [MAIN_SYMBOL]
-        if symdef is ALIAS_SYMDEF and linker in (LinkSolib, LinkExe):
+        if (symdef is ALIAS_SYMDEF
+              and linker in (LinkSolib, LinkExe)
+              and post is not StripResult):
             expect_symbols.append(ALIAS_SYMBOL)
         self.assertEqual(output.opnames, ["addr"])
         actual_symbols = output.ops[0].operand
@@ -250,7 +274,7 @@ class TestRelocation(TestCase):
             output.call(output.note.signature)
         self.__check_symbolerror(cm.exception, lookup_symbols)
 
-    def __make_compiler(self, symdef, addsym_mixin, linker_mixin):
+    def __make_compiler(self, symdef, addsym_mixin, linker_mixin, strip_mixin):
         name = ["RelocTestCompiler"]
         bases = [TestCompiler]
         _dict = {}
@@ -280,6 +304,10 @@ class TestRelocation(TestCase):
             if symdef is LOCAL_SYMDEF:
                 main_c = main_c.replace(MAIN_SYMBOL, "a_function ()")
             _dict["MAIN_C"] = main_c
+
+        if strip_mixin is not None:
+            name.append("Stripped")
+            bases.append(strip_mixin)
 
         print("Testing", ", ".join(name[1:]))
 
