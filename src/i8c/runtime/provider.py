@@ -72,17 +72,17 @@ class Archive(Provider):
     MAGIC = b"!<arch>\n"
 
     def __enter__(self):
-        self.ar = arpy.Archive(self.filename, self.fp)
-        self.ar.read_all_headers()
+        self.__ar = arpy.Archive(self.filename, self.fp)
+        self.__ar.read_all_headers()
         return self
 
     def __exit__(self, type, value, tb):
         super(Archive, self).__exit__(type, value, tb)
-        del self.ar
+        del self.__ar
 
     @property
     def infinity_notes(self):
-        for fp in self.ar.archived_files.values():
+        for fp in self.__ar.archived_files.values():
             fn = "%s[%s]" % (self.filename, fp.header.name.decode("utf-8"))
             with Provider.open(fp, fn) as fp:
                 for note in fp.infinity_notes:
@@ -92,20 +92,20 @@ class ELF(Provider):
     MAGIC = constants.ELFMAG
 
     def __enter__(self):
-        self.elf = elffile.ELFFile(self.fp)
-        self.wordsize = self.elf.elfclass
-        self.byteorder = self.elf.little_endian and b"<" or b">"
+        self.__elf = elffile.ELFFile(self.fp)
+        self.wordsize = self.__elf.elfclass
+        self.byteorder = self.__elf.little_endian and b"<" or b">"
         self.__symbols = None
         self.__relocs = {}
         return self
 
     def __exit__(self, type, value, tb):
         super(ELF, self).__exit__(type, value, tb)
-        del self.__relocs, self.__symbols, self.elf
+        del self.__relocs, self.__symbols, self.__elf
 
     @property
     def note_sections(self):
-        for sect in self.elf.iter_sections():
+        for sect in self.__elf.iter_sections():
             if isinstance(sect, sections.NoteSection):
                 yield NoteSection(self, sect)
 
@@ -119,7 +119,7 @@ class ELF(Provider):
     def symbols(self):
         if self.__symbols is None:
             self.__symbols = {}
-            for sect in self.elf.iter_sections():
+            for sect in self.__elf.iter_sections():
                 if not isinstance(sect, sections.SymbolTableSection):
                     continue
                 for sym in sect.iter_symbols():
@@ -155,11 +155,11 @@ class ELF(Provider):
         relocs = self.__relocs.get(sect.name, None)
         if relocs is None:
             relocs = self.__relocs[sect.name] = {}
-            reloc_handler = relocation.RelocationHandler(self.elf)
+            reloc_handler = relocation.RelocationHandler(self.__elf)
             reloc_sect = reloc_handler.find_relocations_for_section(sect)
             if reloc_sect is None:
                 return relocs
-            symtab = self.elf.get_section(reloc_sect["sh_link"])
+            symtab = self.__elf.get_section(reloc_sect["sh_link"])
             for reloc in reloc_sect.iter_relocations():
                 symbol = self.__get_named_symbol(symtab, reloc["r_info_sym"])
                 offset = reloc["r_offset"]
