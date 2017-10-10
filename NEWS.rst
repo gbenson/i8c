@@ -37,10 +37,9 @@ Bug fixes
   command specified by "I8C_CC" would be used even if "I8C_AS" was
   set.
 
-* I8X now fails gracefully if referenced symbol names cannot be
-  determined.  This can happen if an Infinity function provided by
-  a shared library loads an address that does not match any symbol
-  in the symbol table.
+* I8X now correctly determines names for referenced symbols in many
+  more configurations, and now fails gracefully when names cannot be
+  determined.
 
 Testsuite changes
 ~~~~~~~~~~~~~~~~~

@@ -216,20 +216,11 @@ class TestRelocation(TestCase):
         compiler = self.__make_compiler(symdef, symloc, linker, post)
         tree, output = compiler.compile(SOURCE)
 
-        # Stripped results result in SymbolErrors except for shared
-        # libraries with defined global symbols.
+        # Most stripped inputs result in SymbolErrors.
         if (post is StripResult
-            and (symdef is None
-                 or linker is not LinkSolib
-                 or symdef is LOCAL_SYMDEF)):
-            self.assertImportRaised(output, SymbolError)
-            return
-
-        # Solib with undefined symbol results in SymbolError.
-        if (linker is LinkSolib
-            and (symdef is None
+            and (linker is not LinkSolib
                  or (symdef is LOCAL_SYMDEF
-                     and symloc is SymInOwnObjfile))):
+                     and symloc is SymInNoteObjfile))):
             self.assertImportRaised(output, SymbolError)
             return
 

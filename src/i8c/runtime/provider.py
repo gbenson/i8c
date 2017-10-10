@@ -147,6 +147,8 @@ class ELF(Provider):
                     if not name:
                         continue
                     addr = sym["st_value"]
+                    if addr == 0 and sym.entry.st_info.bind != "STB_GLOBAL":
+                        continue
                     if addr not in self.__symbols:
                         self.__symbols[addr] = []
                     if name not in self.__symbols[addr]:
@@ -187,8 +189,7 @@ class ELF(Provider):
             name = self.relocations_for(section).get(offset, None)
             if name is not None:
                 return [name]
-        else:
-            return self.symbols.get(addr, None)
+        return self.symbols.get(addr, None)
 
 Provider.CLASSES = [Archive, ELF]
 open = Provider.open
