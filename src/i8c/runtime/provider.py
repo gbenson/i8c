@@ -96,12 +96,11 @@ class ELF(Provider):
         self.wordsize = self.__elf.elfclass
         self.byteorder = self.__elf.little_endian and b"<" or b">"
         self.__symbols = None
-        self.__relocs = {}
         return self
 
     def __exit__(self, type, value, tb):
         super(ELF, self).__exit__(type, value, tb)
-        del self.__relocs, self.__symbols, self.__elf
+        del self.__elf
 
     @property
     def note_sections(self):
@@ -154,27 +153,21 @@ class ELF(Provider):
         raise ProviderError(self.filename, "unhandled relocation")
 
     def relocations_for(self, sect):
-        relocs = self.__relocs.get(sect.name, None)
-        if relocs is None:
-            relocs = self.__relocs[sect.name] = {}
-            reloc_handler = relocation.RelocationHandler(self.__elf)
-            reloc_sect = reloc_handler.find_relocations_for_section(sect)
-            if reloc_sect is None:
-                return relocs
-            symtab = self.__elf.get_section(reloc_sect["sh_link"])
-            for reloc in reloc_sect.iter_relocations():
-                symbol = self.__get_named_symbol(symtab, reloc["r_info_sym"])
-                offset = reloc["r_offset"]
-                if offset not in relocs:
-                    relocs[offset] = []
-                relocs[offset].append(symbol)
-        return relocs
+        result = {}
+        reloc_handler = relocation.RelocationHandler(self.__elf)
+        reloc_sect = reloc_handler.find_relocations_for_section(sect)
+        if reloc_sect is None:
+            return result
+        symtab = self.__elf.get_section(reloc_sect["sh_link"])
+        for reloc in reloc_sect.iter_relocations():
+            symbol = self.__get_named_symbol(symtab, reloc["r_info_sym"])
+            offset = reloc["r_offset"]
+            if offset not in result:
+                result[offset] = []
+            result[offset].append(symbol)
+        return result
 
-    def symbols_at(self, section, offset, addr):
-        if addr == 0:
-            result = self.relocations_for(section).get(offset, None)
-            if result is not None:
-                return result
+    def symbols_matching(self, addr):
         return self.symbols.get(addr, [])
 
 Provider.CLASSES = [Archive, ELF]
@@ -186,6 +179,7 @@ class NoteSection(object):
         self.__sect = weakref.ref(section)
         self.offset = section["sh_offset"]
         self.data = section.data()
+        self.__relocs = None
 
     @property
     def filename(self):
@@ -207,11 +201,29 @@ class NoteSection(object):
                                     "NT_GNU_INFINITY")):
                 yield Note(self, note)
 
+    @property
+    def relocations(self):
+        if self.__relocs is None:
+            self.__relocs = self.__elf.relocations_for(self.__sect())
+        return self.__relocs
+
+    def relocs_at(self, offset):
+        return self.relocations.get(offset, [])
+
     def symbols_at(self, offset):
         fmt = self.byteorder + {32: b"I", 64: b"Q"}[self.wordsize]
         size = struct.calcsize(fmt)
         addr = struct.unpack(fmt, self.data[offset:offset + size])[0]
-        return self.__elf.symbols_at(self.__sect(), offset, addr)
+
+        # First try relocations.  This branch handles ET_REL
+        # (object files, including those in static libraries).
+        result = self.relocs_at(offset)
+        if result:
+            return result
+
+        # Fall back to symbol table lookup.  This branch does
+        # ET_DYN (shared libraries) and ET_EXEC (executables).
+        return self.__elf.symbols_matching(addr)
 
 class NoteSlice(object):
     def __init__(self, section, key):
