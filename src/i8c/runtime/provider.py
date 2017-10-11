@@ -126,7 +126,7 @@ class ELF(Provider):
                     name = sym.name
                     if not name:
                         continue
-                    addr = sym["st_value"]
+                    addr = sym.entry.st_value
                     if addr == 0 and sym.entry.st_info.bind != "STB_GLOBAL":
                         continue
                     orig = self.__symbols.get(addr, [])
@@ -140,15 +140,17 @@ class ELF(Provider):
         symbol = symtab.get_symbol(index)
         if symbol.name:
             return symbol
-        # XXX this symbol is the start of a section?
-        assert symbol.entry["st_info"]["type"] == "STT_SECTION"
-        assert symbol.entry["st_value"] == 0
-        st_shndx = symbol.entry["st_shndx"]
-        for symbol in symtab.iter_symbols():
-            if (symbol.entry["st_shndx"] == st_shndx
-                    and symbol.entry["st_value"] == 0
-                    and symbol.name):
-                return symbol
+        # Handle cases where the target of a relocation is at the
+        # start of a section and the relocation references the
+        # section's symbol rather than the named symbol we want.
+        if symbol.entry.st_info.type == "STT_SECTION":
+            assert symbol.entry.st_value == 0
+            st_shndx = symbol.entry.st_shndx
+            for symbol in symtab.iter_symbols():
+                if (symbol.entry.st_shndx == st_shndx
+                        and symbol.entry.st_value == 0
+                        and symbol.name):
+                    return symbol
         raise ProviderError(self.filename, "unhandled relocation")
 
     def relocations_for(self, sect):
