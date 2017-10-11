@@ -266,11 +266,11 @@ class NoteSlice(object):
         return NoteSlice(self.__sect, slice(start, self.limit))
 
     @property
-    def filename(self):
+    def srcname(self):
         return self.__sect.filename
 
     @property
-    def offset(self):
+    def srcoffset(self):
         return self.__sect.offset + self.start
 
     @property

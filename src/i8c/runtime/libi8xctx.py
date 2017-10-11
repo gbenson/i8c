@@ -209,8 +209,8 @@ class Context(context.AbstractContext):
         bcc_cooked = UnpackedBytecodeConsumer("i8x_code_setup_dispatch")
         self.__bytecode_consumers = (bcc_raw, bcc_cooked)
 
-        func = self.__ctx.import_bytecode(ns.data, ns.filename,
-                                          ns.offset)
+        func = self.__ctx.import_bytecode(ns.data, ns.srcname,
+                                          ns.srcoffset)
 
         # Store the unpacked bytecode.
         ops = bcc_raw.ops
@@ -224,7 +224,7 @@ class Context(context.AbstractContext):
 
         # Store any relocations.
         for reloc in func.relocations:
-            start = reloc.srcoffset - ns.offset
+            start = reloc.srcoffset - ns.srcoffset
             src = ns[start:start + 1]
             reloc.operation.operands = (src.symbol_names,)
 
@@ -347,8 +347,8 @@ class FakeSlice(object):
     """libi8x.I8XError location, wrapped like a provider.NoteSlice."""
 
     def __init__(self, libi8x_exception):
-        self.filename = libi8x_exception.srcname
-        self.offset = libi8x_exception.srcoffset
+        self.srcname = libi8x_exception.srcname
+        self.srcoffset = libi8x_exception.srcoffset
 
 Context._class_init()
 

@@ -41,7 +41,7 @@ class AbstractOperation(context.AbstractOperation):
 
     @property
     def srcoffset(self):
-        return self.src.offset
+        return self.src.srcoffset
 
 class FakeReturn(AbstractOperation):
     fullname = "[return]"

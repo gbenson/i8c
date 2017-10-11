@@ -59,8 +59,8 @@ class NoteError(I8XError):
     def __init__(self, location, msg):
         args = [self, msg]
         if location is not None:
-            args.append("%s[0x%08x]" % (location.filename,
-                                        location.offset))
+            args.append("%s[0x%08x]" % (location.srcname,
+                                        location.srcoffset))
         I8XError.__init__(*args)
 
 class CorruptNoteError(NoteError):
