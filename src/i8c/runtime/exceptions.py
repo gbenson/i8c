@@ -56,40 +56,40 @@ class HeaderFileError(InputFileError):
 class NoteError(I8XError):
     """An error was detected while decoding a note.
     """
-    def __init__(self, elfslice, msg):
+    def __init__(self, location, msg):
         args = [self, msg]
-        if elfslice is not None:
-            args.append("%s[0x%08x]" % (elfslice.filename,
-                                        elfslice.offset))
+        if location is not None:
+            args.append("%s[0x%08x]" % (location.filename,
+                                        location.offset))
         I8XError.__init__(*args)
 
 class CorruptNoteError(NoteError):
     """A corrupt note was detected.
     """
-    def __init__(self, elfslice, msg=None):
+    def __init__(self, location, msg=None):
         if msg is None:
             msg="corrupt note"
-        NoteError.__init__(self, elfslice, msg)
+        NoteError.__init__(self, location, msg)
 
 class UnhandledNoteError(NoteError):
     """An unhandled note was detected.
     """
-    def __init__(self, elfslice, msg=None):
+    def __init__(self, location, msg=None):
         if msg is None:
             msg="unhandled note"
-        NoteError.__init__(self, elfslice, msg)
+        NoteError.__init__(self, location, msg)
 
 class SymbolError(NoteError):
     """No symbols match the referenced address.
     """
-    def __init__(self, elfslice, names=None, msg=None):
+    def __init__(self, location, names=None, msg=None):
         if msg is None:
             if names is None:
                 msg = "no matching symbols found"
             else:
                 msg = ("unresolved symbol %s"
                        % ", ".join("‘%s’" % name for name in names))
-        NoteError.__init__(self, elfslice, msg)
+        NoteError.__init__(self, location, msg)
 
 class UnresolvedFunctionError(NoteError):
     """The requested function is not present.
