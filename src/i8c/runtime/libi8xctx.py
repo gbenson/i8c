@@ -39,7 +39,7 @@ class Context(context.AbstractContext):
             try:
                 return func(self, *args, **kwargs)
             except libi8x.UnhandledNoteError as e:
-                raise UnhandledNoteError(FakeSlice(e))
+                raise UnhandledNoteError(e)
             except libi8x.I8XError as e: # pragma: no cover
                 raise NotImplementedError("libi8x." + e.__class__.__name__)
         return _func
@@ -302,8 +302,7 @@ class Context(context.AbstractContext):
 
     def __relocate(self, inf, reloc):
         """Address relocation function."""
-        return self.lookup_symbol(reloc.operation.operand,
-                                  FakeSlice(reloc))
+        return self.lookup_symbol(reloc.operation.operand, reloc)
 
     # Methods to convert between signed and unsigned integers.
 
@@ -342,13 +341,6 @@ class Relocation(libi8x.Relocation):
         result = self.function.ops[self.srcoffset - 1]
         assert result.fullname == "DW_OP_addr"
         return result
-
-class FakeSlice(object):
-    """libi8x.I8XError location, wrapped like a provider.NoteSlice."""
-
-    def __init__(self, libi8x_exception):
-        self.srcname = libi8x_exception.srcname
-        self.srcoffset = libi8x_exception.srcoffset
 
 Context._class_init()
 
