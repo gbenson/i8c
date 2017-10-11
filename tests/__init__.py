@@ -91,6 +91,11 @@ class TestCompiler(TestObject):
         assert len(objfiles) == 1
         return objfiles[0]
 
+    def postlink(self, build, assembler, linked):
+        """Postprocess the linked file.
+        """
+        return linked
+
 class CompilerTask(object):
     __filenames = {}
     __filenames_lock = threading.Lock()
@@ -238,7 +243,8 @@ class CompilerTask(object):
             assembler.check_call(("-c", srcfile, "-o", objfile))
             objfiles.append(objfile)
 
-        self.asm_output_file = tc.link(self, assembler, objfiles)
+        linked = tc.link(self, assembler, objfiles)
+        self.asm_output_file = tc.postlink(self, assembler, linked)
 
         return (self,)
 
