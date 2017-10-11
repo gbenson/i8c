@@ -188,7 +188,7 @@ class ELF(Provider):
             if name is not None:
                 return [name]
         else:
-            return self.symbols[addr]
+            return self.symbols.get(addr, None)
 
 Provider.CLASSES = [Archive, ELF]
 open = Provider.open
