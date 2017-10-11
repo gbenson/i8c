@@ -389,9 +389,6 @@ class UnpackedBytecodeConsumer(object):
         else:
             operands = tuple(map(self.__str_to_int, operands))
 
-        # XXX process the remainder?
-        # It has next_pc values, and I8_OP_warn strings.
-
         op = Operation(fullname, operands)
         self.ops[pc] = op
         return op
