@@ -68,7 +68,7 @@ class CorruptNoteError(NoteError):
     """
     def __init__(self, location, msg=None):
         if msg is None:
-            msg="corrupt note"
+            msg = "corrupt note"
         NoteError.__init__(self, location, msg)
 
 class UnhandledNoteError(NoteError):
@@ -76,7 +76,7 @@ class UnhandledNoteError(NoteError):
     """
     def __init__(self, location, msg=None):
         if msg is None:
-            msg="unhandled note"
+            msg = "unhandled note"
         NoteError.__init__(self, location, msg)
 
 class SymbolError(NoteError):
