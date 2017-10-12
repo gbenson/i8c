@@ -104,7 +104,8 @@ class ExecutionError(I8XError):
     """An error was detected during bytecode execution.
     """
     def __init__(self, op, msg):
-        I8XError.__init__(self, msg, "%s+%04d" % op.location)
+        I8XError.__init__(self, msg, "%s+%04d" % (op.function.signature,
+                                                  op.srcoffset))
 
 class BadJumpError(ExecutionError):
     """A DW_OP_bra or DW_OP_skip went to a bad place.

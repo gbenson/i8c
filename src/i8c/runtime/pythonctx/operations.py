@@ -188,10 +188,6 @@ class Operation(AbstractOperation):
     def byteorder(self):
         return self.src.byteorder
 
-    @property
-    def location(self):
-        return (self.function, self.srcoffset)
-
     @staticmethod
     def decode_address(code):
         return code.wordsize >> 3, code.symbol_names
