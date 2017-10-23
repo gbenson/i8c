@@ -252,7 +252,7 @@ class Context(context.AbstractContext):
         while kill_list:
             func = kill_list.pop()
             func.is_persistent = False
-            self.__ctx.unregister(func)
+            func.unregister()
             if self.__extra_checks:
                 check = weakref.ref(func)
             del func
