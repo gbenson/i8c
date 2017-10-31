@@ -2,8 +2,8 @@ Infinity Note Compiler
 ======================
 
 Infinity is a platform-independent system for executables and shared
-libraries to export information to software development tools such as
-debuggers.
+libraries to expose functionality to debug, monitoring, and analysis
+tooling.
 
 In Infinity, executable and shared library files contain *Infinity
 notes* in addition to their regular contents.  Each Infinity note
@@ -116,23 +116,16 @@ Documentation for Infinity is currently being put together on the
 
 Right now there’s no documentation for I8C and I8X aside from this
 file and what you see in |i8c --help| and |i8x --help|.  This is
-being worked on.  You could help!
+being worked on!
 
 
 Contributing
 ------------
 
+The Infinity project homepage is https://infinitynotes.org/.  Future
+work is planned and coordinated on https://infinitynotes.org/roadmap.
 For help or to report bugs please email infinity@sourceware.org.
 
-If you’re working on this software please join the mailing list and
-coordinate so we don’t collide.
-
-Definitely mention if you’re writing software to *consume* Infinity
-notes because I8X doesn’t fully implement the as-yet unwritten spec
-and isn’t a good model to base things on.
-
-
-.. reStructuredText stuff:
 
 .. Links
 .. _GitLab: https://gitlab.com/gbenson/i8c/
