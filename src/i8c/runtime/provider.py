@@ -135,19 +135,19 @@ class ELF(Provider):
                         orig.append(sym)
         return self.__symbols
 
-    def __get_named_symbol(self, symtab, index):
-        symbol = symtab.get_symbol(index)
+    def __get_named_symbol(self, symtab, reloc):
+        symbol = symtab.get_symbol(reloc["r_info_sym"])
         if symbol.name:
             return symbol
-        # Handle cases where the target of a relocation is at the
-        # start of a section and the relocation references the
-        # section's symbol rather than the named symbol we want.
+        # Handle cases where the target of a relocation is an
+        # offset into a section.
         if symbol.entry.st_info.type == "STT_SECTION":
             assert symbol.entry.st_value == 0
             st_shndx = symbol.entry.st_shndx
+            r_addend = getattr(reloc.entry, "r_addend", 0)
             for symbol in symtab.iter_symbols():
                 if (symbol.entry.st_shndx == st_shndx
-                        and symbol.entry.st_value == 0
+                        and symbol.entry.st_value == r_addend
                         and symbol.name):
                     return symbol
         raise ProviderError(self.filename, "unhandled relocation")
@@ -160,7 +160,7 @@ class ELF(Provider):
             return result
         symtab = self.__elf.get_section(reloc_sect["sh_link"])
         for reloc in reloc_sect.iter_relocations():
-            symbol = self.__get_named_symbol(symtab, reloc["r_info_sym"])
+            symbol = self.__get_named_symbol(symtab, reloc)
             offset = reloc["r_offset"]
             if offset not in result:
                 result[offset] = []
