@@ -61,11 +61,11 @@ Testsuite changes
   interpreter (e.g. because they test side-effects such as logging or
   tracing.)
 
-* A new environment variable "I8CTEST_ALT_AS" is provided to allow a
-  second, alternate assembler to be specified for test cases.  If set
-  to an assembler which creates output with with opposite endianness
-  to "I8C_AS" then tests will be multiplexed across both assemblers to
-  test both big- and little-endian notes.
+* I8C's unit tests may be multiplexed across multiple assemblers.
+  Environment variables starting with "I8CTEST_ALT_AS" will be
+  interpreted as alternate assemblers to multiplex tests across.
+  Amongst other things this allows multiplexing across both big-
+  and little-endian notes.
 
 * A new environment variable "I8CTEST_PARALLEL" is provided.  If set
   to "1" then test note compilation will be parallelized.

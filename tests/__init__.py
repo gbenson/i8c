@@ -242,6 +242,10 @@ class CompilerTask(object):
         self.byteorder = assembler.output_byteorder
         self.__fileprefix += {b"<": "el", b">": "be"}[self.byteorder]
 
+        check, arch = assembler._TestAssembler__machine_name.split("_", 1)
+        assert self.__fileprefix.endswith("_" + check)
+        self.__fileprefix += "_" + arch
+
         srcfiles = (self.asm_input_file,) + self.__extra_sources
         objfiles = []
         for srcfile in srcfiles:
@@ -268,29 +272,27 @@ class TestAssembler(commands.Assembler):
             try:
                 return self.__check_call(*args, **kwargs)
             except subprocess.CalledProcessError:
-                print("  *** SOFT FAILURE ***")
+                print("  SOFT FAILURE:", self.__machine_name)
                 raise SoftFailure
 
 class AssemblerManager(object):
     def __init__(self):
         self.__variants = {}
+        self.__order = []
         self.__by_wordsize = {}
 
         self.__add_principal()
-        self.__try_add_alternate()
+        self.__try_add_alternates()
 
         # Sort self.__by_wordsize such that the first machine of
         # the first wordsize is the principal (i.e. I8C_AS with no
         # alternate wordsize.)
-        tmp = sorted((ws != self.__principal.output_wordsize,
-                      ws, tuple(machs))
+        principal_wordsize = self.__variants[self.__order[0]].output_wordsize
+        tmp = sorted((ws != principal_wordsize, ws, tuple(machs))
                      for ws, machs in self.__by_wordsize.items())
         self.__by_wordsize = tuple((ws, machs) for sk, ws, machs in tmp)
         for index, variant in enumerate(self):
-            is_principal = index == 0
-            assert (variant is self.__principal) == is_principal
-            variant._TestAssembler__is_principal = is_principal
-        del self.__principal
+            assert variant._TestAssembler__is_principal == (index == 0)
 
     def __len__(self):
          return len(self.__variants)
@@ -310,24 +312,28 @@ class AssemblerManager(object):
                              for machine in machines)
 
     def announce(self, file=sys.stderr):
-        machines = reduce(operator.add,
-                          (machines
-                           for wordsize, machines in self.__by_wordsize))
-        message = "testing %s output" % ", ".join(machines)
-        if len(self.__variants) < 4:
-            message = "*** %s only ***" % message
+        notetypes = {}
+        for machine in self.__order:
+            notetype, arch = machine.split("_", 1)
+            print("building %s (%s)" % (notetype, arch), file=file)
+            notetypes[notetype] = True
+        notetypes = notetypes.keys()
+        message = "testing " + ", ".join(sorted(notetypes))
+        looksgood = len(notetypes) == 4
+        if not looksgood:
+            message = "warning: %s only!" % message
         if hasattr(file, "isatty") and file.isatty():
-            colour = len(self.__variants) == 4 and 32 or 33
-            message = "\x1B[%sm%s\x1B[0m" % (colour, message)
+            colour = looksgood and 32 or 33
+            message = "\x1B[%dm%s\x1B[0m" % (colour, message)
         print(message, file=file)
 
     def __add_principal(self):
-        self.__principal = self.__add_variant()
+        self.__add_variant()
 
-    def __try_add_alternate(self):
-        args = os.environ.get("I8CTEST_ALT_AS", None)
-        if args is not None:
-            self.__try_add_variant(args.split())
+    def __try_add_alternates(self, prefix="I8CTEST_ALT_AS"):
+        keys = (key for key in os.environ.keys() if key.startswith(prefix))
+        for key in sorted(keys):
+            self.__try_add_variant(os.environ[key].split())
 
     def __try_add_variant(self, *args, **kwargs):
         kwargs["probe_quietly"] = True
@@ -344,7 +350,22 @@ class AssemblerManager(object):
         machine = "%d%s" % (wordsize,
                             {b"<": "el",
                              b">": "be"}[variant.output_byteorder])
+
+        e_machine = variant.output_e_machine
+        if e_machine.startswith("EM_"):
+            e_machine = e_machine[3:].lower()
+        machine += "_" + e_machine
+
+        machine = {"32el_386": "32el_i386",
+                   "32el_x86_64": "32el_x32",
+                   "64be_s390": "64be_s390x",
+                   "64el_ppc64": "64el_ppc64le",
+            }.get(machine, machine)
+
         assert machine not in self.__variants
+        variant._TestAssembler__is_principal = not self.__variants
+        variant._TestAssembler__machine_name = machine
+        self.__order.append(machine)
         self.__variants[machine] = variant
         if wordsize not in self.__by_wordsize:
             self.__by_wordsize[wordsize] = []
@@ -614,7 +635,7 @@ class TestOutput(Multiplexer):
     def announce(cls, file=sys.stderr):
         backends = getattr(cls, "backends", ())
         if len(backends) == 1:
-            format = "*** USING %s ONLY ***"
+            format = "warning: using %s only!"
             looksgood = False
         else:
             format = "using %s"
