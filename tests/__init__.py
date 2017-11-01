@@ -32,6 +32,7 @@ from i8c.runtime.core import TestObject
 from i8c.runtime.testcase import BaseTestCase
 import collections
 import copy
+import glob
 import io
 import operator
 import os
@@ -728,3 +729,33 @@ class TestCase(BaseTestCase):
         output = io.BytesIO()
         tree = compiler.compile(input.readline, output.write, **kwargs)
         return tree, output.getvalue().decode("utf-8")
+
+    def load_precompiled(self):
+        """Load a precompiled input file.
+
+        This is for testing failures that can't easily be replicated,
+        for example because a specific compiler is required.  Note
+        that the input directory is not shipped in the tarball to
+        avoid licensing issues, so these tests automatically skip if
+        their input file is not found.
+        """
+        result = self._new_compilation()
+
+        tmp = result.fileprefix.split(os.sep)
+        self.assertEqual(len(tmp), 4)
+        self.assertEqual(tmp[0], self.module)
+        self.assertEqual(tmp[1], self.outdir)
+        tmp[1] = "precompiled"
+
+        pattern = os.path.join(*tmp[:-1]) + "*"
+        matches = glob.glob(pattern)
+        if not matches:
+            self.skipTest(pattern + " not found")
+        self.assertEqual(len(matches), 1)
+        filename = matches[0]
+
+        build = CompilerTask(result.fileprefix)
+        build.asm_output_file = filename
+        result.add_variant(build)
+
+        return result
