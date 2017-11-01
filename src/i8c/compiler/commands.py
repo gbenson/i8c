@@ -22,9 +22,9 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from .. import constants
+from elftools.elf import elffile
 import copy
 import os
-import struct
 import subprocess
 import tempfile
 
@@ -82,6 +82,11 @@ class Assembler(CompilerCommand):
         self.__maybe_probe_output()
         return self.__byteorder
 
+    @property
+    def output_e_machine(self):
+        self.__maybe_probe_output()
+        return self.__e_machine
+
     def __maybe_probe_output(self):
         current_args = tuple(self.args)
         if current_args == self.__last_probed:
@@ -96,20 +101,13 @@ class Assembler(CompilerCommand):
         self.__last_probed = current_args
 
     def __probe_output(self, stderr=None):
-        hdrfmt = b"4sBB"
-        hdrlen = struct.calcsize(hdrfmt)
         with tempfile.NamedTemporaryFile(suffix=".o") as of:
             with tempfile.NamedTemporaryFile(suffix=".S") as cf:
                 self.check_call(("-c", cf.name, "-o", of.name),
                                 stderr=stderr)
                 with open(of.name, "rb") as fp:
-                    header = fp.read(hdrlen)
+                    elf = elffile.ELFFile(fp)
 
-        magic, elfclass, elfdata = struct.unpack(hdrfmt, header)
-        assert magic == constants.ELFMAG
-
-        self.__wordsize = {constants.ELFCLASS32: 32,
-                           constants.ELFCLASS64: 64}[elfclass]
-        self.__byteorder = {constants.ELFDATA2LSB: b"<",
-                            constants.ELFDATA2MSB: b">"}[elfdata]
-
+                    self.__wordsize = elf.elfclass
+                    self.__byteorder = elf.little_endian and b"<" or b">"
+                    self.__e_machine = elf["e_machine"]

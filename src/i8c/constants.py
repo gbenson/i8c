@@ -25,12 +25,6 @@ from __future__ import unicode_literals
 
 ELFMAG = b"\x7fELF"
 
-ELFCLASS32 = 1
-ELFCLASS64 = 2
-
-ELFDATA2LSB = 1
-ELFDATA2MSB = 2
-
 NT_GNU_INFINITY = 8995
 
 I8_CHUNK_SIGNATURE = 1
