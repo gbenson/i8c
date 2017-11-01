@@ -125,6 +125,12 @@ class ELF(Provider):
                     name = sym.name
                     if not name:
                         continue
+                    # Skip aarch64 mapping symbols.
+                    if (name[0] == "$"
+                          and sym.entry.st_info.type == "STT_NOTYPE"
+                          and sym.entry.st_info.bind == "STB_LOCAL"
+                          and sym.entry.st_size == 0):
+                        continue
                     addr = sym.entry.st_value
                     if addr == 0 and sym.entry.st_info.bind != "STB_GLOBAL":
                         continue
