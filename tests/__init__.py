@@ -254,6 +254,23 @@ class CompilerTask(object):
 
         return (self,)
 
+class TestAssembler(commands.Assembler):
+    def __check_call(self, *args, **kwargs):
+        return super(TestAssembler, self).check_call(*args, **kwargs)
+
+    def check_call(self, *args, **kwargs):
+        fail_softly = kwargs.pop("fail_softly", False)
+        if not fail_softly or self.__is_principal:
+            return self.__check_call(*args, **kwargs)
+
+        with open(os.devnull, "w") as fp:
+            kwargs["stderr"] = fp
+            try:
+                return self.__check_call(*args, **kwargs)
+            except subprocess.CalledProcessError:
+                print("  *** SOFT FAILURE ***")
+                raise SoftFailure
+
 class AssemblerManager(object):
     def __init__(self):
         self.__variants = {}
@@ -269,7 +286,10 @@ class AssemblerManager(object):
                       ws, tuple(machs))
                      for ws, machs in self.__by_wordsize.items())
         self.__by_wordsize = tuple((ws, machs) for sk, ws, machs in tmp)
-        assert self[0] is self.__principal
+        for index, variant in enumerate(self):
+            is_principal = index == 0
+            assert (variant is self.__principal) == is_principal
+            variant._TestAssembler__is_principal = is_principal
         del self.__principal
 
     def __len__(self):
@@ -319,7 +339,7 @@ class AssemblerManager(object):
     def __add_variant(self, *args, **kwargs):
         is_alt_wordsize = kwargs.pop("is_alt_wordsize", False)
 
-        variant = commands.Assembler(*args, **kwargs)
+        variant = TestAssembler(*args, **kwargs)
         wordsize = variant.output_wordsize
         machine = "%d%s" % (wordsize,
                             {b"<": "el",
