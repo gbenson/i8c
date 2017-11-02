@@ -130,7 +130,8 @@ class SymInOwnObjfile(object):
 class LinkSolib(object):
     def link(self, build, assembler, objfiles):
         filename = build.writable_filename(".so")
-        assembler.check_call(["-shared"] + objfiles + ["-o", filename])
+        assembler.check_call(["-shared"] + objfiles + ["-o", filename],
+                             fail_softly=True)
         return filename
 
 class StaticLinker(commands.CompilerCommand):
@@ -152,7 +153,8 @@ class LinkExe(LinkStatic):
     def link(self, build, assembler, objfiles):
         library = LinkStatic.link(self, build, assembler, objfiles)
         filename = build.writable_filename("")
-        assembler.check_call([self.__main_c, library, "-o", filename])
+        assembler.check_call([self.__main_c, library, "-o", filename],
+                             fail_softly=True)
         return filename
 
 class StripResult(object):
