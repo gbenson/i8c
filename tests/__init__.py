@@ -97,6 +97,9 @@ class TestCompiler(TestObject):
         """
         return linked
 
+class SoftFailure(Exception):
+    pass
+
 class CompilerTask(object):
     __filenames = {}
     __filenames_lock = threading.Lock()
@@ -204,6 +207,8 @@ class CompilerTask(object):
         assert self.__exception is None
         try:
             self.__result = func(self, *args, **kwargs)
+        except SoftFailure:
+            self.__result = []
         except Exception as e:
             self.__exception = e
 
