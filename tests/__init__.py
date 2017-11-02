@@ -344,6 +344,7 @@ class AssemblerManager(object):
 
     def __add_variant(self, *args, **kwargs):
         is_alt_wordsize = kwargs.pop("is_alt_wordsize", False)
+        is_alt_byteorder = kwargs.pop("is_alt_byteorder", False)
 
         variant = TestAssembler(*args, **kwargs)
         wordsize = variant.output_wordsize
@@ -357,6 +358,7 @@ class AssemblerManager(object):
         machine += "_" + e_machine
 
         machine = {"32el_386": "32el_i386",
+                   "32el_ppc": "32el_ppc32le",
                    "32el_x86_64": "32el_x32",
                    "64be_s390": "64be_s390x",
                    "64el_ppc64": "64el_ppc64le",
@@ -372,18 +374,30 @@ class AssemblerManager(object):
         self.__by_wordsize[wordsize].append(machine)
 
         if not is_alt_wordsize:
-            self.__try_add_alt_wordsize(variant)
+            self.__try_add_alt_wordsize(variant, is_alt_byteorder)
+            if not is_alt_byteorder:
+                self.__try_add_alt_byteorder(variant, is_alt_wordsize)
 
         return variant
 
-    def __try_add_alt_wordsize(self, main):
+    def __try_add_alt_wordsize(self, main, is_alt_byteorder):
         for try_wordsize in (64, 32, 31):
             elf_wordsize = ((try_wordsize + 1) >> 1) << 1
             if main.output_wordsize == elf_wordsize:
                 continue
             try_args = main.args + ["-m%d" % try_wordsize]
-            if self.__try_add_variant(try_args, is_alt_wordsize=True):
+            if self.__try_add_variant(try_args,
+                                      is_alt_wordsize=True,
+                                      is_alt_byteorder=is_alt_byteorder):
                 return
+
+    def __try_add_alt_byteorder(self, main, is_alt_wordsize):
+        try_byteorder = {b"<": "big",
+                         b">": "little"}[main.output_byteorder]
+        try_args = main.args + ["-m" + try_byteorder]
+        self.__try_add_variant(try_args,
+                               is_alt_wordsize=is_alt_wordsize,
+                               is_alt_byteorder=True)
 
 class TestContext(object):
     @classmethod
