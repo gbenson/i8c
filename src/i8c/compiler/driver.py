@@ -37,6 +37,7 @@ from . import serializer
 from . import stack
 from . import target
 from . import types
+from . import warn
 import copy
 import io
 import os
@@ -277,6 +278,10 @@ def main(args):
     if ((args.with_cpp and not args.cpp_args)
             or not (args.with_cpp or args.with_i8c or args.with_asm)):
         raise I8CError("nothing to do!\n%s" % clue)
+
+    if args.wrap_asm and (args.with_asm or not args.with_i8c):
+        warn("ignoring ‘--wrap-asm‘")
+        args.wrap_asm = False
 
     outfile = io.BytesIO()
     process, infile = setup_input(args)

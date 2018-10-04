@@ -1,6 +1,16 @@
 What has changed in I8C?
 ========================
 
+Changes since I8C 0.0.6
+-----------------------
+
+Bug fixes
+~~~~~~~~~
+
+* I8C now ignores the "--wrap-asm" command-line option if its final
+  output would not otherwise be assembly language.
+
+
 Changes in I8C 0.0.6
 --------------------
 

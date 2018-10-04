@@ -99,6 +99,8 @@ class TestCompilerDriver(TestCase):
         if "-S" in args:
             expect.append("i8c: warning: assuming ‘wordsize %d’\n"
                           % self.assemblers[0].output_wordsize)
+        if "--wrap-asm" in args and ("-E" in args or "-c" in args):
+            expect.append("i8c: warning: ignoring ‘--wrap-asm‘\n")
         expect = [line.encode("utf-8") for line in expect]
         with open(self.errfile, "rb") as fp:
             actual = fp.readlines()
@@ -135,6 +137,14 @@ class TestCompilerDriver(TestCase):
     def test_i8_to_obj(self):
         """Check that i8 source to object code works."""
         self.__run_permtest(["-c"], ".o")
+
+    def test_i8_to_pp_ignores_wrap_asm(self):
+        """Check that --wrap-asm is ignored with -E."""
+        self.__run_permtest(["-E", "--wrap-asm"], ".i8p")
+
+    def test_i8_to_obj_ignores_wrap_asm(self):
+        """Check that --wrap-asm is ignored with -c."""
+        self.__run_permtest(["-c", "--wrap-asm"], ".o")
 
     # Test that GCC errors are handled correctly
 
